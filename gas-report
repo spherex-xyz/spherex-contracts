@@ -1,0 +1,16 @@
+| src/SphereXEngine.sol:SphereXEngine contract |                 |       |        |       |         |
+|----------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                              | Deployment Size |       |        |       |         |
+| 740880                                       | 3366            |       |        |       |         |
+| Function Name                                | min             | avg   | median | max   | # calls |
+| activateRules                                | 657             | 3073  | 803    | 5603  | 95      |
+| addAllowedPatterns                           | 3266            | 22313 | 23166  | 45568 | 123     |
+| addAllowedSender                             | 23220           | 23220 | 23220  | 23220 | 88      |
+| deactivateRules                              | 508             | 2082  | 2607   | 2607  | 4       |
+| removeAllowedPatterns                        | 943             | 1210  | 1344   | 1344  | 3       |
+| removeAllowedSender                          | 2787            | 4217  | 4932   | 4932  | 3       |
+| sphereXValidateInternalPost                  | 2045            | 2045  | 2045   | 2045  | 8       |
+| sphereXValidateInternalPre                   | 457             | 5041  | 2063   | 18952 | 157     |
+| sphereXValidatePost                          | 1057            | 2880  | 2736   | 4616  | 86      |
+| sphereXValidatePre                           | 966             | 9340  | 8167   | 19456 | 94      |
+| transferOwnership                            | 7343            | 7343  | 7343   | 7343  | 1       |

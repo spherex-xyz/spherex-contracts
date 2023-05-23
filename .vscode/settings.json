@@ -1,0 +1,9 @@
+{
+  "solidity.packageDefaultDependenciesContractsDirectory": "src",
+  "solidity.packageDefaultDependenciesDirectory": "lib",
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#302F06",
+    "titleBar.activeBackground": "#434208",
+    "titleBar.activeForeground": "#FCFBE6"
+  }
+}
