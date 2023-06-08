@@ -27,8 +27,8 @@ abstract contract SphereXProtected {
         uint256 gas;
     }
 
-    event ChangedSpherexAdmin(address newSpherexAdmin);
-    event ChangedSpherexEngineAddress(address newEngineAddress);
+    event ChangedSpherexAdmin(address oldSphereXAdmin, address newSphereXAdmin);
+    event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
 
     /**
      * @dev used when the client doesn't use a proxy
@@ -44,7 +44,7 @@ abstract contract SphereXProtected {
     function __SphereXProtected_init() internal {
         if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
-            emit ChangedSpherexAdmin(msg.sender);
+            emit ChangedSpherexAdmin(address(0), msg.sender);
         }
     }
 
@@ -101,8 +101,9 @@ abstract contract SphereXProtected {
      * @param newSphereXAdmin new address of the new admin account
      */
     function changeSphereXAdmin(address newSphereXAdmin) external onlySphereXAdmin {
+        address oldSphereXAdmin = _getAddress(SPHEREX_ADMIN_STORAGE_SLOT);
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, newSphereXAdmin);
-        emit ChangedSpherexAdmin(newSphereXAdmin);
+        emit ChangedSpherexAdmin(oldSphereXAdmin, newSphereXAdmin);
     }
 
     /**
@@ -112,8 +113,9 @@ abstract contract SphereXProtected {
      * (because as long is this address is 0, the protection is disabled).
      */
     function changeSphereXEngine(address newSphereXEngine) external onlySphereXAdmin {
+        address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
-        emit ChangedSpherexEngineAddress(newSphereXEngine);
+        emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
     }
 
     // ============ Hooks ============
@@ -169,7 +171,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns (uint256) {
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }
