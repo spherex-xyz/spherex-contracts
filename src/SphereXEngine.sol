@@ -26,6 +26,8 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
 
+    event TxStartedAtIrregularDepth();
+
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
             return;
@@ -128,6 +130,11 @@ contract SphereXEngine is Ownable, ISphereXEngine {
             if (currentBlockOriginHash != _currentBlockOriginHash) {
                 _currentPattern = PATTERN_START;
                 _currentBlockOriginHash = currentBlockOriginHash;
+                if (_callDepth != DEPTH_START) {
+                    // This is an edge case we (and the client) should be able to monitor easily.
+                    emit TxStartedAtIrregularDepth();
+                }
+                _callDepth = DEPTH_START;
             }
         }
 
