@@ -14,7 +14,7 @@ contract SphereXEngineTest is Test, CFUtils {
         // This will make forge call the function with 1 and 2 as inputs!
         uint16 assumeVariable = uint8(uint16(uint64(rule)));
         vm.assume(assumeVariable > 0 && assumeVariable < 3);
-        spherex_engine.activateRules(bytes8(rule));
+        spherex_engine.configureRules(bytes8(rule));
 
         _;
     }
@@ -143,21 +143,21 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_onlyApprovedSenders_sphereXValidateInternalPre() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
         spherex_engine.sphereXValidateInternalPre(1);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePre() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
         spherex_engine.sphereXValidatePre(1, address(this), msg.data);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePost() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
         bytes32[] memory emptyArray = new bytes32[](0);
@@ -165,7 +165,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_returnsIfNotActivated_sphereXValidateInternalPre() public {
-        spherex_engine.deactivateRules();
+        spherex_engine.deactivateAllRules();
         spherex_engine.sphereXValidateInternalPre(1);
         spherex_engine.sphereXValidateInternalPre(-1);
 
@@ -173,7 +173,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_returnsIfNotActivated_sphereXValidatePrePost() public {
-        spherex_engine.deactivateRules();
+        spherex_engine.deactivateAllRules();
         spherex_engine.sphereXValidatePre(1, address(this), msg.data);
         bytes32[] memory emptyArray = new bytes32[](0);
         spherex_engine.sphereXValidatePost(-1, 0, emptyArray, emptyArray);
@@ -182,31 +182,31 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_activateRule1_not_owner() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(random_address);
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_activateRule2_not_owner() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(random_address);
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_deactivateRules_not_owner() public {
-        spherex_engine.deactivateRules();
+    function test_deactivateAllRules_not_owner() public {
+        spherex_engine.deactivateAllRules();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(random_address);
-        spherex_engine.deactivateRules();
+        spherex_engine.deactivateAllRules();
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -385,7 +385,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_activateRule1_after_Rule2() public activateRule(PREFIX_TX_FLOW) {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         allowed_cf_storage = [int16(1), -1];
         addAllowedPattern();
 
@@ -400,7 +400,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_activateRule2_after_Rule1() public activateRule(CF) {
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
 
         // If we would have stayed in rule1 the test would have failed (see somment above the original test)
         test_PrefixTFlow_same_origin_same_block_number();

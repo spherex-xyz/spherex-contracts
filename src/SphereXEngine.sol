@@ -45,14 +45,14 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Activate the guardian rules
      * @param rules bytes8 representing the new rules to activate.
      */
-    function activateRules(bytes8 rules) external onlyOwner {
+    function configureRules(bytes8 rules) external onlyOwner {
         _engineRules = rules;
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
-    function deactivateRules() external onlyOwner {
+    function deactivateAllRules() external onlyOwner {
         _engineRules = bytes8(uint64(0));
     }
 
