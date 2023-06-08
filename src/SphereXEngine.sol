@@ -122,9 +122,10 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     function _addCFElement(int16 num, bool forceCheck) private {
         // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the _currentPattern, and save
-        // the new transaction "hash" (block.number+tx.origin)
+        // the new transaction "hash" (block.number+tx.origin+timestamp+difficulty, used together to work on Ethereum, Optimism and Arbitrum)
         if (num > 0 && _isRule2Activated()) {
-            bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
+            bytes32 currentBlockOriginHash =
+                keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty));
             if (currentBlockOriginHash != _currentBlockOriginHash) {
                 _currentPattern = PATTERN_START;
                 _currentBlockOriginHash = currentBlockOriginHash;
