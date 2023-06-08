@@ -195,8 +195,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         onlyApprovedSenders
         returns (bytes32[] memory result)
     {
-        _addCfElementFunctionEntry;
-        (num);
+        _addCfElementFunctionEntry(num);
         return result;
     }
 
