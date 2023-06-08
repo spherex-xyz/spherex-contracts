@@ -116,47 +116,61 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     }
 
     /**
-     * update the current CF pattern with a new number, 
-     * when exiting a function we check the validity of the pattern.
-     * @param num element to add to the flow. Poistive number represents start of function, negative exit.
-     * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
+     * update the current CF pattern with a new positive number (signifying function entry),
+     * @param num element to add to the flow.
      */
-    function _addCFElement(int16 num, bool forceCheck) private {
+    function _addCfElementFunctionEntry(int16 num) private {
+        require(num > 0, "!SX: ERROR");
+        uint256 callDepth = _callDepth;
+        uint256 currentPattern = _currentPattern;
+
         // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the _currentPattern, and save
         // the new transaction "hash" (block.number+tx.origin)
-        if (num > 0 && _isRule2Activated()) {
-            bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
-            if (currentBlockOriginHash != _currentBlockOriginHash) {
-                _currentPattern = PATTERN_START;
-                _currentBlockOriginHash = currentBlockOriginHash;
-                if (_callDepth != DEPTH_START) {
-                    // This is an edge case we (and the client) should be able to monitor easily.
-                    emit TxStartedAtIrregularDepth();
-                }
-                _callDepth = DEPTH_START;
+        bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
+        if (currentBlockOriginHash != _currentBlockOriginHash) {
+            currentPattern = PATTERN_START;
+            _currentBlockOriginHash = currentBlockOriginHash;
+            if (callDepth != DEPTH_START) {
+                // This is an edge case we (and the client) should be able to monitor easily.
+                emit TxStartedAtIrregularDepth();
+                callDepth = DEPTH_START;
             }
         }
 
-        _currentPattern = uint256(keccak256(abi.encode(num, _currentPattern)));
+        currentPattern = uint256(keccak256(abi.encode(num, currentPattern)));
+        ++callDepth;
 
-        if (num > 0) {
-            ++_callDepth;
-        } else if (num < 0) {
-            --_callDepth;
-        } else {
-            revert("!SX:ERROR");
-        }
+        _callDepth = callDepth;
+        _currentPattern = currentPattern;
+    }
 
-        if ((_callDepth == DEPTH_START) || (forceCheck)) {
+    /**
+     * update the current CF pattern with a new negative number (signfying function exit),
+     * under some conditions, this will also check the validity of the pattern.
+     * @param num element to add to the flow. should be negative.
+     * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
+     */
+    function _addCfElementFunctionExit(int16 num, bool forceCheck) private {
+        require(num < 0, "!SX: ERROR");
+        uint256 callDepth = _callDepth;
+        uint256 currentPattern = _currentPattern;
+
+        currentPattern = uint256(keccak256(abi.encode(num, currentPattern)));
+        --callDepth;
+
+        if ((forceCheck) || (callDepth == DEPTH_START)) {
             _checkCallFlow();
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // _currentPattern
-        if (_isRule1Activated() && _callDepth == DEPTH_START) {
-            _currentPattern = PATTERN_START;
+        if (callDepth == DEPTH_START && _isRule1Activated()) {
+            currentPattern = PATTERN_START;
         }
+
+        _callDepth = callDepth;
+        _currentPattern = currentPattern;
     }
 
     /**
@@ -181,7 +195,8 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         onlyApprovedSenders
         returns (bytes32[] memory result)
     {
-        _addCFElement(num, false);
+        _addCfElementFunctionEntry;
+        (num);
         return result;
     }
 
@@ -192,13 +207,13 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param valuesBefore For future use
      * @param valuesAfter For future use
      */
-    function sphereXValidatePost(int16 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter)
-        external
-        override
-        returnsIfNotActivated
-        onlyApprovedSenders
-    {
-        _addCFElement(num, true);
+    function sphereXValidatePost(
+        int16 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override returnsIfNotActivated onlyApprovedSenders {
+        _addCfElementFunctionExit(num, true);
     }
 
     /**
@@ -207,7 +222,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param num id of function to add.
      */
     function sphereXValidateInternalPre(int16 num) external override returnsIfNotActivated onlyApprovedSenders {
-        _addCFElement(num, false);
+        _addCfElementFunctionEntry(num);
     }
 
     /**
@@ -215,7 +230,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int16 num, uint256 gas) external override returnsIfNotActivated onlyApprovedSenders {
-        _addCFElement(num, false);
+    function sphereXValidateInternalPost(int16 num, uint256 gas)
+        external
+        override
+        returnsIfNotActivated
+        onlyApprovedSenders
+    {
+        _addCfElementFunctionExit(num, false);
     }
 }
