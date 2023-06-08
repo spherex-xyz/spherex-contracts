@@ -26,6 +26,13 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
 
+    event ConfigureRules(bytes8 rules);
+    event DisableAllRules();
+    event AddedAllowedSender(address sender);
+    event RemovedAllowedSender(address sender);
+    event AddedAllowedPattern(uint256 pattern);
+    event RemovedAllowedPattern(uint256 pattern);
+
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
             return;
@@ -47,6 +54,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function activateRules(bytes8 rules) external onlyOwner {
         _engineRules = rules;
+        emit ConfigureRules(rules);
     }
 
     /**
@@ -54,6 +62,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function deactivateRules() external onlyOwner {
         _engineRules = bytes8(uint64(0));
+        emit DisableAllRules();
     }
 
     /**
@@ -63,6 +72,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     function addAllowedSender(address[] calldata senders) external onlyOwner {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = true;
+            emit AddedAllowedSender(senders[i]);
         }
     }
 
@@ -73,6 +83,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     function removeAllowedSender(address[] calldata senders) external onlyOwner {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = false;
+            emit RemovedAllowedSender(senders[i]);
         }
     }
 
@@ -83,6 +94,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     function addAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
+            emit AddedAllowedPattern(patterns[i]);
         }
     }
 
@@ -94,6 +106,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
+            emit RemovedAllowedPattern(patterns[i]);
         }
     }
 

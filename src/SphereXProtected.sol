@@ -27,6 +27,9 @@ abstract contract SphereXProtected {
         uint256 gas;
     }
 
+    event ChangedSpherexAdmin(address newSpherexAdmin);
+    event ChangedSpherexEngineAddress(address newEngineAddress);
+
     /**
      * @dev used when the client doesn't use a proxy
      * @notice constructor visibality is required to support all compiler versions
@@ -41,6 +44,7 @@ abstract contract SphereXProtected {
     function __SphereXProtected_init() internal {
         if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+            emit ChangedSpherexAdmin(msg.sender);
         }
     }
 
@@ -98,6 +102,7 @@ abstract contract SphereXProtected {
      */
     function changeSphereXAdmin(address newSphereXAdmin) external onlySphereXAdmin {
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, newSphereXAdmin);
+        emit ChangedSpherexAdmin(newSphereXAdmin);
     }
 
     /**
@@ -108,6 +113,7 @@ abstract contract SphereXProtected {
      */
     function changeSphereXEngine(address newSphereXEngine) external onlySphereXAdmin {
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
+        emit ChangedSpherexEngineAddress(newSphereXEngine);
     }
 
     // ============ Hooks ============
