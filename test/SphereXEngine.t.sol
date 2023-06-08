@@ -134,6 +134,11 @@ contract SphereXEngineTest is Test, CFUtils {
 
     // ============ Modifiers  ============
 
+    function test_badRulesConfig() public {
+        vm.expectRevert("Illegal rules combination");
+        spherex_engine.configureRules(bytes8(uint64(3)));
+    }
+
     function test_onlyOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
         // change caller to random address
@@ -426,7 +431,6 @@ contract SphereXEngineTest is Test, CFUtils {
 
         // the slot layout is 0x[32 empty bits][160 bits for origin address][64 bits for block number]
         assertEq((vm.load(address(spherex_engine), currentBlockStorageSlot)), keccak256(abi.encode(2, random_address)));
-
     }
 
     // Check that after we recognize a new transaction we dont allow the suffix of an approved flow
