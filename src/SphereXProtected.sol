@@ -119,7 +119,7 @@ abstract contract SphereXProtected {
      * @param isExternalCall set to true if this was called externally
      *  or a 'public' function from another address
      */
-    function _sphereXValidatePre(int16 num, bool isExternalCall)
+    function _sphereXValidatePre(int256 num, bool isExternalCall)
         internal
         returnsIfNotActivated
         returns (ModifierLocals memory locals)
@@ -142,7 +142,7 @@ abstract contract SphereXProtected {
      * @param isExternalCall set to true if this was called externally
      *  or a 'public' function from another address
      */
-    function _sphereXValidatePost(int16 num, bool isExternalCall, ModifierLocals memory locals)
+    function _sphereXValidatePost(int256 num, bool isExternalCall, ModifierLocals memory locals)
         internal
         returnsIfNotActivated
     {
@@ -163,7 +163,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int256 num) internal returnsIfNotActivated returns(uint256){
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }
@@ -174,14 +174,14 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @param gas the gas saved before the original function nody run
      */
-    function _sphereXValidateInternalPost(int16 num, uint256 gas) internal returnsIfNotActivated {
+    function _sphereXValidateInternalPost(int256 num, uint256 gas) internal returnsIfNotActivated {
         _sphereXEngine().sphereXValidateInternalPost(num, gas - gasleft());
     }
 
     /**
      *  @dev Modifier to be incorporated in all internal protected non-view functions
      */
-    modifier sphereXGuardInternal(int16 num) {
+    modifier sphereXGuardInternal(int256 num) {
         uint256 gas = _sphereXValidateInternalPre(num);
         _;
         _sphereXValidateInternalPost(-num, gas);
@@ -190,7 +190,7 @@ abstract contract SphereXProtected {
     /**
      *  @dev Modifier to be incorporated in all external protected non-view functions
      */
-    modifier sphereXGuardExternal(int16 num) {
+    modifier sphereXGuardExternal(int256 num) {
         ModifierLocals memory locals = _sphereXValidatePre(num, true);
         _;
         _sphereXValidatePost(-num, true, locals);
@@ -199,7 +199,7 @@ abstract contract SphereXProtected {
     /**
      *  @dev Modifier to be incorporated in all public rotected non-view functions
      */
-    modifier sphereXGuardPublic(int16 num, bytes4 selector) {
+    modifier sphereXGuardPublic(int256 num, bytes4 selector) {
         ModifierLocals memory locals = _sphereXValidatePre(num, msg.sig == selector);
         _;
         _sphereXValidatePost(-num, msg.sig == selector, locals);

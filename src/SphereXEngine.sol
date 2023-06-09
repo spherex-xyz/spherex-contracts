@@ -25,7 +25,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
-
+     
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
             return;
@@ -119,7 +119,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param num element to add to the flow. Poistive number represents start of function, negative exit.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
-    function _addCFElement(int16 num, bool forceCheck) private {
+    function _addCFElement(int256 num, bool forceCheck) private {
         // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the _currentPattern, and save
         // the new transaction "hash" (block.number+tx.origin)
@@ -167,13 +167,14 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param data For future use
      * @return result in the future will return insturction on what storage slots to gather, but not used for now
      */
-    function sphereXValidatePre(int16 num, address sender, bytes calldata data)
+    function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
         override
         returnsIfNotActivated // may return empty bytes32[]
         onlyApprovedSenders
         returns (bytes32[] memory result)
     {
+        require(num > 0, "!SX:PRE_NUMBER_SIGN");
         _addCFElement(num, false);
         return result;
     }
@@ -185,12 +186,13 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param valuesBefore For future use
      * @param valuesAfter For future use
      */
-    function sphereXValidatePost(int16 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter)
+    function sphereXValidatePost(int256 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter)
         external
         override
         returnsIfNotActivated
         onlyApprovedSenders
     {
+        require(num < 0, "!SX:POST_NUMBER_SIGN"); 
         _addCFElement(num, true);
     }
 
@@ -199,7 +201,8 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int16 num) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPre(int256 num) external override returnsIfNotActivated onlyApprovedSenders {
+        require(num > 0, "!SX:PRE_NUMBER_SIGN");
         _addCFElement(num, false);
     }
 
@@ -208,7 +211,8 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int16 num, uint256 gas) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPost(int256 num, uint256 gas) external override returnsIfNotActivated onlyApprovedSenders {
+        require(num < 0, "!SX:POST_NUMBER_SIGN");         
         _addCFElement(num, false);
     }
 }
