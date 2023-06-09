@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.0;
 
 import "./ISphereXEngine.sol";
 
@@ -163,7 +163,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns (uint256) {
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }

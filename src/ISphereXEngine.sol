@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.0;
 
 /**
  * @title Interface for SphereXEngine - defenitions of core functionality
@@ -11,7 +11,12 @@ pragma solidity >=0.5.0;
  */
 interface ISphereXEngine {
     function sphereXValidatePre(int16 num, address sender, bytes calldata data) external returns (bytes32[] memory);
-    function sphereXValidatePost(int16 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter) external;
+    function sphereXValidatePost(
+        int16 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external;
     function sphereXValidateInternalPre(int16 num) external;
     function sphereXValidateInternalPost(int16 num, uint256 gas) external;
 }

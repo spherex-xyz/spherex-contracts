@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Reduced version of OpenZeppelin Ownable Contract. All docs are the original OZ docs
 
-pragma solidity >=0.6.0;
+pragma solidity ^0.8.0;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
