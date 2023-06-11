@@ -23,7 +23,7 @@ abstract contract Ownable {
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
-     * @notice constructor visibality is required to support all compiler versions
+     * @notice constructor visibility is required to support all compiler versions
      */
     constructor() internal {
         address msgSender = msg.sender;

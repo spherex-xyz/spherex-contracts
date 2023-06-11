@@ -116,7 +116,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     /**
      * update the current CF pattern with a new number, 
      * when exiting a function we check the validity of the pattern.
-     * @param num element to add to the flow. Poistive number represents start of function, negative exit.
+     * @param num element to add to the flow. Positive number represents start of function, negative exit.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
     function _addCFElement(int16 num, bool forceCheck) private {
@@ -165,7 +165,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param num id of function to add. Should be positive
      * @param sender For future use
      * @param data For future use
-     * @return result in the future will return insturction on what storage slots to gather, but not used for now
+     * @return result in the future will return instruction on what storage slots to gather, but not used for now
      */
     function sphereXValidatePre(int16 num, address sender, bytes calldata data)
         external

@@ -4,8 +4,8 @@
 pragma solidity >=0.5.0;
 
 /**
- * @title Interface for SphereXEngine - defenitions of core functionality
- * @author SphereX Technolegies ltd
+ * @title Interface for SphereXEngine - definitions of core functionality
+ * @author SphereX Technologies ltd
  * @notice This interface is imported by SphereXProtected, so that SphereXProtected can call functions from SphereXEngine
  * @dev Full docs of these functions can be found in SphereXEngine
  */
