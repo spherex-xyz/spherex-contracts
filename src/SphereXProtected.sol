@@ -3,7 +3,7 @@
 
 pragma solidity >=0.5.0;
 
-import "./ISphereXEngine.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX base Customer contract template
