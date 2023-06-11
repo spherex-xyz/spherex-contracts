@@ -3,8 +3,8 @@
 
 pragma solidity >=0.6.0;
 
-import "./Ownable.sol";
-import "./ISphereXEngine.sol";
+import {Ownable} from "./Ownable.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
