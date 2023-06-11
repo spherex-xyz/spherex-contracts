@@ -78,7 +78,7 @@ abstract contract SphereXProtected {
     // ============ Local modifiers ============
 
     modifier onlySphereXAdmin() {
-        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "!SX:SPHEREX");
+        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "SphereX error: caller is not the admin");
         _;
     }
 

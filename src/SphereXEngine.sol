@@ -35,7 +35,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     }
 
     modifier onlyApprovedSenders() {
-        require(_allowedSenders[msg.sender], "!SX:SENDERS");
+        require(_allowedSenders[msg.sender], "SphereX error: disallowed sender address");
         _;
     }
 
@@ -138,7 +138,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         } else if (num < 0) {
             --_callDepth;
         } else {
-            revert("!SX:ERROR");
+            revert("SphereX error: num cant be zero");
         }
 
         if ((_callDepth == DEPTH_START) || (forceCheck)) {
@@ -156,7 +156,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
     function _checkCallFlow() private view {
-        require(_allowedPatterns[_currentPattern], "!SX:DETECTED");
+        require(_allowedPatterns[_currentPattern], "SphereX error: disallowed tx pattern");
     }
 
     /**
