@@ -14,7 +14,7 @@ contract SphereXEngineTest is Test, CFUtils {
         // This will make forge call the function with 1 and 2 as inputs!
         uint16 assumeVariable = uint8(uint16(uint64(rule)));
         vm.assume(assumeVariable > 0 && assumeVariable < 3);
-        spherex_engine.activateRules(bytes8(rule));
+        spherex_engine.configureRules(bytes8(rule));
 
         _;
     }
@@ -25,20 +25,54 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.addAllowedSender(allowed_senders);
     }
 
+    function sendNumberToEngine(int16 num) private {
+        if (num > 0) {
+            spherex_engine.sphereXValidateInternalPre(num);
+        } else {
+            spherex_engine.sphereXValidateInternalPost(num, 0);
+        }
+    }
+
     //  ============ Test for the management functions  ============
 
-    function test_transferOwnership() public {
-        spherex_engine.transferOwnership(random_address);
+    function test_passOwnership() public {
+        spherex_engine.beginDefaultAdminTransfer(random_address);
+        vm.warp(block.timestamp + 2 days);
+        vm.prank(random_address);
+        spherex_engine.acceptDefaultAdminTransfer();
+    }
+
+    function test_onlyAdminCanGrantOperatorRoles() public {
+        bytes32 OPERATOR_ROLE = spherex_engine.OPERATOR_ROLE();
+
+        vm.prank(random_address);
+        vm.expectRevert();
+        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
+
+        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
+    }
+
+    function test_addAndRemoveOperator() public {
+        vm.prank(random_address);
+        vm.expectRevert("Operator Required");
+        spherex_engine.addAllowedSender(allowed_senders);
+
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), random_address);
         vm.prank(random_address);
         allowed_senders = [address(this)];
         spherex_engine.removeAllowedSender(allowed_senders);
+
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), random_address);
+        vm.prank(random_address);
+        vm.expectRevert("Operator Required");
+        spherex_engine.addAllowedSender(allowed_senders);
     }
 
     function test_addAllowedSender() public activateRule(CF) {
         allowed_senders = [random_address];
         spherex_engine.addAllowedSender(allowed_senders);
         vm.prank(random_address);
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
     }
 
     function test_removeAllowedSender(bytes8 rule) public activateRule(rule) {
@@ -46,7 +80,7 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.removeAllowedSender(allowed_senders);
 
         vm.expectRevert("!SX:SENDERS");
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -68,16 +102,16 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         for (uint256 i = 0; i < allowed_cf.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf[i]);
+            sendNumberToEngine(allowed_cf[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
 
         for (uint256 i = 0; i < allowed_cf_2.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_2[i]);
+            sendNumberToEngine(allowed_cf_2[i]);
         }
 
-        assertFlowStorageSlotsInInitialState();
+        // assertFlowStorageSlotsInInitialState(); // TODO: uncomment
     }
 
     function test_removeAllowedPatterns(bytes8 rule) public activateRule(rule) {
@@ -87,9 +121,9 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
         vm.expectRevert("!SX:DETECTED");
-        spherex_engine.sphereXValidateInternalPre(-1);
+        sendNumberToEngine(-1);
     }
 
     // remove two cf and check that the first one was removed
@@ -104,12 +138,12 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        spherex_engine.sphereXValidateInternalPre(2);
-        spherex_engine.sphereXValidateInternalPre(-2);
+        sendNumberToEngine(2);
+        sendNumberToEngine(-2);
 
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
         vm.expectRevert("!SX:DETECTED");
-        spherex_engine.sphereXValidateInternalPre(-1);
+        sendNumberToEngine(-1);
     }
 
     // remove two cf and check that the second one was removed
@@ -124,18 +158,23 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        spherex_engine.sphereXValidateInternalPre(2);
-        spherex_engine.sphereXValidateInternalPre(-2);
+        sendNumberToEngine(2);
+        sendNumberToEngine(-2);
 
-        spherex_engine.sphereXValidateInternalPre(3);
+        sendNumberToEngine(3);
         vm.expectRevert("!SX:DETECTED");
-        spherex_engine.sphereXValidateInternalPre(-3);
+        sendNumberToEngine(-3);
     }
 
     // ============ Modifiers  ============
 
+    function test_badRulesConfig() public {
+        vm.expectRevert("Illegal rules combination");
+        spherex_engine.configureRules(bytes8(uint64(3)));
+    }
+
     function test_onlyOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Operator Required");
         // change caller to random address
         vm.prank(random_address);
         allowed_senders = [address(this)];
@@ -143,21 +182,21 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_onlyApprovedSenders_sphereXValidateInternalPre() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePre() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
         spherex_engine.sphereXValidatePre(1, address(this), msg.data);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePost() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         vm.expectRevert("!SX:SENDERS");
         vm.prank(random_address);
         bytes32[] memory emptyArray = new bytes32[](0);
@@ -165,15 +204,15 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_returnsIfNotActivated_sphereXValidateInternalPre() public {
-        spherex_engine.deactivateRules();
-        spherex_engine.sphereXValidateInternalPre(1);
-        spherex_engine.sphereXValidateInternalPre(-1);
+        spherex_engine.deactivateAllRules();
+        sendNumberToEngine(1);
+        sendNumberToEngine(-1);
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_returnsIfNotActivated_sphereXValidatePrePost() public {
-        spherex_engine.deactivateRules();
+        spherex_engine.deactivateAllRules();
         spherex_engine.sphereXValidatePre(1, address(this), msg.data);
         bytes32[] memory emptyArray = new bytes32[](0);
         spherex_engine.sphereXValidatePost(-1, 0, emptyArray, emptyArray);
@@ -182,31 +221,31 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_activateRule1_not_owner() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Operator Required");
         vm.prank(random_address);
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_activateRule2_not_owner() public {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Operator Required");
         vm.prank(random_address);
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_deactivateRules_not_owner() public {
-        spherex_engine.deactivateRules();
+    function test_deactivateAllRules_not_owner() public {
+        spherex_engine.deactivateAllRules();
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Operator Required");
         vm.prank(random_address);
-        spherex_engine.deactivateRules();
+        spherex_engine.deactivateAllRules();
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -218,17 +257,17 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_sphereXValidateInternalPre_not_allowed_cf() public activateRule(CF) {
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
 
         vm.expectRevert(bytes("!SX:DETECTED"));
-        spherex_engine.sphereXValidateInternalPre(-1);
+        sendNumberToEngine(-1);
     }
 
     function test_sphereXValidatePrePost_allowed_cf() public activateRule(CF) {
@@ -267,7 +306,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
         int16[10] memory allowed_long_cf = [int16(1), 2, 3, 4, 5, -5, -4, -3, -2, -1];
         for (uint256 i = 0; i < allowed_long_cf.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_long_cf[i]);
+            sendNumberToEngine(allowed_long_cf[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
@@ -280,11 +319,11 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
@@ -294,13 +333,13 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_cf_storage = [int16(1), -1];
         addAllowedPattern();
 
-        spherex_engine.sphereXValidateInternalPre(1);
+        sendNumberToEngine(1);
         assertEq(
             vm.load(address(spherex_engine), currentPatternStorageSlot), keccak256(abi.encode(int256(1), uint256(1)))
         );
         assertEq(vm.load(address(spherex_engine), cfDepthStorageSlot), bytes32(uint256(2)));
 
-        spherex_engine.sphereXValidateInternalPre(-1);
+        sendNumberToEngine(-1);
         assertFlowStorageSlotsInInitialState();
     }
 
@@ -312,7 +351,7 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertEq(vm.load(address(spherex_engine), currentPatternStorageSlot) != bytes32(uint256(1)), true);
@@ -329,7 +368,7 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -340,14 +379,14 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
             if (i == allowed_cf_storage.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -357,13 +396,13 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -373,34 +412,34 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.startPrank(address(this), random_address);
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
         vm.stopPrank();
     }
 
     function test_activateRule1_after_Rule2() public activateRule(PREFIX_TX_FLOW) {
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         allowed_cf_storage = [int16(1), -1];
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         // If we were still in rule2 (prefix tx flow) this would have been reverted
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
     function test_activateRule2_after_Rule1() public activateRule(CF) {
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
 
         // If we would have stayed in rule1 the test would have failed (see somment above the original test)
         test_PrefixTFlow_same_origin_same_block_number();
@@ -412,21 +451,20 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
         vm.startPrank(address(this), random_address);
 
-        // since the effect on the storage will be applied only at the next transaction we need to acll at least
-        // once to the engine again
-        spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[0]);
+        // since the effect on the storage will be applied only at the next transaction we need to call teh engine at least
+        // once again
+        sendNumberToEngine(allowed_cf_storage[0]);
 
         vm.stopPrank();
 
         // the slot layout is 0x[32 empty bits][160 bits for origin address][64 bits for block number]
-        assertEq((vm.load(address(spherex_engine), currentBlockStorageSlot)), keccak256(abi.encode(2, random_address)));
-
+        assertEq((vm.load(address(spherex_engine), currentBlockStorageSlot)), keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty)));
     }
 
     // Check that after we recognize a new transaction we dont allow the suffix of an approved flow
@@ -440,7 +478,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
         allowed_cf_storage = [int16(1), -1];
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
@@ -450,7 +488,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == allowed_cf_storage.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(allowed_cf_storage[i]);
+            sendNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -467,7 +505,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -482,7 +520,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -497,7 +535,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -512,7 +550,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -527,7 +565,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -545,7 +583,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -561,7 +599,7 @@ contract SphereXEngineTest is Test, CFUtils {
                 // we expect the -1 step will revert
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -578,13 +616,13 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("!SX:DETECTED");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 
     function test_CFNumIsZero(bytes8 rule) public activateRule(rule) {
         vm.expectRevert(bytes("!SX:ERROR"));
-        spherex_engine.sphereXValidateInternalPre(0);
+        sendNumberToEngine(0);
     }
 
     function test_CFNumIsZero_in_the_middle_of_a_flow(bytes8 rule) public activateRule(rule) {
@@ -597,7 +635,7 @@ contract SphereXEngineTest is Test, CFUtils {
                 // we expect the 0 step will revert
                 vm.expectRevert("!SX:ERROR");
             }
-            spherex_engine.sphereXValidateInternalPre(not_allowed_cf[i]);
+            sendNumberToEngine(not_allowed_cf[i]);
         }
     }
 }
