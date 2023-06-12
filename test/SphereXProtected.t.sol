@@ -14,7 +14,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
 
     modifier activateRule2() {
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
         allowed_cf_storage = [int16(1), -1, 11, 12, -12, -11];
         addAllowedPattern();
         allowed_cf_storage = [int16(1), -1];
@@ -38,7 +38,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.activateRules(bytes8(uint64(1)));
+        spherex_engine.configureRules(bytes8(uint64(1)));
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
     }
