@@ -15,6 +15,8 @@ abstract contract SphereXProtected {
      * @dev to easily incorporate with existing contracts
      */
     bytes32 private constant SPHEREX_ADMIN_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.spherex")) - 1);
+    bytes32 private constant SPHEREX_PENDING_ADMIN_STORAGE_SLOT =
+        bytes32(uint256(keccak256("eip1967.spherex.pending")) - 1);
     bytes32 private constant SPHEREX_OPERATOR_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.operator")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
@@ -27,6 +29,9 @@ abstract contract SphereXProtected {
         bytes32[] valuesBefore;
         uint256 gas;
     }
+
+    event SpherexAdminTransferStarted(address currentAdmin, address pendingAdmin);
+    event SpherexAdminTransferCompleted(address oldAdmin, address newAdmin);
 
     /**
      * @dev used when the client doesn't use a proxy
@@ -102,11 +107,40 @@ abstract contract SphereXProtected {
     // ============ Management ============
 
     /**
-     *
-     * @param newSphereXAdmin new address of the new admin account
+     * Returns the currently pending admin address, the one that can call acceptSphereXAdminRole to become the admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
-    function changeSphereXAdmin(address newSphereXAdmin) external onlySphereXAdmin {
-        _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, newSphereXAdmin);
+    function pendingSphereXAdmin() public view returns (address) {
+        return _getAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT);
+    }
+
+    /**
+     * Returns the current admin address, the one that can call acceptSphereXAdminRole to become the admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function sphereXAdmin() public view returns (address) {
+        return _getAddress(SPHEREX_ADMIN_STORAGE_SLOT);
+    }
+
+    /**
+     * Setting the address of the next admin. this address will have to accept the role to become the new admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function transferSphereXAdminRole(address newAdmin) public onlySphereXAdmin {
+        _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, newAdmin);
+        emit SpherexAdminTransferStarted(sphereXAdmin(), newAdmin);
+    }
+
+    /**
+     * Accepting the admin role and completing the transfer.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function acceptSphereXAdminRole() public {
+        require(pendingSphereXAdmin() == msg.sender, "!SX: Not the pending account");
+        address oldAdmin = sphereXAdmin();
+        _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+        _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, address(0));
+        emit SpherexAdminTransferCompleted(oldAdmin, msg.sender);
     }
 
     /**
