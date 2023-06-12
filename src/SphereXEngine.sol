@@ -11,9 +11,14 @@ import "./ISphereXEngine.sol";
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 contract SphereXEngine is Ownable, ISphereXEngine {
+    struct ConfigurationInfo{
+        bool isPermited;
+        uint256 timestamp;
+    }
+    
     bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
-    mapping(address => bool) private _allowedSenders;
-    mapping(uint256 => bool) private _allowedPatterns;
+    mapping(address => ConfigurationInfo) private _allowedSenders;
+    mapping(uint256 => ConfigurationInfo) private _allowedPatterns;
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint256 private _currentPattern = PATTERN_START;
@@ -35,7 +40,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     }
 
     modifier onlyApprovedSenders() {
-        require(_allowedSenders[msg.sender], "!SX:SENDERS");
+        ConfigurationInfo memory configInfo = _allowedSenders[msg.sender];
+        if(!configInfo.isPermited) {
+            // if the change was made in the same timestamp then we dont want to revert,
+            // otherwise we should revert.
+            require(configInfo.timestamp == block.timestamp, "!SX:SENDERS");
+        }
         _;
     }
 
@@ -62,7 +72,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function addAllowedSender(address[] calldata senders) external onlyOwner {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = true;
+            _allowedSenders[senders[i]] = ConfigurationInfo(true, 0);
         }
     }
 
@@ -72,7 +82,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function removeAllowedSender(address[] calldata senders) external onlyOwner {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = false;
+            _allowedSenders[senders[i]] = ConfigurationInfo(false, block.timestamp);
         }
     }
 
@@ -82,7 +92,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function addAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = true;
+            _allowedPatterns[patterns[i]] = ConfigurationInfo(true, 0);
         }
     }
 
@@ -93,7 +103,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      */
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = false;
+            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, block.timestamp);
         }
     }
 
@@ -156,7 +166,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
     function _checkCallFlow() private view {
-        require(_allowedPatterns[_currentPattern], "!SX:DETECTED");
+        ConfigurationInfo memory configInfo = _allowedPatterns[_currentPattern];
+        // if the change was made in the same timestamp then we dont want to revert,
+        // otherwise we should revert.
+        if(!configInfo.isPermited) {
+            require(configInfo.timestamp == block.timestamp, "!SX:DETECTED");
+        }
     }
 
     /**
