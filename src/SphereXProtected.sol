@@ -15,6 +15,7 @@ abstract contract SphereXProtected {
      * @dev to easily incorporate with existing contracts
      */
     bytes32 private constant SPHEREX_ADMIN_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.spherex")) - 1);
+    bytes32 private constant SPHEREX_OPERATOR_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.operator")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
 
@@ -41,6 +42,9 @@ abstract contract SphereXProtected {
     function __SphereXProtected_init() internal {
         if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+        }
+        if (_getAddress(SPHEREX_OPERATOR_STORAGE_SLOT) == address(0)) {
+            _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, msg.sender);
         }
     }
 
@@ -78,7 +82,12 @@ abstract contract SphereXProtected {
     // ============ Local modifiers ============
 
     modifier onlySphereXAdmin() {
-        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "!SX:SPHEREX");
+        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "!SX: Admin required");
+        _;
+    }
+
+    modifier onlyOperator() {
+        require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "!SX: Operator required");
         _;
     }
 
@@ -102,11 +111,19 @@ abstract contract SphereXProtected {
 
     /**
      *
+     * @param newSphereXOperator new address of the new operator account
+     */
+    function changeSphereXOperator(address newSphereXOperator) external onlySphereXAdmin {
+        _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, newSphereXOperator);
+    }
+
+    /**
+     *
      * @param newSphereXEngine new address of the spherex engine
      * @dev this is also used to actually enable the defence
      * (because as long is this address is 0, the protection is disabled).
      */
-    function changeSphereXEngine(address newSphereXEngine) external onlySphereXAdmin {
+    function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
     }
 
@@ -163,7 +180,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns (uint256) {
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }
