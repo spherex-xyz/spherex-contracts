@@ -109,13 +109,6 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     }
 
     /**
-     * Checks if rule2 us activated.
-     */
-    function _isRule2Activated() private view returns (bool) {
-        return (_engineRules & bytes8(uint64(2))) > 0;
-    }
-
-    /**
      * update the current CF pattern with a new positive number (signifying function entry),
      * @param num element to add to the flow.
      */
