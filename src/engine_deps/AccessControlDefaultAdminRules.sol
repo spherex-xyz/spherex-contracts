@@ -68,7 +68,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @dev See {IERC5313-owner}.
      */
-    function owner() public view virtual returns (address) {
+    function owner() public view override virtual returns (address) {
         return defaultAdmin();
     }
 
@@ -159,21 +159,21 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function defaultAdmin() public view virtual returns (address) {
+    function defaultAdmin() public view override virtual returns (address) {
         return _currentDefaultAdmin;
     }
 
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function pendingDefaultAdmin() public view virtual returns (address newAdmin, uint48 schedule) {
+    function pendingDefaultAdmin() public view override virtual returns (address newAdmin, uint48 schedule) {
         return (_pendingDefaultAdmin, _pendingDefaultAdminSchedule);
     }
 
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function defaultAdminDelay() public view virtual returns (uint48) {
+    function defaultAdminDelay() public view override virtual returns (uint48) {
         uint48 schedule = _pendingDelaySchedule;
         return (_isScheduleSet(schedule) && _hasSchedulePassed(schedule)) ? _pendingDelay : _currentDelay;
     }
@@ -181,7 +181,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function pendingDefaultAdminDelay() public view virtual returns (uint48 newDelay, uint48 schedule) {
+    function pendingDefaultAdminDelay() public view override virtual returns (uint48 newDelay, uint48 schedule) {
         schedule = _pendingDelaySchedule;
         return (_isScheduleSet(schedule) && !_hasSchedulePassed(schedule)) ? (_pendingDelay, schedule) : (0, 0);
     }
@@ -189,7 +189,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function defaultAdminDelayIncreaseWait() public view virtual returns (uint48) {
+    function defaultAdminDelayIncreaseWait() public view override virtual returns (uint48) {
         return 5 days;
     }
 
@@ -200,7 +200,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function beginDefaultAdminTransfer(address newAdmin) public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function beginDefaultAdminTransfer(address newAdmin) public override virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _beginDefaultAdminTransfer(newAdmin);
     }
 
@@ -218,7 +218,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function cancelDefaultAdminTransfer() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function cancelDefaultAdminTransfer() public override virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _cancelDefaultAdminTransfer();
     }
 
@@ -234,7 +234,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function acceptDefaultAdminTransfer() public virtual {
+    function acceptDefaultAdminTransfer() public override virtual {
         (address newDefaultAdmin,) = pendingDefaultAdmin();
         require(_msgSender() == newDefaultAdmin, "AccessControl: pending admin must accept");
         _acceptDefaultAdminTransfer();
@@ -261,7 +261,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function changeDefaultAdminDelay(uint48 newDelay) public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function changeDefaultAdminDelay(uint48 newDelay) public override virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _changeDefaultAdminDelay(newDelay);
     }
 
@@ -279,7 +279,7 @@ abstract contract AccessControlDefaultAdminRules is IAccessControlDefaultAdminRu
     /**
      * @inheritdoc IAccessControlDefaultAdminRules
      */
-    function rollbackDefaultAdminDelay() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function rollbackDefaultAdminDelay() public override virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _rollbackDefaultAdminDelay();
     }
 
