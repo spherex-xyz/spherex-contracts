@@ -590,7 +590,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_CFNumIsZero(bytes8 rule) public activateRule(rule) {
-        vm.expectRevert(bytes("!SX: ERROR"));
+        vm.expectRevert(bytes("!SX:ERROR"));
         sendNumberToEngine(0);
     }
 
@@ -602,7 +602,7 @@ contract SphereXEngineTest is Test, CFUtils {
         for (uint256 i = 0; i < not_allowed_cf.length; i++) {
             if (i == 3) {
                 // we expect the 0 step will revert
-                vm.expectRevert("!SX: ERROR");
+                vm.expectRevert("!SX:ERROR");
             }
             sendNumberToEngine(not_allowed_cf[i]);
         }

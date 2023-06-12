@@ -120,12 +120,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param num element to add to the flow.
      */
     function _addCfElementFunctionEntry(int16 num) private {
-        require(num > 0, "!SX: ERROR");
+        require(num > 0, "!SX:ERROR");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
         // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
-        // or a new one. in case of a new one we need to reinit the _currentPattern, and save
+        // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "hash" (block.number+tx.origin)
         bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
         if (currentBlockOriginHash != _currentBlockOriginHash) {
@@ -152,7 +152,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
     function _addCfElementFunctionExit(int16 num, bool forceCheck) private {
-        require(num < 0, "!SX: ERROR");
+        require(num < 0, "!SX:ERROR");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
@@ -164,7 +164,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
-        // _currentPattern
+        // currentPattern
         if (callDepth == DEPTH_START && _isRule1Activated()) {
             currentPattern = PATTERN_START;
         }
