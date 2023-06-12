@@ -19,10 +19,12 @@ contract mockEngine is ISphereXEngine {
         return slot;
     }
 
-    function sphereXValidatePost(int16 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter)
-        external
-        override
-    {
+    function sphereXValidatePost(
+        int16 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override {
         stor[0] = uint256(valuesBefore[0]);
         stor[1] = uint256(valuesAfter[0]);
     }
