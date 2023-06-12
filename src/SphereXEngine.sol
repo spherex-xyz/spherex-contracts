@@ -160,7 +160,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         --callDepth;
 
         if ((forceCheck) || (callDepth == DEPTH_START)) {
-            _checkCallFlow();
+            _checkCallFlow(currentPattern);
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
@@ -176,8 +176,8 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow() private view {
-        require(_allowedPatterns[_currentPattern], "!SX:DETECTED");
+    function _checkCallFlow(uint256 pattern) private view {
+        require(_allowedPatterns[pattern], "!SX:DETECTED");
     }
 
     /**

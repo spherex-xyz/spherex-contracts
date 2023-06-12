@@ -96,7 +96,7 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
         sendNumberToEngine(1);
-        vm.expectRevert("!SX: ERROR");
+        vm.expectRevert("!SX:DETECTED");
         sendNumberToEngine(-1);
     }
 
@@ -235,7 +235,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_sphereXValidateInternalPre_not_allowed_cf() public activateRule(CF) {
         sendNumberToEngine(1);
 
-        vm.expectRevert(bytes("!SX: ERROR"));
+        vm.expectRevert(bytes("!SX:DETECTED"));
         sendNumberToEngine(-1);
     }
 
