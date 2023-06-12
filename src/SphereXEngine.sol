@@ -114,7 +114,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     }
 
     /**
-     * update the current CF pattern with a new number, 
+     * update the current CF pattern with a new number,
      * when exiting a function we check the validity of the pattern.
      * @param num element to add to the flow. Poistive number represents start of function, negative exit.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
@@ -185,12 +185,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param valuesBefore For future use
      * @param valuesAfter For future use
      */
-    function sphereXValidatePost(int16 num, uint256 gas, bytes32[] calldata valuesBefore, bytes32[] calldata valuesAfter)
-        external
-        override
-        returnsIfNotActivated
-        onlyApprovedSenders
-    {
+    function sphereXValidatePost(
+        int16 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override returnsIfNotActivated onlyApprovedSenders {
         _addCFElement(num, true);
     }
 
@@ -199,8 +199,15 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int16 num) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPre(int16 num)
+        external
+        override
+        returnsIfNotActivated
+        onlyApprovedSenders
+        returns (bytes32[] memory result)
+    {
         _addCFElement(num, false);
+        return result;
     }
 
     /**
@@ -208,7 +215,12 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int16 num, uint256 gas) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPost(
+        int16 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override returnsIfNotActivated onlyApprovedSenders {
         _addCFElement(num, false);
     }
 }
