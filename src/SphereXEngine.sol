@@ -11,11 +11,6 @@ import "./ISphereXEngine.sol";
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
-    struct ConfigurationInfo{
-        bool isPermited;
-        uint256 timestamp;
-    }
-
     bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
     mapping(address => ConfigurationInfo) private _allowedSenders;
     mapping(uint256 => ConfigurationInfo) private _allowedPatterns;
@@ -35,6 +30,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event TxStartedAtIrregularDepth();
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    struct ConfigurationInfo{
+        bool isPermited;
+        uint256 timestamp;
+    }
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
         grantRole(OPERATOR_ROLE, msg.sender);
@@ -208,8 +208,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow() private view {
-        ConfigurationInfo memory configInfo = _allowedPatterns[_currentPattern];
+    function _checkCallFlow(uint256 currentPattern) private view {
+        ConfigurationInfo memory configInfo = _allowedPatterns[currentPattern];
         // if the change was made in the same timestamp then we dont want to revert,
         // otherwise we should revert.
         if(!configInfo.isPermited) {
