@@ -27,13 +27,38 @@ contract SphereXEngineTest is Test, CFUtils {
 
     //  ============ Test for the management functions  ============
 
-    // TODO: this is not transfer ownership
-    // function test_transferOwnership() public {
-    //     spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), random_address);
-    //     vm.prank(random_address);
-    //     allowed_senders = [address(this)];
-    //     spherex_engine.removeAllowedSender(allowed_senders);
-    // }
+    function test_passOwnership() public {
+        spherex_engine.beginDefaultAdminTransfer(random_address);
+        vm.warp(block.timestamp + 2 days);
+        vm.prank(random_address);
+        spherex_engine.acceptDefaultAdminTransfer();
+    }
+
+    function test_onlyAdminCanGrantOperatorRoles() public {
+        bytes32 OPERATOR_ROLE = spherex_engine.OPERATOR_ROLE();
+
+        vm.prank(random_address);
+        vm.expectRevert();
+        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
+
+        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
+    }
+
+    function test_addAndRemoveOperator() public {
+        vm.prank(random_address);
+        vm.expectRevert("Operator Required");
+        spherex_engine.addAllowedSender(allowed_senders);
+
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), random_address);
+        vm.prank(random_address);
+        allowed_senders = [address(this)];
+        spherex_engine.removeAllowedSender(allowed_senders);
+
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), random_address);
+        vm.prank(random_address);
+        vm.expectRevert("Operator Required");
+        spherex_engine.addAllowedSender(allowed_senders);
+    }
 
     function test_addAllowedSender() public activateRule(CF) {
         allowed_senders = [random_address];

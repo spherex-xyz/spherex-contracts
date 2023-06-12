@@ -25,6 +25,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
+
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
