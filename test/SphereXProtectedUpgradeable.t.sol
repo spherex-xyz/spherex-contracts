@@ -26,7 +26,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         allowed_senders.push(address(costumer_proxy_contract));
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         p_costumerContract = CostumerContract(address(costumer_proxy_contract));
         p_costumerContract.initialize(address(this));
         p_costumerContract.changeSphereXEngine(address(spherex_engine));
@@ -42,7 +42,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
 
         // since the above call has no effect the next call should revert
         vm.prank(address(2));
-        vm.expectRevert("!SX:SPHEREX");
+        vm.expectRevert("SphereX error: admin required");
         CostumerContract(address(costumer_proxy_contract)).changeSphereXAdmin(address(1));
     }
 }

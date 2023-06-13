@@ -14,7 +14,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
 
     modifier activateRule2() {
-        spherex_engine.activateRules(PREFIX_TX_FLOW);
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
         allowed_cf_storage = [int16(1), -1, 11, 12, -12, -11];
         addAllowedPattern();
         allowed_cf_storage = [int16(1), -1];
@@ -38,7 +38,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.activateRules(bytes8(uint64(1)));
+        spherex_engine.configureRules(bytes8(uint64(1)));
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
     }
@@ -59,7 +59,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
@@ -79,12 +79,12 @@ contract SphereXProtectedTest is Test, CFUtils {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
@@ -92,7 +92,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_changeSphereXAdmin() external {
         costumer_contract.changeSphereXAdmin(address(1));
-        vm.expectRevert("!SX:SPHEREX");
+        vm.expectRevert("SphereX error: admin required");
         costumer_contract.changeSphereXAdmin(address(this));
         vm.prank(address(1));
         costumer_contract.changeSphereXAdmin(address(this));
@@ -116,7 +116,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testBlocked() external {
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
@@ -135,7 +135,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         allowed_cf_storage = [int16(3), 4, 5, -5, -4, -3];
         addAllowedPattern();
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.call_inner();
 
         assertFlowStorageSlotsInInitialState();
@@ -244,7 +244,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         bytes memory engineCallMsgData =
             abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, int16(10));
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.arbitraryCall(address(spherex_engine), engineCallMsgData);
 
         assertFlowStorageSlotsInInitialState();
@@ -289,7 +289,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     function test_PrefixTxFlow_sanity_revert() public activateRule2 {
         costumer_contract.try_allowed_flow();
         vm.roll(2);
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.externalCallsExternal();
     }
 
@@ -310,7 +310,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_allowed_flow();
     }
 }
