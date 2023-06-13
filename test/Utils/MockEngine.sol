@@ -36,7 +36,7 @@ contract mockEngine is ISphereXEngine {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override {}
-    
+
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(ISphereXEngine).interfaceId;
     }
