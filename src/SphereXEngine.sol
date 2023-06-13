@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.17;
 
-import "./engine_deps/AccessControlDefaultAdminRules.sol";
+import "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import "./ISphereXEngine.sol";
 
 /**
@@ -61,6 +61,16 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     // ============ Management ============
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlDefaultAdminRules, IERC165)
+        returns (bool)
+    {
+        return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
+    }
 
     /**
      * Activate the guardian rules
