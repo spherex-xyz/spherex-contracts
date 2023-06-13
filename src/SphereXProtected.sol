@@ -39,7 +39,7 @@ abstract contract SphereXProtected {
      * @dev used when the client doesn't use a proxy
      * @notice constructor visibility is required to support all compiler versions
      */
-    constructor() internal {
+    constructor() {
         __SphereXProtected_init();
     }
 
