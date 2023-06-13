@@ -54,7 +54,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
     function test_addAndRemoveOperator() public {
         vm.prank(random_address);
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         spherex_engine.addAllowedSender(allowed_senders);
 
         spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), random_address);
@@ -64,7 +64,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
         spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), random_address);
         vm.prank(random_address);
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         spherex_engine.addAllowedSender(allowed_senders);
     }
 
@@ -79,7 +79,7 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_senders = [address(this)];
         spherex_engine.removeAllowedSender(allowed_senders);
         skip(1); //moving the timestamp forward so the change will take effect
-        vm.expectRevert("!SX:SENDERS");
+        vm.expectRevert("SphereX error: disallowed sender");
         sendNumberToEngine(1);
 
         assertFlowStorageSlotsInInitialState();
@@ -172,12 +172,12 @@ contract SphereXEngineTest is Test, CFUtils {
     // ============ Modifiers  ============
 
     function test_badRulesConfig() public {
-        vm.expectRevert("Illegal rules combination");
+        vm.expectRevert("SphereX error: illegal rules combination");
         spherex_engine.configureRules(bytes8(uint64(3)));
     }
 
     function test_onlyOwner() public {
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         // change caller to random address
         vm.prank(random_address);
         allowed_senders = [address(this)];
@@ -186,21 +186,21 @@ contract SphereXEngineTest is Test, CFUtils {
 
     function test_onlyApprovedSenders_sphereXValidateInternalPre() public {
         spherex_engine.configureRules(CF);
-        vm.expectRevert("!SX:SENDERS");
+        vm.expectRevert("SphereX error: disallowed sender");
         vm.prank(random_address);
         sendNumberToEngine(1);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePre() public {
         spherex_engine.configureRules(CF);
-        vm.expectRevert("!SX:SENDERS");
+        vm.expectRevert("SphereX error: disallowed sender");
         vm.prank(random_address);
         spherex_engine.sphereXValidatePre(1, address(this), msg.data);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePost() public {
         spherex_engine.configureRules(CF);
-        vm.expectRevert("!SX:SENDERS");
+        vm.expectRevert("SphereX error: disallowed sender");
         vm.prank(random_address);
         bytes32[] memory emptyArray = new bytes32[](0);
         spherex_engine.sphereXValidatePost(1, 0, emptyArray, emptyArray);
@@ -226,7 +226,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_activateRule1_not_owner() public {
         spherex_engine.configureRules(CF);
 
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         vm.prank(random_address);
         spherex_engine.configureRules(CF);
 
@@ -236,7 +236,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_activateRule2_not_owner() public {
         spherex_engine.configureRules(CF);
 
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         vm.prank(random_address);
         spherex_engine.configureRules(PREFIX_TX_FLOW);
 
@@ -246,7 +246,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_deactivateAllRules_not_owner() public {
         spherex_engine.deactivateAllRules();
 
-        vm.expectRevert("Operator Required");
+        vm.expectRevert("SphereX error: operator required");
         vm.prank(random_address);
         spherex_engine.deactivateAllRules();
 
@@ -624,7 +624,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function test_CFNumIsZero(bytes8 rule) public activateRule(rule) {
-        vm.expectRevert(bytes("SphereX error: expected positive num"));
+        vm.expectRevert(bytes("SphereX error: expected negative num"));
         sendNumberToEngine(0);
     }
 
@@ -636,7 +636,7 @@ contract SphereXEngineTest is Test, CFUtils {
         for (uint256 i = 0; i < not_allowed_cf.length; i++) {
             if (i == 3) {
                 // we expect the 0 step will revert
-                vm.expectRevert("SphereX error: expected positive num");
+                vm.expectRevert("SphereX error: expected negative num");
             }
             sendNumberToEngine(not_allowed_cf[i]);
         }

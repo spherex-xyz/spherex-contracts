@@ -41,7 +41,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyOperator() {
-        require(hasRole(OPERATOR_ROLE, msg.sender), "SphereX error: operator Required");
+        require(hasRole(OPERATOR_ROLE, msg.sender), "SphereX error: operator required");
         _;
     }
 
