@@ -3,7 +3,7 @@
 
 pragma solidity >=0.6.0;
 
-import "./engine_deps/AccessControlDefaultAdminRules.sol";
+import "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import "./ISphereXEngine.sol";
 
 /**
