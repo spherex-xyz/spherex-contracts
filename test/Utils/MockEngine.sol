@@ -31,4 +31,8 @@ contract mockEngine is ISphereXEngine {
 
     function sphereXValidateInternalPre(int256 num) external override {}
     function sphereXValidateInternalPost(int256 num, uint256 gas) external override {}
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(ISphereXEngine).interfaceId;
+    }
 }
