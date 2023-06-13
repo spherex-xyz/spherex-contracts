@@ -167,7 +167,7 @@ abstract contract SphereXProtected {
         require(
             newSphereXEngine == address(0)
                 || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
-            "!SX: Not a SphereXEngine"
+            "SphereX error: not a SphereXEngine"
         );
         address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
