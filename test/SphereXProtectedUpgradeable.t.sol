@@ -26,7 +26,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         allowed_senders.push(address(costumer_proxy_contract));
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.activateRules(CF);
+        spherex_engine.configureRules(CF);
         p_costumerContract = CostumerContract(address(costumer_proxy_contract));
         p_costumerContract.initialize(address(this));
         p_costumerContract.changeSphereXEngine(address(spherex_engine));
@@ -35,14 +35,18 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     }
 
     function testReInitialize() external {
-        CostumerContract(address(costumer_proxy_contract)).changeSphereXAdmin(address(1));
+        address otherAddress1 = address(1);
+        CostumerContract c_contract = CostumerContract(address(costumer_proxy_contract));
+        c_contract.transferSphereXAdminRole(otherAddress1);
+        vm.prank(otherAddress1);
+        c_contract.acceptSphereXAdminRole();
         // re initialize should not effect the spherexProtected state, therefore we expect the
         // next call to do nothing.
-        CostumerContract(address(costumer_proxy_contract)).initialize(address(2));
+        c_contract.initialize(address(2));
 
         // since the above call has no effect the next call should revert
         vm.prank(address(2));
-        vm.expectRevert("!SX:SPHEREX");
-        CostumerContract(address(costumer_proxy_contract)).changeSphereXAdmin(address(1));
+        vm.expectRevert("SphereX error: admin required");
+        c_contract.transferSphereXAdminRole(address(1));
     }
 }

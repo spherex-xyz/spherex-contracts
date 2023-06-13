@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.17;
 
-import "./ISphereXEngine.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX base Customer contract template
@@ -15,6 +15,9 @@ abstract contract SphereXProtected {
      * @dev to easily incorporate with existing contracts
      */
     bytes32 private constant SPHEREX_ADMIN_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.spherex")) - 1);
+    bytes32 private constant SPHEREX_PENDING_ADMIN_STORAGE_SLOT =
+        bytes32(uint256(keccak256("eip1967.spherex.pending")) - 1);
+    bytes32 private constant SPHEREX_OPERATOR_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.operator")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
 
@@ -26,6 +29,11 @@ abstract contract SphereXProtected {
         bytes32[] valuesBefore;
         uint256 gas;
     }
+
+    event ChangedSpherexOperator(address oldSphereXAdmin, address newSphereXAdmin);
+    event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
+    event SpherexAdminTransferStarted(address currentAdmin, address pendingAdmin);
+    event SpherexAdminTransferCompleted(address oldAdmin, address newAdmin);
 
     /**
      * @dev used when the client doesn't use a proxy
@@ -41,6 +49,11 @@ abstract contract SphereXProtected {
     function __SphereXProtected_init() internal {
         if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+            emit SpherexAdminTransferCompleted(address(0), msg.sender);
+        }
+        if (_getAddress(SPHEREX_OPERATOR_STORAGE_SLOT) == address(0)) {
+            _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, msg.sender);
+            emit ChangedSpherexOperator(address(0), msg.sender);
         }
     }
 
@@ -78,7 +91,12 @@ abstract contract SphereXProtected {
     // ============ Local modifiers ============
 
     modifier onlySphereXAdmin() {
-        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "!SX:SPHEREX");
+        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "SphereX error: admin required");
+        _;
+    }
+
+    modifier onlyOperator() {
+        require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "SphereX error: operator required");
         _;
     }
 
@@ -93,11 +111,50 @@ abstract contract SphereXProtected {
     // ============ Management ============
 
     /**
-     *
-     * @param newSphereXAdmin new address of the new admin account
+     * Returns the currently pending admin address, the one that can call acceptSphereXAdminRole to become the admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
-    function changeSphereXAdmin(address newSphereXAdmin) external onlySphereXAdmin {
-        _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, newSphereXAdmin);
+    function pendingSphereXAdmin() public view returns (address) {
+        return _getAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT);
+    }
+
+    /**
+     * Returns the current admin address, the one that can call acceptSphereXAdminRole to become the admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function sphereXAdmin() public view returns (address) {
+        return _getAddress(SPHEREX_ADMIN_STORAGE_SLOT);
+    }
+
+    /**
+     * Setting the address of the next admin. this address will have to accept the role to become the new admin.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function transferSphereXAdminRole(address newAdmin) public virtual onlySphereXAdmin {
+        _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, newAdmin);
+        emit SpherexAdminTransferStarted(sphereXAdmin(), newAdmin);
+    }
+
+    /**
+     * Accepting the admin role and completing the transfer.
+     * @dev Could not use OZ Ownable2Step because the client's contract might use it.
+     */
+    function acceptSphereXAdminRole() public virtual {
+        require(pendingSphereXAdmin() == msg.sender, "SphereX error: not the pending account");
+        address oldAdmin = sphereXAdmin();
+        _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+        _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, address(0));
+        emit SpherexAdminTransferCompleted(oldAdmin, msg.sender);
+    }
+
+    /**
+     *
+     * @param newSphereXOperator new address of the new operator account
+     */
+    function changeSphereXOperator(address newSphereXOperator) external onlySphereXAdmin {
+        address oldSphereXOperator = _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT);
+        _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, newSphereXOperator);
+        emit ChangedSpherexOperator(oldSphereXOperator, newSphereXOperator);
     }
 
     /**
@@ -106,11 +163,18 @@ abstract contract SphereXProtected {
      * @dev this is also used to actually enable the defense
      * (because as long is this address is 0, the protection is disabled).
      */
-    function changeSphereXEngine(address newSphereXEngine) external onlySphereXAdmin {
+    function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
+        require(
+            newSphereXEngine == address(0)
+                || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
+            "!SX: Not a SphereXEngine"
+        );
+        address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
+        emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
     }
 
-    // ============ Hooks ============
+    // ============ Hoo ks ============
 
     /**
      * @dev internal function for engine communication. We use it to reduce contract size.
@@ -119,8 +183,8 @@ abstract contract SphereXProtected {
      * @param isExternalCall set to true if this was called externally
      *  or a 'public' function from another address
      */
-    function _sphereXValidatePre(int16 num, bool isExternalCall)
-        internal
+    function _sphereXValidatePre(int256 num, bool isExternalCall)
+        private
         returnsIfNotActivated
         returns (ModifierLocals memory locals)
     {
@@ -142,8 +206,8 @@ abstract contract SphereXProtected {
      * @param isExternalCall set to true if this was called externally
      *  or a 'public' function from another address
      */
-    function _sphereXValidatePost(int16 num, bool isExternalCall, ModifierLocals memory locals)
-        internal
+    function _sphereXValidatePost(int256 num, bool isExternalCall, ModifierLocals memory locals)
+        private
         returnsIfNotActivated
     {
         uint256 gas = locals.gas - gasleft();
@@ -163,7 +227,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int16 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int256 num) private returnsIfNotActivated returns(uint256){
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }
@@ -174,14 +238,14 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @param gas the gas saved before the original function body run
      */
-    function _sphereXValidateInternalPost(int16 num, uint256 gas) internal returnsIfNotActivated {
+    function _sphereXValidateInternalPost(int256 num, uint256 gas) private returnsIfNotActivated {
         _sphereXEngine().sphereXValidateInternalPost(num, gas - gasleft());
     }
 
     /**
      *  @dev Modifier to be incorporated in all internal protected non-view functions
      */
-    modifier sphereXGuardInternal(int16 num) {
+    modifier sphereXGuardInternal(int256 num) {
         uint256 gas = _sphereXValidateInternalPre(num);
         _;
         _sphereXValidateInternalPost(-num, gas);
@@ -190,7 +254,7 @@ abstract contract SphereXProtected {
     /**
      *  @dev Modifier to be incorporated in all external protected non-view functions
      */
-    modifier sphereXGuardExternal(int16 num) {
+    modifier sphereXGuardExternal(int256 num) {
         ModifierLocals memory locals = _sphereXValidatePre(num, true);
         _;
         _sphereXValidatePost(-num, true, locals);
@@ -199,7 +263,7 @@ abstract contract SphereXProtected {
     /**
      *  @dev Modifier to be incorporated in all public protected non-view functions
      */
-    modifier sphereXGuardPublic(int16 num, bytes4 selector) {
+    modifier sphereXGuardPublic(int256 num, bytes4 selector) {
         ModifierLocals memory locals = _sphereXValidatePre(num, msg.sig == selector);
         _;
         _sphereXValidatePost(-num, msg.sig == selector, locals);
