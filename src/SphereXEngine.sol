@@ -33,7 +33,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     struct ConfigurationInfo{
         bool isPermited;
-        uint256 timestamp;
+        uint128 timestamp;
     }
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
@@ -119,7 +119,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedSenders[senders[i]] = ConfigurationInfo(false, uint128(block.timestamp));
             emit RemovedAllowedSender(senders[i]);
         }
     }
@@ -142,7 +142,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, uint128(block.timestamp));
             emit RemovedAllowedPattern(patterns[i]);
         }
     }
