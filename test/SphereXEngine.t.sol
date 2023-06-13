@@ -460,14 +460,17 @@ contract SphereXEngineTest is Test, CFUtils {
         vm.roll(2);
         vm.startPrank(address(this), random_address);
 
-        // since the effect on the storage will be applied only at the next transaction we need to call teh engine at least
+        // since the effect on the storage will be applied only at the next transaction we need to call the engine at least
         // once again
         sendNumberToEngine(allowed_cf_storage[0]);
 
         vm.stopPrank();
 
         // the slot layout is 0x[32 empty bits][160 bits for origin address][64 bits for block number]
-        assertEq((vm.load(address(spherex_engine), currentBlockStorageSlot)), keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty)));
+        assertEq(
+            (vm.load(address(spherex_engine), currentBlockStorageSlot)),
+            keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty))
+        );
     }
 
     // Check that after we recognize a new transaction we dont allow the suffix of an approved flow
