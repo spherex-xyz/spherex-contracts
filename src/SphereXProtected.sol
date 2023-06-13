@@ -126,7 +126,7 @@ abstract contract SphereXProtected {
      * Setting the address of the next admin. this address will have to accept the role to become the new admin.
      * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
-    function transferSphereXAdminRole(address newAdmin) public onlySphereXAdmin {
+    function transferSphereXAdminRole(address newAdmin) public virtual onlySphereXAdmin {
         _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, newAdmin);
         emit SpherexAdminTransferStarted(sphereXAdmin(), newAdmin);
     }
@@ -135,7 +135,7 @@ abstract contract SphereXProtected {
      * Accepting the admin role and completing the transfer.
      * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
-    function acceptSphereXAdminRole() public {
+    function acceptSphereXAdminRole() public virtual {
         require(pendingSphereXAdmin() == msg.sender, "!SX: Not the pending account");
         address oldAdmin = sphereXAdmin();
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
@@ -158,10 +158,15 @@ abstract contract SphereXProtected {
      * (because as long is this address is 0, the protection is disabled).
      */
     function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
+        require(
+            newSphereXEngine == address(0)
+                || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
+            "!SX: Not a SphereXEngine"
+        );
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
     }
 
-    // ============ Hooks ============
+    // ============ Hoo ks ============
 
     /**
      * @dev internal function for engine communication. We use it to reduce contract size.

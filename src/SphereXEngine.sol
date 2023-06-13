@@ -55,6 +55,16 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     // ============ Management ============
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlDefaultAdminRules, IERC165)
+        returns (bool)
+    {
+        return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /**
      * Activate the guardian rules
      * @param rules bytes8 representing the new rules to activate.
