@@ -140,7 +140,7 @@ abstract contract SphereXProtected {
      * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
     function acceptSphereXAdminRole() public virtual {
-        require(pendingSphereXAdmin() == msg.sender, "!SX: Not the pending account");
+        require(pendingSphereXAdmin() == msg.sender, "SphereX error: not the pending account");
         address oldAdmin = sphereXAdmin();
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
         _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, address(0));

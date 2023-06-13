@@ -97,13 +97,13 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.prank(otherAddress);
         costumer_contract.acceptSphereXAdminRole();
 
-        vm.expectRevert("!SX: Admin required");
+        vm.expectRevert("SphereX error: admin required");
         costumer_contract.transferSphereXAdminRole(address(this));
         vm.prank(otherAddress);
         costumer_contract.transferSphereXAdminRole(address(this));
 
         vm.prank(otherAddress);
-        vm.expectRevert("!SX: Not the pending account");
+        vm.expectRevert("SphereX error: not the pending account");
         costumer_contract.acceptSphereXAdminRole();
 
         costumer_contract.acceptSphereXAdminRole();

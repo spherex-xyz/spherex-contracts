@@ -46,7 +46,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
 
         // since the above call has no effect the next call should revert
         vm.prank(address(2));
-        vm.expectRevert("!SX: Admin required");
+        vm.expectRevert("SphereX error: admin required");
         c_contract.transferSphereXAdminRole(address(1));
     }
 }
