@@ -227,7 +227,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int256 num) private returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int256 num) private returnsIfNotActivated returns (uint256) {
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }

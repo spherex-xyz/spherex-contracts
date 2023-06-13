@@ -3,7 +3,9 @@
 
 pragma solidity ^0.8.17;
 
-import {AccessControlDefaultAdminRules, IERC165} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {
+    AccessControlDefaultAdminRules, IERC165
+} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
@@ -31,7 +33,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    struct ConfigurationInfo{
+    struct ConfigurationInfo {
         bool isPermited;
         uint128 timestamp;
     }
@@ -62,7 +64,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     modifier onlyApprovedSenders() {
         ConfigurationInfo memory configInfo = _allowedSenders[msg.sender];
-        if(!configInfo.isPermited) {
+        if (!configInfo.isPermited) {
             // if the change was made in the same timestamp then we dont want to revert,
             // otherwise we should revert.
             require(configInfo.timestamp == block.timestamp, "SphereX error: disallowed sender");
@@ -222,7 +224,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         ConfigurationInfo memory configInfo = _allowedPatterns[currentPattern];
         // if the change was made in the same timestamp then we dont want to revert,
         // otherwise we should revert.
-        if(!configInfo.isPermited) {
+        if (!configInfo.isPermited) {
             require(configInfo.timestamp == block.timestamp, "SphereX error: disallowed tx pattern");
         }
     }
