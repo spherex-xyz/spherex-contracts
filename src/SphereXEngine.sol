@@ -40,10 +40,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     event TxStartedAtIrregularDepth();
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
-    event AddedAllowedSender(address sender);
-    event RemovedAllowedSender(address sender);
-    event AddedAllowedPattern(uint256 pattern);
-    event RemovedAllowedPattern(uint256 pattern);
+    event AddedAllowedSenders(address[] senders);
+    event RemovedAllowedSenders(address[] senders);
+    event AddedAllowedPatterns(uint256[] patterns);
+    event RemovedAllowedPatterns(uint256[] patterns);
 
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
@@ -97,8 +97,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = true;
-            emit AddedAllowedSender(senders[i]);
         }
+        emit AddedAllowedSenders(senders);
     }
 
     /**
@@ -108,8 +108,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = false;
-            emit RemovedAllowedSender(senders[i]);
         }
+        emit RemovedAllowedSenders(senders);
     }
 
     /**
@@ -119,8 +119,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
-            emit AddedAllowedPattern(patterns[i]);
         }
+        emit AddedAllowedPatterns(patterns);
     }
 
     /**
@@ -131,8 +131,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
-            emit RemovedAllowedPattern(patterns[i]);
         }
+        emit RemovedAllowedPatterns(patterns);
     }
 
     // ============ CF ============
