@@ -27,8 +27,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes32 private constant DEACTIVATED = bytes32(0);
     uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
-    event TxStartedAtIrregularDepth();
-
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
@@ -40,8 +38,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _;
     }
 
+    event TxStartedAtIrregularDepth();
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
-    event DisableAllRules(bytes8 oldRules);
     event AddedAllowedSender(address sender);
     event RemovedAllowedSender(address sender);
     event AddedAllowedPattern(uint256 pattern);
@@ -89,7 +87,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function deactivateAllRules() external onlyOperator {
         bytes8 oldRules = _engineRules;
         _engineRules = bytes8(uint64(0));
-        emit DisableAllRules(oldRules);
+        emit ConfigureRules(oldRules, 0);
     }
 
     /**
