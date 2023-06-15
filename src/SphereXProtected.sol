@@ -166,7 +166,7 @@ abstract contract SphereXProtected {
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
     }
 
-    // ============ Hoo ks ============
+    // ============ Hooks ============
 
     /**
      * @dev internal function for engine communication. We use it to reduce contract size.
