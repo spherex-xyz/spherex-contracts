@@ -25,7 +25,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
-    uint64 private constant Rules1And2Together = 3;
+    uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
     event TxStartedAtIrregularDepth();
 
@@ -49,7 +49,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOwner {
-        require(Rules1And2Together & uint64(rules) != Rules1And2Together, "Illegal rules combination");
+        require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
         _engineRules = rules;
     }
 
@@ -119,7 +119,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
-        // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
+        // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "hash" (block.number+tx.origin)
         bytes32 currentBlockOriginHash =
