@@ -20,14 +20,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint256 private _callDepth = DEPTH_START;
 
     // Represent keccak256(abi.encode(block.number, tx.origin))
-    bytes32 private _currentBlockOriginHash = bytes32(uint256(1));
+    bytes32 private _lastTxBoundaryHash = bytes32(uint256(1));
 
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
-    uint64 private constant Rules1And2Together = 3;
-
-    event TxStartedAtIrregularDepth();
+    uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
@@ -40,12 +38,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _;
     }
 
+    event TxStartedAtIrregularDepth();
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
-    event DisableAllRules(bytes8 oldRules);
-    event AddedAllowedSender(address sender);
-    event RemovedAllowedSender(address sender);
-    event AddedAllowedPattern(uint256 pattern);
-    event RemovedAllowedPattern(uint256 pattern);
+    event AddedAllowedSenders(address[] senders);
+    event RemovedAllowedSenders(address[] senders);
+    event AddedAllowedPatterns(uint256[] patterns);
+    event RemovedAllowedPatterns(uint256[] patterns);
 
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
@@ -77,7 +75,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
-        require(Rules1And2Together & uint64(rules) != Rules1And2Together, "Illegal rules combination");
+        require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
         bytes8 oldRules = _engineRules;
         _engineRules = rules;
         emit ConfigureRules(oldRules, _engineRules);
@@ -89,7 +87,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function deactivateAllRules() external onlyOperator {
         bytes8 oldRules = _engineRules;
         _engineRules = bytes8(uint64(0));
-        emit DisableAllRules(oldRules);
+        emit ConfigureRules(oldRules, 0);
     }
 
     /**
@@ -99,8 +97,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = true;
-            emit AddedAllowedSender(senders[i]);
         }
+        emit AddedAllowedSenders(senders);
     }
 
     /**
@@ -110,8 +108,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = false;
-            emit RemovedAllowedSender(senders[i]);
         }
+        emit RemovedAllowedSenders(senders);
     }
 
     /**
@@ -121,8 +119,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
-            emit AddedAllowedPattern(patterns[i]);
         }
+        emit AddedAllowedPatterns(patterns);
     }
 
     /**
@@ -133,8 +131,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
-            emit RemovedAllowedPattern(patterns[i]);
         }
+        emit RemovedAllowedPatterns(patterns);
     }
 
     // ============ CF ============
@@ -155,14 +153,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
-        // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
+        // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
-        // the new transaction "hash" (block.number+tx.origin)
-        bytes32 currentBlockOriginHash =
-            keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty));
-        if (currentBlockOriginHash != _currentBlockOriginHash) {
+        // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
+        bytes32 currentTxBoundryHash = keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty));
+        if (currentTxBoundryHash != _lastTxBoundaryHash) {
             currentPattern = PATTERN_START;
-            _currentBlockOriginHash = currentBlockOriginHash;
+            _lastTxBoundaryHash = currentTxBoundryHash;
             if (callDepth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
