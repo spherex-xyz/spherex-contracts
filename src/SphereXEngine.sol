@@ -12,8 +12,8 @@ import "./ISphereXEngine.sol";
  */
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
-    mapping(address => ConfigurationInfo) private _allowedSenders;
-    mapping(uint256 => ConfigurationInfo) private _allowedPatterns;
+    mapping(address => bool) private _allowedSenders;
+    mapping(uint256 => bool) private _allowedPatterns;
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint256 private _currentPattern = PATTERN_START;
@@ -30,11 +30,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event TxStartedAtIrregularDepth();
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
-
-    struct ConfigurationInfo{
-        bool isPermited;
-        uint256 timestamp;
-    }
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
         grantRole(OPERATOR_ROLE, msg.sender);
@@ -61,12 +56,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyApprovedSenders() {
-        ConfigurationInfo memory configInfo = _allowedSenders[msg.sender];
-        if(!configInfo.isPermited) {
-            // if the change was made in the same timestamp then we dont want to revert,
-            // otherwise we should revert.
-            require(configInfo.timestamp == block.timestamp, "!SX:SENDERS");
-        }
+        require(_allowedSenders[msg.sender], "!SX:SENDERS");
         _;
     }
 
@@ -108,7 +98,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function addAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = ConfigurationInfo(true, 0);
+            _allowedSenders[senders[i]] = true;
             emit AddedAllowedSender(senders[i]);
         }
     }
@@ -119,7 +109,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedSenders[senders[i]] = false;
             emit RemovedAllowedSender(senders[i]);
         }
     }
@@ -130,7 +120,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function addAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = ConfigurationInfo(true, 0);
+            _allowedPatterns[patterns[i]] = true;
             emit AddedAllowedPattern(patterns[i]);
         }
     }
@@ -142,7 +132,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedPatterns[patterns[i]] = false;
             emit RemovedAllowedPattern(patterns[i]);
         }
     }
@@ -218,13 +208,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(uint256 currentPattern) private view {
-        ConfigurationInfo memory configInfo = _allowedPatterns[currentPattern];
-        // if the change was made in the same timestamp then we dont want to revert,
-        // otherwise we should revert.
-        if(!configInfo.isPermited) {
-            require(configInfo.timestamp == block.timestamp, "!SX:DETECTED");
-        }
+    function _checkCallFlow(uint256 pattern) private view {
+        require(_allowedPatterns[pattern], "!SX:DETECTED");
     }
 
     /**
