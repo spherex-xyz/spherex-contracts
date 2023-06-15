@@ -78,6 +78,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_removeAllowedSender(bytes8 rule) public activateRule(rule) {
         allowed_senders = [address(this)];
         spherex_engine.removeAllowedSender(allowed_senders);
+
         vm.expectRevert("!SX:SENDERS");
         sendNumberToEngine(1);
 
