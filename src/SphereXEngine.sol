@@ -117,7 +117,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
-        // Upon entry to a new function if we are configured to PrefixTxFlow we should check if we are at the same transaction
+        // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "hash" (block.number+tx.origin)
         bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
