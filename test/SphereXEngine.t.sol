@@ -78,7 +78,7 @@ contract SphereXEngineTest is Test, CFUtils {
     function test_removeAllowedSender(bytes8 rule) public activateRule(rule) {
         allowed_senders = [address(this)];
         spherex_engine.removeAllowedSender(allowed_senders);
-        skip(1); //moving the timestamp forward so the change will take effect
+
         vm.expectRevert("SphereX error: disallowed sender");
         sendNumberToEngine(1);
 
@@ -120,7 +120,6 @@ contract SphereXEngineTest is Test, CFUtils {
 
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
-        skip(1); //moving the timestamp forward so the change will take effect
 
         sendNumberToEngine(1);
         vm.expectRevert("SphereX error: disallowed tx pattern");
@@ -138,7 +137,6 @@ contract SphereXEngineTest is Test, CFUtils {
 
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
-        skip(1); //moving the timestamp forward so the change will take effect
 
         sendNumberToEngine(2);
         sendNumberToEngine(-2);
@@ -159,7 +157,6 @@ contract SphereXEngineTest is Test, CFUtils {
 
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
-        skip(1); //moving the timestamp forward so the change will take effect
 
         sendNumberToEngine(2);
         sendNumberToEngine(-2);
