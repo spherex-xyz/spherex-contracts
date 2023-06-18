@@ -13,19 +13,22 @@ import {ISphereXEngine} from "./ISphereXEngine.sol";
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
+    struct FlowConfiguration {
+        uint16 depth;
+        // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
+        bytes3 txBoundryHash;
+        uint216 pattern;
+    }
+
     bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
     mapping(address => bool) private _allowedSenders;
-    mapping(uint256 => bool) private _allowedPatterns;
+    mapping(uint216 => bool) private _allowedPatterns;
+
+    FlowConfiguration private _flowConfig = FlowConfiguration(DEPTH_START, bytes3(uint24(1)), PATTERN_START);
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
-    uint256 private _currentPattern = PATTERN_START;
-    uint256 private _callDepth = DEPTH_START;
-
-    // Represent keccak256(abi.encode(block.number, tx.origin))
-    bytes32 private _lastTxBoundaryHash = bytes32(uint256(1));
-
-    uint256 private constant PATTERN_START = 1;
-    uint256 private constant DEPTH_START = 1;
+    uint216 private constant PATTERN_START = 1;
+    uint16 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
     uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
@@ -44,8 +47,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
     event AddedAllowedSenders(address[] senders);
     event RemovedAllowedSenders(address[] senders);
-    event AddedAllowedPatterns(uint256[] patterns);
-    event RemovedAllowedPatterns(uint256[] patterns);
+    event AddedAllowedPatterns(uint216[] patterns);
+    event RemovedAllowedPatterns(uint216[] patterns);
 
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
@@ -120,7 +123,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Add allowed patterns - these are representation of allowed flows of transactions, and prefixes of these flows
      * @param patterns list of flows to allow as valid and non-malicious flows
      */
-    function addAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
+    function addAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
         }
@@ -132,7 +135,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * that are no longer considered valid and benign
      * @param patterns list of flows that no longer considered valid and non-malicious
      */
-    function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
+    function removeAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
         }
@@ -154,16 +157,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionEntry(int256 num) private {
         require(num > 0, "SphereX error: expected positive num");
-        uint256 callDepth = _callDepth;
-        uint256 currentPattern = _currentPattern;
+        uint16 callDepth = _flowConfig.depth;
+        uint216 currentPattern = _flowConfig.pattern;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
-        bytes32 currentTxBoundryHash = keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty));
-        if (currentTxBoundryHash != _lastTxBoundaryHash) {
+        bytes3 currentTxBoundryHash =
+            bytes3(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
+        if (currentTxBoundryHash != _flowConfig.txBoundryHash) {
             currentPattern = PATTERN_START;
-            _lastTxBoundaryHash = currentTxBoundryHash;
+            _flowConfig.txBoundryHash = currentTxBoundryHash;
             if (callDepth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
@@ -171,11 +175,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
         }
 
-        currentPattern = uint256(keccak256(abi.encode(num, currentPattern)));
+        currentPattern = uint216(bytes27(keccak256(abi.encode(num, currentPattern))));
         ++callDepth;
 
-        _callDepth = callDepth;
-        _currentPattern = currentPattern;
+        _flowConfig.depth = callDepth;
+        _flowConfig.pattern = currentPattern;
     }
 
     /**
@@ -186,10 +190,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
         require(num < 0, "SphereX error: expected negative num");
-        uint256 callDepth = _callDepth;
-        uint256 currentPattern = _currentPattern;
+        uint16 callDepth = _flowConfig.depth;
+        uint216 currentPattern = _flowConfig.pattern;
 
-        currentPattern = uint256(keccak256(abi.encode(num, currentPattern)));
+        currentPattern = uint216(bytes27(keccak256(abi.encode(num, currentPattern))));
         --callDepth;
 
         if ((forceCheck) || (callDepth == DEPTH_START)) {
@@ -202,14 +206,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             currentPattern = PATTERN_START;
         }
 
-        _callDepth = callDepth;
-        _currentPattern = currentPattern;
+        _flowConfig.depth = callDepth;
+        _flowConfig.pattern = currentPattern;
     }
 
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(uint256 pattern) private view {
+    function _checkCallFlow(uint216 pattern) private view {
         require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
     }
 
