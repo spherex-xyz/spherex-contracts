@@ -59,7 +59,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
@@ -79,23 +79,34 @@ contract SphereXProtectedTest is Test, CFUtils {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
         costumer_contract.try_allowed_flow();
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_changeSphereXAdmin() external {
-        costumer_contract.changeSphereXAdmin(address(1));
-        vm.expectRevert("!SX: Admin required");
-        costumer_contract.changeSphereXAdmin(address(this));
-        vm.prank(address(1));
-        costumer_contract.changeSphereXAdmin(address(this));
+        address otherAddress = address(1);
+
+        costumer_contract.transferSphereXAdminRole(otherAddress);
+        vm.prank(otherAddress);
+        costumer_contract.acceptSphereXAdminRole();
+
+        vm.expectRevert("SphereX error: admin required");
+        costumer_contract.transferSphereXAdminRole(address(this));
+        vm.prank(otherAddress);
+        costumer_contract.transferSphereXAdminRole(address(this));
+
+        vm.prank(otherAddress);
+        vm.expectRevert("SphereX error: not the pending account");
+        costumer_contract.acceptSphereXAdminRole();
+
+        costumer_contract.acceptSphereXAdminRole();
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -116,7 +127,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testBlocked() external {
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
@@ -135,7 +146,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         allowed_cf_storage = [int16(3), 4, 5, -5, -4, -3];
         addAllowedPattern();
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.call_inner();
 
         assertFlowStorageSlotsInInitialState();
@@ -244,7 +255,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         bytes memory engineCallMsgData =
             abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, int16(10));
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.arbitraryCall(address(spherex_engine), engineCallMsgData);
 
         assertFlowStorageSlotsInInitialState();
@@ -289,7 +300,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     function test_PrefixTxFlow_sanity_revert() public activateRule2 {
         costumer_contract.try_allowed_flow();
         vm.roll(2);
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.externalCallsExternal();
     }
 
@@ -310,7 +321,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
-        vm.expectRevert("!SX:DETECTED");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_allowed_flow();
     }
 }

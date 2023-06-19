@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
-import "./engine_deps/AccessControlDefaultAdminRules.sol";
-import "./ISphereXEngine.sol";
+import {
+    AccessControlDefaultAdminRules, IERC165
+} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -31,9 +33,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    struct ConfigurationInfo{
+    struct ConfigurationInfo {
         bool isPermited;
-        uint256 timestamp;
+        uint128 timestamp;
     }
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
@@ -41,7 +43,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyOperator() {
-        require(hasRole(OPERATOR_ROLE, msg.sender), "Operator Required");
+        require(hasRole(OPERATOR_ROLE, msg.sender), "SphereX error: operator required");
         _;
     }
 
@@ -62,22 +64,32 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     modifier onlyApprovedSenders() {
         ConfigurationInfo memory configInfo = _allowedSenders[msg.sender];
-        if(!configInfo.isPermited) {
+        if (!configInfo.isPermited) {
             // if the change was made in the same timestamp then we dont want to revert,
             // otherwise we should revert.
-            require(configInfo.timestamp == block.timestamp, "!SX:SENDERS");
+            require(configInfo.timestamp == block.timestamp, "SphereX error: disallowed sender");
         }
         _;
     }
 
     // ============ Management ============
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlDefaultAdminRules, IERC165)
+        returns (bool)
+    {
+        return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /**
      * Activate the guardian rules
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
-        require(Rules1And2Together & uint64(rules) != Rules1And2Together, "Illegal rules combination");
+        require(Rules1And2Together & uint64(rules) != Rules1And2Together, "SphereX error: illegal rules combination");
         bytes8 oldRules = _engineRules;
         _engineRules = rules;
         emit ConfigureRules(oldRules, _engineRules);
@@ -109,7 +121,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedSenders[senders[i]] = ConfigurationInfo(false, uint128(block.timestamp));
             emit RemovedAllowedSender(senders[i]);
         }
     }
@@ -132,7 +144,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, block.timestamp);
+            _allowedPatterns[patterns[i]] = ConfigurationInfo(false, uint128(block.timestamp));
             emit RemovedAllowedPattern(patterns[i]);
         }
     }
@@ -151,7 +163,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow.
      */
     function _addCfElementFunctionEntry(int256 num) private {
-        require(num > 0, "!SX:ERROR");
+        require(num > 0, "SphereX error: expected positive num");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
@@ -184,7 +196,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
     function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
-        require(num < 0, "!SX:ERROR");
+        require(num < 0, "SphereX error: expected negative num");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
@@ -212,8 +224,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         ConfigurationInfo memory configInfo = _allowedPatterns[currentPattern];
         // if the change was made in the same timestamp then we dont want to revert,
         // otherwise we should revert.
-        if(!configInfo.isPermited) {
-            require(configInfo.timestamp == block.timestamp, "!SX:DETECTED");
+        if (!configInfo.isPermited) {
+            require(configInfo.timestamp == block.timestamp, "SphereX error: disallowed tx pattern");
         }
     }
 
@@ -223,7 +235,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num id of function to add. Should be positive
      * @param sender For future use
      * @param data For future use
-     * @return result in the future will return insturction on what storage slots to gather, but not used for now
+     * @return result in the future will return instruction on what storage slots to gather, but not used for now
      */
     function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
@@ -257,7 +269,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int256 num) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPre(int256 num)
+        external
+        override
+        returnsIfNotActivated
+        onlyApprovedSenders
+        returns (bytes32[] memory result)
+    {
         _addCfElementFunctionEntry(num);
     }
 
@@ -266,12 +284,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int256 num, uint256 gas)
-        external
-        override
-        returnsIfNotActivated
-        onlyApprovedSenders
-    {
+    function sphereXValidateInternalPost(
+        int256 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override returnsIfNotActivated onlyApprovedSenders {
         _addCfElementFunctionExit(num, false);
     }
 }
