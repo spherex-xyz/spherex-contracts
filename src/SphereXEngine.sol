@@ -157,29 +157,27 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionEntry(int256 num) private {
         require(num > 0, "SphereX error: expected positive num");
-        uint16 callDepth = _flowConfig.depth;
-        uint216 currentPattern = _flowConfig.pattern;
+        FlowConfiguration memory flowConfig = _flowConfig;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
         bytes3 currentTxBoundryHash =
             bytes3(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundryHash != _flowConfig.txBoundryHash) {
-            currentPattern = PATTERN_START;
-            _flowConfig.txBoundryHash = currentTxBoundryHash;
-            if (callDepth != DEPTH_START) {
+        if (currentTxBoundryHash != flowConfig.txBoundryHash) {
+            flowConfig.pattern = PATTERN_START;
+            flowConfig.txBoundryHash = currentTxBoundryHash;
+            if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
-                callDepth = DEPTH_START;
+                flowConfig.depth = DEPTH_START;
             }
         }
 
-        currentPattern = uint216(bytes27(keccak256(abi.encode(num, currentPattern))));
-        ++callDepth;
+        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        ++flowConfig.depth;
 
-        _flowConfig.depth = callDepth;
-        _flowConfig.pattern = currentPattern;
+        _flowConfig = flowConfig;
     }
 
     /**
@@ -190,24 +188,23 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
         require(num < 0, "SphereX error: expected negative num");
-        uint16 callDepth = _flowConfig.depth;
-        uint216 currentPattern = _flowConfig.pattern;
+        FlowConfiguration memory flowConfig = _flowConfig;
 
-        currentPattern = uint216(bytes27(keccak256(abi.encode(num, currentPattern))));
-        --callDepth;
 
-        if ((forceCheck) || (callDepth == DEPTH_START)) {
-            _checkCallFlow(currentPattern);
+        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        --flowConfig.depth;
+
+        if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
+            _checkCallFlow(flowConfig.pattern);
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // currentPattern
-        if (callDepth == DEPTH_START && _isRule1Activated()) {
-            currentPattern = PATTERN_START;
+        if (flowConfig.depth == DEPTH_START && _isRule1Activated()) {
+            flowConfig.pattern = PATTERN_START;
         }
 
-        _flowConfig.depth = callDepth;
-        _flowConfig.pattern = currentPattern;
+        _flowConfig = flowConfig;
     }
 
     /**
