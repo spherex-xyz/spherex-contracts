@@ -277,7 +277,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     //  ============ Storage thesis helper function test  ============
 
     function test_readSlot() external {
-        mockEngine mock_spherex_engine = new mockEngine();
+        MockEngine mock_spherex_engine = new MockEngine();
         uint256 before = costumer_contract.slot0();
         costumer_contract.changeSphereXEngine(address(mock_spherex_engine));
         costumer_contract.changex();

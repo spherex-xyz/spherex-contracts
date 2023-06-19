@@ -4,28 +4,28 @@ pragma solidity >=0.6.2;
 import "forge-std/Test.sol";
 import "../src/SphereXEngineUpdater.sol";
 import "../src/SphereXProtected.sol";
+import "./Utils/MockEngine.sol";
 
+contract MockProtectedContract is SphereXProtected {
 
-contract MockContract is SphereXProtected {
-
-    constructor(address newSphereXEngine) public SphereXProtected(newSphereXEngine) {}
-    function initialize(address newSphereX) public {
-        __SphereXProtected_init(newSphereX);
+    function initialize() public {
+        __SphereXProtected_init();
     }
 }
 
 contract SphereXEngineUpdaterTest is Test {
     SphereXEngineUpdater updater;
-    MockContract[] public protectedContracts;
+    MockProtectedContract[] public protectedContracts;
     address[] public protectedAddresses;
-    address constant initialEngineAddress = 0xeF9c2F2C9B767496Ba849A269d18C5E4C0717b62;
+    address initialEngineAddress;
     bytes32 private constant SPHEREX_MANAGER_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.spherex")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
 
     function setUp() public virtual {
         updater = new SphereXEngineUpdater();
+        initialEngineAddress = address(new MockEngine());
         for (uint i = 0; i < 5; i++) {
-            protectedContracts.push(new MockContract(address(this)));
+            protectedContracts.push(new MockProtectedContract());
             protectedContracts[i].changeSphereXEngine(initialEngineAddress);
             protectedAddresses.push(address(protectedContracts[i]));
         }
@@ -38,22 +38,15 @@ contract SphereXEngineUpdaterTest is Test {
         }
     }
 
-    function checkProtectedsManager(address addr) internal {
-        for (uint i = 0; i < protectedContracts.length; i++) {
-            address current_engine = address(uint160(uint256(vm.load(address(protectedContracts[i]), SPHEREX_MANAGER_STORAGE_SLOT))));
-            assertEq(current_engine, addr);
-        }
-    }
-
     function updateOwnershipToUpdater() internal {
         for (uint i = 0; i < protectedContracts.length; i++) {
-            protectedContracts[i].changeSphereXManager(address(updater));
+            protectedContracts[i].changeSphereXOperator(address(updater));
         }
     }
 
     function testUpdateFailureWithoutOwnershipTransfer() external {
         checkProtectedsEngine(initialEngineAddress);
-        vm.expectRevert("!SX:SPHEREX");
+        vm.expectRevert("SphereX error: operator required");
         updater.update(protectedAddresses, address(this));
     }
 
@@ -61,10 +54,9 @@ contract SphereXEngineUpdaterTest is Test {
         checkProtectedsEngine(initialEngineAddress);
         updateOwnershipToUpdater();
 
-        address newEngine = 0xeF9C2F2C9B767496bA849A269D18C5e4C0717b63;
+        address newEngine = address(new MockEngine());
         updater.update(protectedAddresses, newEngine);
 
         checkProtectedsEngine(newEngine);
-        checkProtectedsManager(address(this));
     }
 }

@@ -6,7 +6,7 @@ pragma solidity >=0.6.2;
 import "../../src/ISphereXEngine.sol";
 import "forge-std/console.sol";
 
-contract mockEngine is ISphereXEngine {
+contract MockEngine is ISphereXEngine {
     uint256[2] public stor;
 
     function sphereXValidatePre(int256 num, address sender, bytes calldata data)
