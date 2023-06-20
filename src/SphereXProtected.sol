@@ -175,7 +175,7 @@ abstract contract SphereXProtected is ISphereXProtected {
         emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
     }
 
-    // ============ Hoo ks ============
+    // ============ Hooks ============
 
     /**
      * @dev internal function for engine communication. We use it to reduce contract size.
