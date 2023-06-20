@@ -16,7 +16,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct FlowConfiguration {
         uint16 depth;
         // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
-        bytes3 txBoundryHash;
+        bytes3 txBoundaryHash;
         uint216 pattern;
     }
 
@@ -162,11 +162,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
-        bytes3 currentTxBoundryHash =
+        bytes3 currentTxBoundaryHash =
             bytes3(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundryHash != flowConfig.txBoundryHash) {
+        if (currentTxBoundaryHash != flowConfig.txBoundaryHash) {
             flowConfig.pattern = PATTERN_START;
-            flowConfig.txBoundryHash = currentTxBoundryHash;
+            flowConfig.txBoundaryHash = currentTxBoundaryHash;
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
