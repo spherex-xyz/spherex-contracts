@@ -20,17 +20,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint216 pattern;
     }
 
-    bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
-    mapping(address => bool) private _allowedSenders;
-    mapping(uint216 => bool) private _allowedPatterns;
+    bytes8 internal _engineRules; // By default the contract will be deployed with no guarding rules activated
+    mapping(address => bool) internal _allowedSenders;
+    mapping(uint216 => bool) internal _allowedPatterns;
 
-    FlowConfiguration private _flowConfig = FlowConfiguration(DEPTH_START, bytes3(uint24(1)), PATTERN_START);
+    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, bytes3(uint24(1)), PATTERN_START);
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
-    uint216 private constant PATTERN_START = 1;
-    uint16 private constant DEPTH_START = 1;
-    bytes32 private constant DEACTIVATED = bytes32(0);
-    uint64 private constant RULES_1_AND_2_TOGETHER = 3;
+    uint216 internal constant PATTERN_START = 1;
+    uint16 internal constant DEPTH_START = 1;
+    bytes32 internal constant DEACTIVATED = bytes32(0);
+    uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
@@ -147,7 +147,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Checks if rule1 is activated.
      */
-    function _isRule1Activated() private view returns (bool) {
+    function _isRule1Activated() internal view returns (bool) {
         return (_engineRules & bytes8(uint64(1))) > 0;
     }
 
@@ -155,7 +155,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * update the current CF pattern with a new positive number (signifying function entry),
      * @param num element to add to the flow.
      */
-    function _addCfElementFunctionEntry(int256 num) private {
+    function _addCfElementFunctionEntry(int256 num) internal {
         require(num > 0, "SphereX error: expected positive num");
         FlowConfiguration memory flowConfig = _flowConfig;
 
@@ -186,7 +186,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow. should be negative.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
-    function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
+    function _addCfElementFunctionExit(int256 num, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
 
@@ -210,7 +210,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(uint216 pattern) private view {
+    function _checkCallFlow(uint216 pattern) internal view {
         require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
     }
 
