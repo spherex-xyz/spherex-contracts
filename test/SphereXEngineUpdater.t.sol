@@ -9,7 +9,7 @@ import "./Utils/MockEngine.sol";
 contract MockProtectedContract is SphereXProtected {
 
     function initialize() public {
-        __SphereXProtected_init();
+        __SphereXProtected_init(msg.sender, msg.sender, address(0));
     }
 }
 
