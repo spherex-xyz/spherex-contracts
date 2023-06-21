@@ -31,8 +31,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
     uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = 5000;
 
+    // the index of the addAllowedSenderOnChain in the call flow
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = 5000;
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
@@ -46,7 +47,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _;
     }
 
-    modifier onlySenderAdder() {
+    modifier onlySenderAdderRole() {
         require(hasRole(SENDER_ADDER_ROLE, msg.sender), "SphereX error: sender adder required");
         _;
     }
@@ -121,7 +122,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Adds address that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
      * @param sender address to add to the set of allowed addresses
      */
-    function addAllowedSenderOnChain(address sender) external onlySenderAdder {
+    function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
         _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _allowedSenders[sender] = true;
         emit AddedAllowedSendersOnchain(sender);
