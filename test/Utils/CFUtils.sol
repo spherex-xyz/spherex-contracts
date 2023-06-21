@@ -13,7 +13,7 @@ contract CFUtils is Test {
 
     // This variable exists so we can use memory int16[] parameters in functions
     // it will be used locally in each tests and wont have any meaning between tests.
-    int16[] allowed_cf_storage;
+    int256[] allowed_cf_storage;
 
     /**
      * @dev obtained using `forge inspect --pretty SphereXEngine storage`

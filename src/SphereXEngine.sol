@@ -33,7 +33,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
 
     // the index of the addAllowedSenderOnChain in the call flow
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = 5000;
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
