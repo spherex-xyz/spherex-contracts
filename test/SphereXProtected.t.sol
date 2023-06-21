@@ -353,17 +353,26 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         address someContract = costumer_contract.factory();
         
-        // If the factory fauled to add the contract to allowed sender 
+        // If the factory failed to add the contract to allowed sender 
         // we would get SphereX error: disallowed sender.
         vm.expectRevert("SphereX error: disallowed tx pattern");
         SomeContract(someContract).someFunc();
     }
 
     function test_factoryfailsAllowedSender() public {
-        allowed_cf_storage = [int16(13), 5000, -5000, -13];
-        addAllowedPattern();
-
         vm.expectRevert("SphereX error: sender adder required");
         address someContract = costumer_contract.factory();
+    }
+
+    function test_factory_callCreatedContract() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int16(13), 5000, -5000];
+        addAllowedPattern();
+        allowed_cf_storage = [int16(13), 5000, -5000, -13];
+        addAllowedPattern();
+        allowed_cf_storage = [int16(100), -100];
+        addAllowedPattern();
+        address someContract = costumer_contract.factory();
+        SomeContract(someContract).someFunc();
     }
 }
