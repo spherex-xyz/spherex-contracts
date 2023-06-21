@@ -55,7 +55,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event TxStartedAtIrregularDepth();
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
     event AddedAllowedSenders(address[] senders);
-    event AddedAllowedSendersOnchain(address sender);
+    event AddedAllowedSenderOnchain(address sender);
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint216[] patterns);
     event RemovedAllowedPatterns(uint216[] patterns);
@@ -125,7 +125,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
         _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _allowedSenders[sender] = true;
-        emit AddedAllowedSendersOnchain(sender);
+        emit AddedAllowedSenderOnchain(sender);
         _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 
