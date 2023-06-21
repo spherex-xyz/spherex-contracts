@@ -27,7 +27,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
-
+        costumer_contract.changeSphereXOperator(address(this));
         int16[2] memory allowed_cf = [int16(1), -1];
         uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf.length; i++) {

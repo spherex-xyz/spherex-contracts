@@ -15,6 +15,8 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     function setUp() public override {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
+        costumer_contract.changeSphereXOperator(address(this));
+
         costumer_proxy_contract = new CostumerContractProxy(address(costumer_contract));
 
         int16[2] memory allowed_cf = [int16(1), -1];

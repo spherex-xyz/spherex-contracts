@@ -26,6 +26,7 @@ contract SphereXEngineUpdaterTest is Test {
         initialEngineAddress = address(new MockEngine());
         for (uint i = 0; i < 5; i++) {
             protectedContracts.push(new MockProtectedContract());
+            protectedContracts[i].changeSphereXOperator(address(this));
             protectedContracts[i].changeSphereXEngine(initialEngineAddress);
             protectedAddresses.push(address(protectedContracts[i]));
         }
