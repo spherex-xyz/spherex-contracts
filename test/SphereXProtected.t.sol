@@ -324,4 +324,46 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_allowed_flow();
     }
+
+    function test_factorySetup() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int16(13), 5000, -5000];
+        addAllowedPattern();
+        allowed_cf_storage = [int16(13), 5000, -5000, -13];
+        addAllowedPattern();
+
+        address someContract = costumer_contract.factory();
+        assertEq(SphereXProtectedBase(someContract).sphereXEngine(), 
+            SphereXProtected(costumer_contract).sphereXEngine());
+
+        assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), 
+            SphereXProtected(costumer_contract).sphereXAdmin());
+
+        assertEq(SphereXProtectedBase(someContract).sphereXOperator(), 
+            SphereXProtected(costumer_contract).sphereXOperator());
+
+    }
+
+    function test_factoryAllowedSender() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int16(13), 5000, -5000];
+        addAllowedPattern();
+        allowed_cf_storage = [int16(13), 5000, -5000, -13];
+        addAllowedPattern();
+
+        address someContract = costumer_contract.factory();
+        
+        // If the factory fauled to add the contract to allowed sender 
+        // we would get SphereX error: disallowed sender.
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_factoryfailsAllowedSender() public {
+        allowed_cf_storage = [int16(13), 5000, -5000, -13];
+        addAllowedPattern();
+
+        vm.expectRevert("SphereX error: sender adder required");
+        address someContract = costumer_contract.factory();
+    }
 }

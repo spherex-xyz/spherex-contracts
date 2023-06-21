@@ -5,12 +5,13 @@ pragma solidity >=0.6.2;
 
 import "./Proxy.sol";
 import "../../src/SphereXProtected.sol";
+import "../../src/SphereXProtectedBase.sol";
 
 contract CostumerContractProxy is Proxy {
     bytes32 space; // only so the x variable wont be overriden by the _imp variable
     address private _imp;
 
-    constructor(address implementation) public {
+    constructor(address implementation) {
         _imp = implementation;
     }
 
@@ -19,14 +20,22 @@ contract CostumerContractProxy is Proxy {
     }
 }
 
+contract SomeContract is SphereXProtectedBase {
+    constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
+
+    function someFunc() external sphereXGuardExternal(100){}
+}
+
 contract CostumerContract is SphereXProtected {
     uint256 public slot0 = 5;
 
-    constructor() public SphereXProtected() {}
+    SomeContract internal someContract;
 
-    function initialize(address newSphereX) public {
+    constructor() SphereXProtected() {}
+
+    function initialize(address owner) public {
         slot0 = 5;
-        __SphereXProtected_init(msg.sender, msg.sender, address(0));
+        __SphereXProtected_init(owner, msg.sender, address(0));
     }
 
     function try_allowed_flow() external sphereXGuardExternal(1) {}
@@ -80,5 +89,12 @@ contract CostumerContract is SphereXProtected {
 
     function externalCallee() external sphereXGuardExternal(12) returns (bool) {
         return true;
+    }
+
+    function factory() external sphereXGuardExternal(13) returns(address) {
+        address engine = sphereXEngine();
+        someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), engine); 
+        ISphereXEngine(engine).addAllowedSenderOnchain(address(someContract));
+        return address(someContract);
     }
 }

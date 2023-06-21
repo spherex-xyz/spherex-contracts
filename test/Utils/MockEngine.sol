@@ -40,4 +40,6 @@ contract MockEngine is ISphereXEngine {
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(ISphereXEngine).interfaceId;
     }
+
+    function addAllowedSenderOnchain(address sender) external {}
 }

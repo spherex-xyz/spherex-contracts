@@ -133,6 +133,20 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
     }
 
     /**
+     * Returns the current operator address.
+     */
+    function sphereXOperator() public view returns (address) {
+        return _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT);
+    }
+
+    /**
+     * Returns the current engine address.
+     */
+    function sphereXEngine() public view returns (address) {
+        return _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
+    }
+
+    /**
      * Setting the address of the next admin. this address will have to accept the role to become the new admin.
      * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
