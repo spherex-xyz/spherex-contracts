@@ -94,7 +94,7 @@ contract CostumerContract is SphereXProtected {
     function factory() external sphereXGuardExternal(13) returns(address) {
         address engine = sphereXEngine();
         someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), engine); 
-        ISphereXEngine(engine).addAllowedSenderOnchain(address(someContract));
+        ISphereXEngine(engine).addAllowedSenderOnChain(address(someContract));
         return address(someContract);
     }
 }

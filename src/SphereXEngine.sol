@@ -31,7 +31,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
     uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHIN_INDEX = 5000;
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = 5000;
 
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
@@ -121,11 +121,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Adds address that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
      * @param sender address to add to the set of allowed addresses
      */
-    function addAllowedSenderOnchain(address sender) external onlySenderAdder {
-        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHIN_INDEX);
+    function addAllowedSenderOnChain(address sender) external onlySenderAdder {
+        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _allowedSenders[sender] = true;
         emit AddedAllowedSendersOnchain(sender);
-        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHIN_INDEX, true);
+        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 
     /**

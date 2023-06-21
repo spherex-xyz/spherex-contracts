@@ -41,5 +41,5 @@ contract MockEngine is ISphereXEngine {
         return interfaceId == type(ISphereXEngine).interfaceId;
     }
 
-    function addAllowedSenderOnchain(address sender) external {}
+    function addAllowedSenderOnChain(address sender) external {}
 }

@@ -27,5 +27,5 @@ interface ISphereXEngine is IERC165 {
         bytes32[] calldata valuesAfter
     ) external;
 
-    function addAllowedSenderOnchain(address sender) external;
+    function addAllowedSenderOnChain(address sender) external;
 }
