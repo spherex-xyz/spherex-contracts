@@ -152,7 +152,7 @@ When integrating the protected contract with a factory pattern there a few key p
 
 ```
 ChildContract newChild = new ChildContract(..., sphereXAdmin(), sphereXOperator(), sphereXEngine());
-???.addAllowedSenderOnChain(address(newChild));
+???._addAllowedSenderOnChain(address(newChild));
 ```
 
 ## Notes regarding SphereXEngine contract
