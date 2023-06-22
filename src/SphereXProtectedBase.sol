@@ -8,7 +8,6 @@ import {ISphereXProtected} from "./ISphereXProtected.sol";
 
 /**
  * @title SphereX base Customer contract template
- * @dev notice this is an abstract
  */
 abstract contract SphereXProtectedBase is ISphereXProtected {
     /**
