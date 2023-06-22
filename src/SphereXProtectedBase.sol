@@ -47,19 +47,15 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
      * @dev used when the client uses a proxy - should be called by the inhereter initialization
      */
     function __SphereXProtected_init(address admin, address operator ,address engine) internal virtual {
-        if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
-            _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, admin);
-            emit SpherexAdminTransferCompleted(address(0), admin);
-        }
-        if (_getAddress(SPHEREX_OPERATOR_STORAGE_SLOT) == address(0)) {
-            _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, operator);
-            emit ChangedSpherexOperator(address(0), operator);
-        }
-        if (_getAddress(SPHEREX_ENGINE_STORAGE_SLOT) == address(0)) {
-            _chackSphereXEngine(engine);
-            _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, engine);
-            emit ChangedSpherexEngineAddress(address(0), engine);
-        }
+        _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, admin);
+        emit SpherexAdminTransferCompleted(address(0), admin);
+        
+        _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, operator);
+        emit ChangedSpherexOperator(address(0), operator);
+
+        _chackSphereXEngine(engine);
+        _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, engine);
+        emit ChangedSpherexEngineAddress(address(0), engine);
     }
 
     // ============ Helper functions ============
