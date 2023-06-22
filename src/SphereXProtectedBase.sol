@@ -201,6 +201,11 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
         emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
     }
+    // ============ Engine interaction ============
+
+    function _addAllowedSenderOnChain(address newSender) internal {
+        _sphereXEngine().addAllowedSenderOnChain(newSender);
+    }
 
     // ============ Hooks ============
 
