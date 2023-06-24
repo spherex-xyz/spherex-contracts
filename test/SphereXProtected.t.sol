@@ -376,4 +376,17 @@ contract SphereXProtectedTest is Test, CFUtils {
         address someContract = costumer_contract.factory();
         SomeContract(someContract).someFunc();
     }
+
+    function test_factoryEngineDisabledr() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        
+        // deactivate the engine and check that the call to create the factory succeed.
+        spherex_engine.deactivateAllRules();
+        address someContract = costumer_contract.factory();
+        
+        // activate the engine and see if the call reverts
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        SomeContract(someContract).someFunc();
+    }
 }

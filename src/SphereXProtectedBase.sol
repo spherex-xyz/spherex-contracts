@@ -199,8 +199,12 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
     // ============ Engine interaction ============
 
     function _addAllowedSenderOnChain(address newSender) internal {
-        _sphereXEngine().addAllowedSenderOnChain(newSender);
+        ISphereXEngine engine = _sphereXEngine();
+        if (address(engine) != address(0)){
+            engine.addAllowedSenderOnChain(newSender);
+        }    
     }
+        
 
     // ============ Hooks ============
 

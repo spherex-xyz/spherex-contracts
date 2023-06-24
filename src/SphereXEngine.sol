@@ -123,9 +123,18 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param sender address to add to the set of allowed addresses
      */
     function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
-        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
+       
+       // If the engine is diactivated then we dont want to add elements
+       // to the current pattern and possibly revert
+        if (_engineRules == DEACTIVATED) {
+            return;
+        }
+        
+        // not at the start of the function but still works sine the function
+        // doesnt call any other function.
+        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 
