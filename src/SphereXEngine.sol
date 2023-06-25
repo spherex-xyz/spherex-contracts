@@ -126,14 +126,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
        
-       // If the engine is diactivated then we dont want to add elements
+       // If the engine is deactivated then we don't want to add elements
        // to the current pattern and possibly revert
         if (_engineRules == DEACTIVATED) {
             return;
         }
         
-        // not at the start of the function but still works sine the function
-        // doesnt call any other function.
+        // not at the start of the function but still works since the function
+        // doesn't call any other function.
         _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
         _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
