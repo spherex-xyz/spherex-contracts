@@ -122,19 +122,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Adds address that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
      * @param sender address to add to the set of allowed addresses
      */
-    function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
+    function addAllowedSenderOnChain(address sender) external returnsIfNotActivated onlySenderAdderRole {
+        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
+
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
-       
-       // If the engine is deactivated then we don't want to add elements
-       // to the current pattern and possibly revert
-        if (_engineRules == DEACTIVATED) {
-            return;
-        }
-        
-        // not at the start of the function but still works since the function
-        // doesn't call any other function.
-        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
+               
         _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 

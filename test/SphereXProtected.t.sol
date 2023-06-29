@@ -377,16 +377,17 @@ contract SphereXProtectedTest is Test, CFUtils {
         SomeContract(someContract).someFunc();
     }
 
-    function test_factoryEngineDisabledr() public {
+    function test_factoryEngineDisabled() public {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
         
-        // deactivate the engine and check that the call to create the factory succeed.
+        // deactivate the engine and check that the call to create the factory 
+        // does not fail.
         spherex_engine.deactivateAllRules();
         address someContract = costumer_contract.factory();
         
-        // activate the engine and see if the call reverts
+        // activate the engine and see that the new contract is disallowed 
         spherex_engine.configureRules(PREFIX_TX_FLOW);
-        vm.expectRevert("SphereX error: disallowed tx pattern");
+        vm.expectRevert("SphereX error: disallowed sender");
         SomeContract(someContract).someFunc();
     }
 }
