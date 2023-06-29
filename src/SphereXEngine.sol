@@ -165,6 +165,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit RemovedAllowedPatterns(patterns);
     }
 
+    function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
+        super._grantRole(SENDER_ADDER_ROLE, newSenderAdder);
+    }
+
     // ============ CF ============
 
     /**

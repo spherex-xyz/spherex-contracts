@@ -390,4 +390,28 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.expectRevert("SphereX error: disallowed sender");
         SomeContract(someContract).someFunc();
     }
+
+    function test_grantSenderAdderRoleOnlyOperator() public {
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
+        vm.prank(address(1));
+        spherex_engine.grantSenderAdderRole(address(costumer_contract));
+        
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(100), -100];
+        addAllowedPattern();
+        address someContract = costumer_contract.factory();
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_grantSenderAdderRoleAdminRevert() public {
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
+
+        vm.expectRevert("SphereX error: operator required");
+        spherex_engine.grantSenderAdderRole(address(costumer_contract));
+    }
 }
