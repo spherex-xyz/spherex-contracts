@@ -392,17 +392,19 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_grantSenderAdderRoleOnlyOperator() public {
-        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
-        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
-        vm.prank(address(1));
-        spherex_engine.grantSenderAdderRole(address(costumer_contract));
-        
         allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
         addAllowedPattern();
         allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
         addAllowedPattern();
         allowed_cf_storage = [int256(100), -100];
         addAllowedPattern();
+
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
+        vm.prank(address(1));
+        spherex_engine.grantSenderAdderRole(address(costumer_contract));
+        
+
         address someContract = costumer_contract.factory();
         SomeContract(someContract).someFunc();
     }
