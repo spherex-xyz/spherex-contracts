@@ -147,7 +147,7 @@ The only difference between SphereXProtectedBase and SphereXProtected is the con
 
 ### Factory integration note
 When integrating the protected contract with a factory pattern there a few key points to look at:
-1. The contract crreated by the factory should inherit from SphereXProtectedBase
+1. The contract created by the factory should inherit from SphereXProtectedBase
 2. Upon creating the new contract the process should look something like:
 
 ```

@@ -53,7 +53,7 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
         _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, operator);
         emit ChangedSpherexOperator(address(0), operator);
 
-        _chackSphereXEngine(engine);
+        _checkSphereXEngine(engine);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, engine);
         emit ChangedSpherexEngineAddress(address(0), engine);
     }
@@ -176,7 +176,7 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
      * Checks the given address implements ISphereXEngine or is address(0)
      * @param newSphereXEngine new address of the spherex engine
      */
-    function _chackSphereXEngine(address newSphereXEngine) private view {
+    function _checkSphereXEngine(address newSphereXEngine) private view {
         require(
             newSphereXEngine == address(0)
                 || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
@@ -191,7 +191,7 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
      * (because as long is this address is 0, the protection is disabled).
      */
     function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
-        _chackSphereXEngine(newSphereXEngine);
+        _checkSphereXEngine(newSphereXEngine);
         address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
         emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
