@@ -40,13 +40,13 @@ abstract contract SphereXProtectedBase is ISphereXProtected {
      * @notice constructor visibility is required to support all compiler versions
      */
     constructor(address admin, address operator ,address engine) {
-        __SphereXProtected_init(admin, operator, engine);
+        __SphereXProtectedBase_init(admin, operator, engine);
     }
 
     /**
      * @dev used when the client uses a proxy - should be called by the inhereter initialization
      */
-    function __SphereXProtected_init(address admin, address operator ,address engine) internal virtual {
+    function __SphereXProtectedBase_init(address admin, address operator ,address engine) internal virtual {
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, admin);
         emit SpherexAdminTransferCompleted(address(0), admin);
         
