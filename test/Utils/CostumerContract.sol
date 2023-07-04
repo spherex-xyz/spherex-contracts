@@ -35,7 +35,7 @@ contract CostumerContract is SphereXProtected {
 
     function initialize(address owner) public {
         slot0 = 5;
-        __SphereXProtected_init(owner, msg.sender, address(0));
+        __SphereXProtectedBase_init(owner, msg.sender, address(0));
     }
 
     function try_allowed_flow() external sphereXGuardExternal(1) {}

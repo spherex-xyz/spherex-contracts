@@ -4,12 +4,11 @@
 pragma solidity ^0.8.17;
 
 import {ISphereXEngine} from "./ISphereXEngine.sol";
-import {ISphereXProtected} from "./ISphereXProtected.sol";
 
 /**
  * @title SphereX base Customer contract template
  */
-abstract contract SphereXProtectedBase is ISphereXProtected {
+abstract contract SphereXProtectedBase {
     /**
      * @dev we would like to avoid occupying storage slots
      * @dev to easily incorporate with existing contracts
