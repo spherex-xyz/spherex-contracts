@@ -91,11 +91,22 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_changeSphereXAdmin() external {
-        costumer_contract.changeSphereXAdmin(address(1));
-        vm.expectRevert("!SX:SPHEREX");
-        costumer_contract.changeSphereXAdmin(address(this));
-        vm.prank(address(1));
-        costumer_contract.changeSphereXAdmin(address(this));
+        address otherAddress = address(1);
+
+        costumer_contract.transferSphereXAdminRole(otherAddress);
+        vm.prank(otherAddress);
+        costumer_contract.acceptSphereXAdminRole();
+
+        vm.expectRevert("!SX: Admin required");
+        costumer_contract.transferSphereXAdminRole(address(this));
+        vm.prank(otherAddress);
+        costumer_contract.transferSphereXAdminRole(address(this));
+
+        vm.prank(otherAddress);
+        vm.expectRevert("!SX: Not the pending account");
+        costumer_contract.acceptSphereXAdminRole();
+
+        costumer_contract.acceptSphereXAdminRole();
 
         assertFlowStorageSlotsInInitialState();
     }

@@ -3,13 +3,15 @@
 
 pragma solidity >=0.5.0;
 
+import "openzeppelin-contracts/utils/introspection/IERC165.sol";
 /**
  * @title Interface for SphereXEngine - defenitions of core functionality
  * @author SphereX Technolegies ltd
  * @notice This interface is imported by SphereXProtected, so that SphereXProtected can call functions from SphereXEngine
  * @dev Full docs of these functions can be found in SphereXEngine
  */
-interface ISphereXEngine {
+
+interface ISphereXEngine is IERC165 {
     function sphereXValidatePre(int16 num, address sender, bytes calldata data) external returns (bytes32[] memory);
     function sphereXValidatePost(
         int16 num,

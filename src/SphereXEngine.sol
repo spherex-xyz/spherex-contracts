@@ -3,14 +3,14 @@
 
 pragma solidity >=0.6.0;
 
-import "./Ownable.sol";
+import "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import "./ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
-contract SphereXEngine is Ownable, ISphereXEngine {
+contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes8 private _engineRules; // By default the contract will be deployed with no guarding rules activated
     mapping(address => bool) private _allowedSenders;
     mapping(uint256 => bool) private _allowedPatterns;
@@ -29,6 +29,17 @@ contract SphereXEngine is Ownable, ISphereXEngine {
 
     event TxStartedAtIrregularDepth();
 
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
+        grantRole(OPERATOR_ROLE, msg.sender);
+    }
+
+    modifier onlyOperator() {
+        require(hasRole(OPERATOR_ROLE, msg.sender), "Operator Required");
+        _;
+    }
+
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
             return;
@@ -44,11 +55,21 @@ contract SphereXEngine is Ownable, ISphereXEngine {
 
     // ============ Management ============
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlDefaultAdminRules, IERC165)
+        returns (bool)
+    {
+        return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /**
      * Activate the guardian rules
      * @param rules bytes8 representing the new rules to activate.
      */
-    function configureRules(bytes8 rules) external onlyOwner {
+    function configureRules(bytes8 rules) external onlyOperator {
         require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
         _engineRules = rules;
     }
@@ -56,7 +77,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     /**
      * Deactivates the engine, the calls will return without being checked
      */
-    function deactivateAllRules() external onlyOwner {
+    function deactivateAllRules() external onlyOperator {
         _engineRules = bytes8(uint64(0));
     }
 
@@ -64,7 +85,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Adds addresses that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
      * @param senders list of address to add to the set of allowed addresses
      */
-    function addAllowedSender(address[] calldata senders) external onlyOwner {
+    function addAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = true;
         }
@@ -74,7 +95,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Removes address so that they will not get served when calling the engine. Transaction from these addresses will get reverted.
      * @param senders list of address to stop service.
      */
-    function removeAllowedSender(address[] calldata senders) external onlyOwner {
+    function removeAllowedSender(address[] calldata senders) external onlyOperator {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = false;
         }
@@ -84,7 +105,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Add allowed patterns - these are representation of allowed flows of transactions, and prefixes of these flows
      * @param patterns list of flows to allow as valid and non-malicious flows
      */
-    function addAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
+    function addAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
         }
@@ -95,7 +116,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * that are no longer considered valid and benign
      * @param patterns list of flows that no longer considered valid and non-malicious
      */
-    function removeAllowedPatterns(uint256[] calldata patterns) external onlyOwner {
+    function removeAllowedPatterns(uint256[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
         }

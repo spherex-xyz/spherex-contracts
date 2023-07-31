@@ -18,11 +18,10 @@ contract CFUtils is Test {
     /**
      * @dev obtained using `forge inspect --pretty SphereXEngine storage`
      */
-    bytes32 constant currentPatternStorageSlot = bytes32(uint256(3));
-    bytes32 constant cfDepthStorageSlot = bytes32(uint256(4));
+    bytes32 constant currentPatternStorageSlot = bytes32(uint256(6));
+    bytes32 constant cfDepthStorageSlot = bytes32(uint256(7));
     // currentBlock and currentOrigin are packed together so they share the same slot
-    bytes32 constant currentBlockStorageSlot = bytes32(uint256(5));
-    bytes32 constant currentOriginStorageSlot = bytes32(uint256(5));
+    bytes32 constant currentBlockStorageSlot = bytes32(uint256(8));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
 
