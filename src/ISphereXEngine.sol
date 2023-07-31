@@ -19,6 +19,11 @@ interface ISphereXEngine is IERC165 {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external;
-    function sphereXValidateInternalPre(int256 num) external;
-    function sphereXValidateInternalPost(int256 num, uint256 gas) external;
+    function sphereXValidateInternalPre(int256 num) external returns (bytes32[] memory);
+    function sphereXValidateInternalPost(
+        int256 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external;
 }

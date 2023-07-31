@@ -29,7 +29,8 @@ contract SphereXEngineTest is Test, CFUtils {
         if (num > 0) {
             spherex_engine.sphereXValidateInternalPre(num);
         } else {
-            spherex_engine.sphereXValidateInternalPost(num, 0);
+            bytes32[] memory emptyArray = new bytes32[](0);
+            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
         }
     }
 

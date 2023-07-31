@@ -254,7 +254,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int256 num) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPre(int256 num)
+        external
+        override
+        returnsIfNotActivated
+        onlyApprovedSenders
+        returns (bytes32[] memory result)
+    {
         _addCfElementFunctionEntry(num);
     }
 
@@ -263,12 +269,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int256 num, uint256 gas)
-        external
-        override
-        returnsIfNotActivated
-        onlyApprovedSenders
-    {
+    function sphereXValidateInternalPost(
+        int256 num,
+        uint256 gas,
+        bytes32[] calldata valuesBefore,
+        bytes32[] calldata valuesAfter
+    ) external override returnsIfNotActivated onlyApprovedSenders {
         _addCfElementFunctionExit(num, false);
     }
 }

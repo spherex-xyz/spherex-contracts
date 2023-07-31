@@ -39,7 +39,7 @@ abstract contract SphereXProtected {
      * @dev used when the client doesn't use a proxy
      * @notice constructor visibility is required to support all compiler versions
      */
-    constructor() internal {
+    constructor() {
         __SphereXProtected_init();
     }
 
@@ -191,10 +191,10 @@ abstract contract SphereXProtected {
         ISphereXEngine sphereXEngine = _sphereXEngine();
         if (isExternalCall) {
             locals.storageSlots = sphereXEngine.sphereXValidatePre(num, msg.sender, msg.data);
-            locals.valuesBefore = _readStorage(locals.storageSlots);
         } else {
-            sphereXEngine.sphereXValidateInternalPre(num);
+            locals.storageSlots = sphereXEngine.sphereXValidateInternalPre(num);
         }
+        locals.valuesBefore = _readStorage(locals.storageSlots);
         locals.gas = gasleft();
         return locals;
     }
@@ -211,13 +211,16 @@ abstract contract SphereXProtected {
         returnsIfNotActivated
     {
         uint256 gas = locals.gas - gasleft();
+
         ISphereXEngine sphereXEngine = _sphereXEngine();
+
+        bytes32[] memory valuesAfter;
+        valuesAfter = _readStorage(locals.storageSlots);
+
         if (isExternalCall) {
-            bytes32[] memory valuesAfter;
-            valuesAfter = _readStorage(locals.storageSlots);
             sphereXEngine.sphereXValidatePost(num, gas, locals.valuesBefore, valuesAfter);
         } else {
-            sphereXEngine.sphereXValidateInternalPost(num, gas);
+            sphereXEngine.sphereXValidateInternalPost(num, gas, locals.valuesBefore, valuesAfter);
         }
     }
 
@@ -225,30 +228,38 @@ abstract contract SphereXProtected {
      * @dev internal function for engine communication. We use it to reduce contract size.
      *  Should be called before the code of a function.
      * @param num function identifier
-     * @return gas used before calling the original function body
+     * @return locals ModifierLocals
      */
-    function _sphereXValidateInternalPre(int256 num) private returnsIfNotActivated returns (uint256) {
-        _sphereXEngine().sphereXValidateInternalPre(num);
-        return gasleft();
+    function _sphereXValidateInternalPre(int256 num)
+        internal
+        returnsIfNotActivated
+        returns (ModifierLocals memory locals)
+    {
+        locals.storageSlots = _sphereXEngine().sphereXValidateInternalPre(num);
+        locals.valuesBefore = _readStorage(locals.storageSlots);
+        locals.gas = gasleft();
+        return locals;
     }
 
     /**
      * @dev internal function for engine communication. We use it to reduce contract size.
      *  Should be called after the code of a function.
      * @param num function identifier
-     * @param gas the gas saved before the original function body run
+     * @param locals ModifierLocals
      */
-    function _sphereXValidateInternalPost(int256 num, uint256 gas) private returnsIfNotActivated {
-        _sphereXEngine().sphereXValidateInternalPost(num, gas - gasleft());
+    function _sphereXValidateInternalPost(int256 num, ModifierLocals memory locals) internal returnsIfNotActivated {
+        bytes32[] memory valuesAfter;
+        valuesAfter = _readStorage(locals.storageSlots);
+        _sphereXEngine().sphereXValidateInternalPost(num, locals.gas - gasleft(), locals.valuesBefore, valuesAfter);
     }
 
     /**
      *  @dev Modifier to be incorporated in all internal protected non-view functions
      */
     modifier sphereXGuardInternal(int256 num) {
-        uint256 gas = _sphereXValidateInternalPre(num);
+        ModifierLocals memory locals = _sphereXValidateInternalPre(num);
         _;
-        _sphereXValidateInternalPost(-num, gas);
+        _sphereXValidateInternalPost(-num, locals);
     }
 
     /**
