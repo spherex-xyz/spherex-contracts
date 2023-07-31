@@ -148,7 +148,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * update the current CF pattern with a new positive number (signifying function entry),
      * @param num element to add to the flow.
      */
-    function _addCfElementFunctionEntry(int16 num) private {
+    function _addCfElementFunctionEntry(int256 num) private {
         require(num > 0, "!SX:ERROR");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
@@ -180,7 +180,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow. should be negative.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
-    function _addCfElementFunctionExit(int16 num, bool forceCheck) private {
+    function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
         require(num < 0, "!SX:ERROR");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
@@ -217,7 +217,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param data For future use
      * @return result in the future will return insturction on what storage slots to gather, but not used for now
      */
-    function sphereXValidatePre(int16 num, address sender, bytes calldata data)
+    function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
         override
         returnsIfNotActivated // may return empty bytes32[]
@@ -236,7 +236,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param valuesAfter For future use
      */
     function sphereXValidatePost(
-        int16 num,
+        int256 num,
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
@@ -249,7 +249,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int16 num) external override returnsIfNotActivated onlyApprovedSenders {
+    function sphereXValidateInternalPre(int256 num) external override returnsIfNotActivated onlyApprovedSenders {
         _addCfElementFunctionEntry(num);
     }
 
@@ -258,7 +258,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPost(int16 num, uint256 gas)
+    function sphereXValidateInternalPost(int256 num, uint256 gas)
         external
         override
         returnsIfNotActivated

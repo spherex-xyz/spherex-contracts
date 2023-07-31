@@ -9,7 +9,7 @@ import "forge-std/console.sol";
 contract mockEngine is ISphereXEngine {
     uint256[2] public stor;
 
-    function sphereXValidatePre(int16 num, address sender, bytes calldata data)
+    function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
         override
         returns (bytes32[] memory)
@@ -20,7 +20,7 @@ contract mockEngine is ISphereXEngine {
     }
 
     function sphereXValidatePost(
-        int16 num,
+        int256 num,
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
@@ -29,8 +29,8 @@ contract mockEngine is ISphereXEngine {
         stor[1] = uint256(valuesAfter[0]);
     }
 
-    function sphereXValidateInternalPre(int16 num) external override {}
-    function sphereXValidateInternalPost(int16 num, uint256 gas) external override {}
+    function sphereXValidateInternalPre(int256 num) external override {}
+    function sphereXValidateInternalPost(int256 num, uint256 gas) external override {}
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(ISphereXEngine).interfaceId;

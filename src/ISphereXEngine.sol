@@ -12,13 +12,13 @@ import "openzeppelin-contracts/utils/introspection/IERC165.sol";
  */
 
 interface ISphereXEngine is IERC165 {
-    function sphereXValidatePre(int16 num, address sender, bytes calldata data) external returns (bytes32[] memory);
+    function sphereXValidatePre(int256 num, address sender, bytes calldata data) external returns (bytes32[] memory);
     function sphereXValidatePost(
-        int16 num,
+        int256 num,
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external;
-    function sphereXValidateInternalPre(int16 num) external;
-    function sphereXValidateInternalPost(int16 num, uint256 gas) external;
+    function sphereXValidateInternalPre(int256 num) external;
+    function sphereXValidateInternalPost(int256 num, uint256 gas) external;
 }

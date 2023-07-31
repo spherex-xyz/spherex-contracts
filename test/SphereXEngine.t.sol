@@ -406,7 +406,7 @@ contract SphereXEngineTest is Test, CFUtils {
         }
     }
 
-    // Check that after the a different tx.origin we check the current flow from the begning
+    // Check that after the a different tx.origin we check the current flow from the begining
     function test_PrefixTFlow_different_origin_same_block_number() public activateRule(PREFIX_TX_FLOW) {
         allowed_cf_storage = [int16(1), -1];
         addAllowedPattern();
