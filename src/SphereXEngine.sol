@@ -27,8 +27,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes32 private constant DEACTIVATED = bytes32(0);
     uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
-    event TxStartedAtIrregularDepth();
-
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
@@ -39,6 +37,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         require(hasRole(OPERATOR_ROLE, msg.sender), "Operator Required");
         _;
     }
+
+    event TxStartedAtIrregularDepth();
+    event ConfigureRules(bytes8 oldRules, bytes8 newRules);
+    event AddedAllowedSenders(address[] senders);
+    event RemovedAllowedSenders(address[] senders);
+    event AddedAllowedPatterns(uint256[] patterns);
+    event RemovedAllowedPatterns(uint256[] patterns);
 
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
@@ -71,14 +76,18 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function configureRules(bytes8 rules) external onlyOperator {
         require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
+        bytes8 oldRules = _engineRules;
         _engineRules = rules;
+        emit ConfigureRules(oldRules, _engineRules);
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
     function deactivateAllRules() external onlyOperator {
+        bytes8 oldRules = _engineRules;
         _engineRules = bytes8(uint64(0));
+        emit ConfigureRules(oldRules, 0);
     }
 
     /**
@@ -89,6 +98,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = true;
         }
+        emit AddedAllowedSenders(senders);
     }
 
     /**
@@ -99,6 +109,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < senders.length; ++i) {
             _allowedSenders[senders[i]] = false;
         }
+        emit RemovedAllowedSenders(senders);
     }
 
     /**
@@ -109,6 +120,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
         }
+        emit AddedAllowedPatterns(patterns);
     }
 
     /**
@@ -120,6 +132,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
         }
+        emit RemovedAllowedPatterns(patterns);
     }
 
     // ============ CF ============

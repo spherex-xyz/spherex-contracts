@@ -30,6 +30,8 @@ abstract contract SphereXProtected {
         uint256 gas;
     }
 
+    event ChangedSpherexOperator(address oldSphereXAdmin, address newSphereXAdmin);
+    event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
     event SpherexAdminTransferStarted(address currentAdmin, address pendingAdmin);
     event SpherexAdminTransferCompleted(address oldAdmin, address newAdmin);
 
@@ -47,9 +49,11 @@ abstract contract SphereXProtected {
     function __SphereXProtected_init() internal {
         if (_getAddress(SPHEREX_ADMIN_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
+            emit SpherexAdminTransferCompleted(address(0), msg.sender);
         }
         if (_getAddress(SPHEREX_OPERATOR_STORAGE_SLOT) == address(0)) {
             _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, msg.sender);
+            emit ChangedSpherexOperator(address(0), msg.sender);
         }
     }
 
@@ -148,7 +152,9 @@ abstract contract SphereXProtected {
      * @param newSphereXOperator new address of the new operator account
      */
     function changeSphereXOperator(address newSphereXOperator) external onlySphereXAdmin {
+        address oldSphereXOperator = _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT);
         _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, newSphereXOperator);
+        emit ChangedSpherexOperator(oldSphereXOperator, newSphereXOperator);
     }
 
     /**
@@ -163,7 +169,9 @@ abstract contract SphereXProtected {
                 || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
             "!SX: Not a SphereXEngine"
         );
+        address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
+        emit ChangedSpherexEngineAddress(oldEngine, newSphereXEngine);
     }
 
     // ============ Hooks ============
