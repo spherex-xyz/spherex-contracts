@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.17;
 
-import "./ISphereXEngine.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX base Customer contract template
@@ -91,12 +91,12 @@ abstract contract SphereXProtected {
     // ============ Local modifiers ============
 
     modifier onlySphereXAdmin() {
-        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "!SX: Admin required");
+        require(msg.sender == _getAddress(SPHEREX_ADMIN_STORAGE_SLOT), "SphereX error: admin required");
         _;
     }
 
     modifier onlyOperator() {
-        require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "!SX: Operator required");
+        require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "SphereX error: operator required");
         _;
     }
 
@@ -140,7 +140,7 @@ abstract contract SphereXProtected {
      * @dev Could not use OZ Ownable2Step because the client's contract might use it.
      */
     function acceptSphereXAdminRole() public virtual {
-        require(pendingSphereXAdmin() == msg.sender, "!SX: Not the pending account");
+        require(pendingSphereXAdmin() == msg.sender, "SphereX error: not the pending account");
         address oldAdmin = sphereXAdmin();
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, msg.sender);
         _setAddress(SPHEREX_PENDING_ADMIN_STORAGE_SLOT, address(0));
@@ -167,7 +167,7 @@ abstract contract SphereXProtected {
         require(
             newSphereXEngine == address(0)
                 || ISphereXEngine(newSphereXEngine).supportsInterface(type(ISphereXEngine).interfaceId),
-            "!SX: Not a SphereXEngine"
+            "SphereX error: not a SphereXEngine"
         );
         address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);

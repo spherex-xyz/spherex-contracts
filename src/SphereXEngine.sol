@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import "./ISphereXEngine.sol";
+import {AccessControlDefaultAdminRules, IERC165} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -34,7 +34,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyOperator() {
-        require(hasRole(OPERATOR_ROLE, msg.sender), "Operator Required");
+        require(hasRole(OPERATOR_ROLE, msg.sender), "SphereX error: operator required");
         _;
     }
 
@@ -54,7 +54,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyApprovedSenders() {
-        require(_allowedSenders[msg.sender], "!SX:SENDERS");
+        require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
         _;
     }
 
@@ -75,7 +75,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
-        require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
+        require(
+            RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "SphereX error: illegal rules combination"
+        );
         bytes8 oldRules = _engineRules;
         _engineRules = rules;
         emit ConfigureRules(oldRules, _engineRules);
@@ -149,7 +151,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow.
      */
     function _addCfElementFunctionEntry(int256 num) private {
-        require(num > 0, "!SX:ERROR");
+        require(num > 0, "SphereX error: expected positive num");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
@@ -181,7 +183,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
     function _addCfElementFunctionExit(int256 num, bool forceCheck) private {
-        require(num < 0, "!SX:ERROR");
+        require(num < 0, "SphereX error: expected negative num");
         uint256 callDepth = _callDepth;
         uint256 currentPattern = _currentPattern;
 
@@ -206,7 +208,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
     function _checkCallFlow(uint256 pattern) private view {
-        require(_allowedPatterns[pattern], "!SX:DETECTED");
+        require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
     }
 
     /**
