@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import "./ISphereXEngine.sol";
+import {AccessControlDefaultAdminRules, IERC165} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {ISphereXEngine} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
