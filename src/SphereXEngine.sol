@@ -20,7 +20,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private _callDepth = DEPTH_START;
 
     // Represent keccak256(abi.encode(block.number, tx.origin))
-    bytes32 private _currentBlockOriginHash = bytes32(uint256(1));
+    bytes32 private _lastTxBoundaryHash = bytes32(uint256(1));
 
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
@@ -121,11 +121,11 @@ contract SphereXEngine is Ownable, ISphereXEngine {
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
-        // the new transaction "hash" (block.number+tx.origin)
-        bytes32 currentBlockOriginHash = keccak256(abi.encode(block.number, tx.origin));
-        if (currentBlockOriginHash != _currentBlockOriginHash) {
+        // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
+        bytes32 currentTxBoundryHash = keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty));
+        if (currentTxBoundryHash != _lastTxBoundaryHash) {
             currentPattern = PATTERN_START;
-            _currentBlockOriginHash = currentBlockOriginHash;
+            _lastTxBoundaryHash = currentTxBoundryHash;
             if (callDepth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();

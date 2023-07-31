@@ -26,7 +26,6 @@ contract CFUtils is Test {
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
 
-
     function assertFlowStorageSlotsInInitialState() internal {
         assertEq(vm.load(address(spherex_engine), currentPatternStorageSlot), bytes32(uint256(1)));
         assertEq(vm.load(address(spherex_engine), cfDepthStorageSlot), bytes32(uint256(1)));
