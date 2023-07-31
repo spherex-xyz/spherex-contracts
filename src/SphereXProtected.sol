@@ -184,7 +184,7 @@ abstract contract SphereXProtected {
      *  or a 'public' function from another address
      */
     function _sphereXValidatePre(int256 num, bool isExternalCall)
-        internal
+        private
         returnsIfNotActivated
         returns (ModifierLocals memory locals)
     {
@@ -207,7 +207,7 @@ abstract contract SphereXProtected {
      *  or a 'public' function from another address
      */
     function _sphereXValidatePost(int256 num, bool isExternalCall, ModifierLocals memory locals)
-        internal
+        private
         returnsIfNotActivated
     {
         uint256 gas = locals.gas - gasleft();
@@ -227,7 +227,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @return gas used before calling the original function body
      */
-    function _sphereXValidateInternalPre(int256 num) internal returnsIfNotActivated returns(uint256){
+    function _sphereXValidateInternalPre(int256 num) private returnsIfNotActivated returns(uint256){
         _sphereXEngine().sphereXValidateInternalPre(num);
         return gasleft();
     }
@@ -238,7 +238,7 @@ abstract contract SphereXProtected {
      * @param num function identifier
      * @param gas the gas saved before the original function nody run
      */
-    function _sphereXValidateInternalPost(int256 num, uint256 gas) internal returnsIfNotActivated {
+    function _sphereXValidateInternalPost(int256 num, uint256 gas) private returnsIfNotActivated {
         _sphereXEngine().sphereXValidateInternalPost(num, gas - gasleft());
     }
 
