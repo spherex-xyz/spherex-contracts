@@ -123,26 +123,49 @@ graph TD
 
 ## Notes regarding SphereXProtected contract
 
-This is an abstract contract with 2 state variable, but to make sure they do not interrupt the layout of the inherited contract's variables, they are actually saved in distinct storage slots. This is why these are not normal state variables with names. These 2 special addresses contain: 
+This is an abstract contract with 4 state variable, but to make sure they do not interrupt the layout of the inherited contract's variables, they are actually saved in distinct storage slots. This is why these are not normal state variables with names. These 4 special addresses contain: 
 
 1. The address of the SphereXAdmin
-   - This account is the only one who can change the address of the ENGINE state variable, and pass it's role to another address.
-2. The address of the SphereXEngine - this is the address to which data is sent, and which classifies the transaction (at various points of execution).
+   - This account is the only one who can change the address of the OPERTOR state variable, and pass it's role to another address.
+2. the address of the pendingSphereXAdmin
+   - This stte variable is used to implement a two step admin role transfer.
+3. the address of the sphereXOperator
+   - This account is the only onw responsible for managing the protected contract, including changing the address of the ENGINE. 
+4. The address of the SphereXEngine - this is the address to which data is sent, and which classifies the transaction (at various points of execution).
     - If this value is `address(0)`, the engine will be bypassed, essentially disabling its protection.
 
 
-The contract provides functions to transfer the role of the SphereXAdmin, and update the address of the engine.
+The contract provides functions to transfer the role of the SphereXAdmin, SphereXOperator, and update the address of the engine.
 
 The heart of the contract is its modifiers - `SphereXProtected` provides 3 different modifiers to be used on functions with different visibilities:
-1. `sphereXGuardInternal(int16 num)` - used for internal/private functions. The number that should be provided is an id to the function. It should be positive, and we simply use simple counting int starting with 1.
-2. `sphereXGuardExternal(int16 num)` - used for external functions. The number has the same meaning and usage as in the internal.
-3. `sphereXGuardPublic(int16 num, bytes4 selector)` - used fo public functions. The first param is just like in the previous 2 modifiers, and the `selector` param is the 4 bytes selector of the function.
+1. `sphereXGuardInternal(int256 num)` - used for internal/private functions. The number that should be provided is an id to the function. It should be positive, and we simply use simple counting int starting with 1.
+2. `sphereXGuardExternal(int256 num)` - used for external functions. The number has the same meaning and usage as in the internal.
+3. `sphereXGuardPublic(int256 num, bytes4 selector)` - used fo public functions. The first param is just like in the previous 2 modifiers, and the `selector` param is the 4 bytes selector of the function.
 
+### SphereXProtectedBase
+The only difference between SphereXProtectedBase and SphereXProtected is the constructor and the init function, the SphereXProtectedBase has explicit initialization process (receives parameters), and the SphereXProtected has an implicit initialization process (initializes the admin to msg.sender and the rest to address(0)).
+
+### Factory integration note
+When integrating the protected contract with a factory pattern there a few key points to look at:
+1. The contract created by the factory should inherit from SphereXProtectedBase
+2. Upon creating the new contract the process should look something like:
+
+```
+ChildContract newChild = new ChildContract(..., sphereXAdmin(), sphereXOperator(), sphereXEngine());
+_addAllowedSenderOnChain(address(newChild));
+```
 
 ## Notes regarding SphereXEngine contract
 
-This contract is the brain of the system. It is managed by an owner account (we have stripped down and simplified the OpenZeppelin `Ownable` template).
+This contract is the brain of the system. It is managed by an AccessControlDefaultAdminRules pattern (inherited from OpenZeppelin).
 
+The engine has 3 key roles:
+1. The owner
+   - Controls the operator role address.
+2. The operator
+   - Controls the engine managment functions.
+3. The sender adder
+   - A unique role granted to mainly on-chain factory contracts, its sole purpose is to allow adding an address to the `allowedSenders`.
 It has 3 important state variables:
 
 1. `_engineRules` - a bytes8 variable indicating what rules (theses) are applied, 1 for CF, 2 for PrefixTxFlow, if all are off then the engine is deactivated.

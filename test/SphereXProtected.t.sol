@@ -12,14 +12,15 @@ import "../src/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
 
     modifier activateRule2() {
         spherex_engine.configureRules(PREFIX_TX_FLOW);
-        allowed_cf_storage = [int16(1), -1, 11, 12, -12, -11];
+        allowed_cf_storage = [int256(1), -1, 11, 12, -12, -11];
         addAllowedPattern();
-        allowed_cf_storage = [int16(1), -1];
+        allowed_cf_storage = [int256(1), -1];
         addAllowedPattern();
-        allowed_cf_storage = [int16(1), -1, 11, 12, -12];
+        allowed_cf_storage = [int256(1), -1, 11, 12, -12];
         addAllowedPattern();
         _;
     }
@@ -27,8 +28,8 @@ contract SphereXProtectedTest is Test, CFUtils {
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
-
-        int16[2] memory allowed_cf = [int16(1), -1];
+        costumer_contract.changeSphereXOperator(address(this));
+        int256[2] memory allowed_cf = [int256(1), -1];
         uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf.length; i++) {
             allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
@@ -134,7 +135,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testPartialRevertAllowedFlow() external {
-        allowed_cf_storage = [int16(3), 4, -4, -3];
+        allowed_cf_storage = [int256(3), 4, -4, -3];
         addAllowedPattern();
         costumer_contract.call_inner();
 
@@ -143,7 +144,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function testPartialRevertNotAllowedFlow() external {
         // create an allowed cf [3,4,5,-5,-4,-3]
-        allowed_cf_storage = [int16(3), 4, 5, -5, -4, -3];
+        allowed_cf_storage = [int256(3), 4, 5, -5, -4, -3];
         addAllowedPattern();
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
@@ -158,7 +159,7 @@ contract SphereXProtectedTest is Test, CFUtils {
      */
 
     function testPublicFunction() external {
-        allowed_cf_storage = [int16(6), -6];
+        allowed_cf_storage = [int256(6), -6];
         addAllowedPattern();
 
         bytes memory publicFunctionMsgData = abi.encodeWithSelector(costumer_contract.publicFunction.selector);
@@ -185,7 +186,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testExternalCallsInternalFunction() external {
-        allowed_cf_storage = [int16(3), 4, -4, -3];
+        allowed_cf_storage = [int256(3), 4, -4, -3];
         addAllowedPattern();
 
         bytes memory externalFunctionMsgData = abi.encodeWithSelector(costumer_contract.call_inner.selector);
@@ -203,7 +204,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testPublicCallsPublic() external {
-        allowed_cf_storage = [int16(7), 6, -6, -7];
+        allowed_cf_storage = [int256(7), 6, -6, -7];
         addAllowedPattern();
 
         bytes memory publicCallsPublicMsgData = abi.encodeWithSelector(costumer_contract.publicCallsPublic.selector);
@@ -228,10 +229,10 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      twice to the engine.
      */
     function testPublicCallsSamePublic() external {
-        allowed_cf_storage = [int16(8), 8, -8, -8];
+        allowed_cf_storage = [int256(8), 8, -8, -8];
         addAllowedPattern();
 
-        allowed_cf_storage = [int16(8), 8, -8];
+        allowed_cf_storage = [int256(8), 8, -8];
         addAllowedPattern();
 
         bytes memory publicCallsSamePublicMsgData =
@@ -249,11 +250,11 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testArbitraryCall() external {
-        allowed_cf_storage = [int16(10), -10];
+        allowed_cf_storage = [int256(10), -10];
         addAllowedPattern();
 
         bytes memory engineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, int16(10));
+            abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, int256(10));
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.arbitraryCall(address(spherex_engine), engineCallMsgData);
@@ -262,10 +263,10 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testExternalCallsExternalTwice() external {
-        allowed_cf_storage = [int16(11), 12, -12, -11];
+        allowed_cf_storage = [int256(11), 12, -12, -11];
         addAllowedPattern();
 
-        allowed_cf_storage = [int16(11), 12, -12];
+        allowed_cf_storage = [int256(11), 12, -12];
         addAllowedPattern();
 
         costumer_contract.externalCallsExternal();
@@ -277,7 +278,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     //  ============ Storage thesis helper function test  ============
 
     function test_readSlot() external {
-        mockEngine mock_spherex_engine = new mockEngine();
+        MockEngine mock_spherex_engine = new MockEngine();
         uint256 before = costumer_contract.slot0();
         costumer_contract.changeSphereXEngine(address(mock_spherex_engine));
         costumer_contract.changex();
@@ -323,5 +324,96 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_allowed_flow();
+    }
+
+    function test_factorySetup() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        addAllowedPattern();
+
+        address someContract = costumer_contract.factory();
+        assertEq(SphereXProtectedBase(someContract).sphereXEngine(), 
+            SphereXProtected(costumer_contract).sphereXEngine());
+
+        assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), 
+            SphereXProtected(costumer_contract).sphereXAdmin());
+
+        assertEq(SphereXProtectedBase(someContract).sphereXOperator(), 
+            SphereXProtected(costumer_contract).sphereXOperator());
+
+    }
+
+    function test_factoryAllowedSender() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        addAllowedPattern();
+
+        address someContract = costumer_contract.factory();
+        
+        // If the factory failed to add the contract to allowed sender 
+        // we would get SphereX error: disallowed sender.
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_factoryfailsAllowedSender() public {
+        vm.expectRevert("SphereX error: sender adder required");
+        address someContract = costumer_contract.factory();
+    }
+
+    function test_factory_callCreatedContract() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(100), -100];
+        addAllowedPattern();
+        address someContract = costumer_contract.factory();
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_factoryEngineDisabled() public {
+        spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
+        
+        // deactivate the engine and check that the call to create the factory 
+        // does not fail.
+        spherex_engine.deactivateAllRules();
+        address someContract = costumer_contract.factory();
+        
+        // activate the engine and see that the new contract is disallowed 
+        spherex_engine.configureRules(PREFIX_TX_FLOW);
+        vm.expectRevert("SphereX error: disallowed sender");
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_grantSenderAdderRoleOnlyOperator() public {
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(100), -100];
+        addAllowedPattern();
+
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
+        vm.prank(address(1));
+        spherex_engine.grantSenderAdderRole(address(costumer_contract));
+        
+
+        address someContract = costumer_contract.factory();
+        SomeContract(someContract).someFunc();
+    }
+
+    function test_grantSenderAdderRoleAdminRevert() public {
+        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
+        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
+
+        vm.expectRevert("SphereX error: operator required");
+        spherex_engine.grantSenderAdderRole(address(costumer_contract));
     }
 }

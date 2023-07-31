@@ -15,6 +15,8 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     function setUp() public override {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
+        costumer_contract.changeSphereXOperator(address(this));
+
         costumer_proxy_contract = new CostumerContractProxy(address(costumer_contract));
 
         int16[2] memory allowed_cf = [int16(1), -1];
@@ -32,21 +34,5 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         p_costumerContract.changeSphereXEngine(address(spherex_engine));
 
         costumer_contract = p_costumerContract;
-    }
-
-    function testReInitialize() external {
-        address otherAddress1 = address(1);
-        CostumerContract c_contract = CostumerContract(address(costumer_proxy_contract));
-        c_contract.transferSphereXAdminRole(otherAddress1);
-        vm.prank(otherAddress1);
-        c_contract.acceptSphereXAdminRole();
-        // re initialize should not effect the spherexProtected state, therefore we expect the
-        // next call to do nothing.
-        c_contract.initialize(address(2));
-
-        // since the above call has no effect the next call should revert
-        vm.prank(address(2));
-        vm.expectRevert("SphereX error: admin required");
-        c_contract.transferSphereXAdminRole(address(1));
     }
 }

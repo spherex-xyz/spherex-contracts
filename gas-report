@@ -1,21 +1,23 @@
 | src/SphereXEngine.sol:SphereXEngine contract |                 |       |        |       |         |
 |----------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                              | Deployment Size |       |        |       |         |
-| 1847252                                      | 10391           |       |        |       |         |
+| 1912323                                      | 10716           |       |        |       |         |
 | Function Name                                | min             | avg   | median | max   | # calls |
 | OPERATOR_ROLE                                | 338             | 338   | 338    | 338   | 3       |
+| SENDER_ADDER_ROLE                            | 307             | 307   | 307    | 307   | 6       |
 | acceptDefaultAdminTransfer                   | 27892           | 27892 | 27892  | 27892 | 1       |
-| addAllowedPatterns                           | 5406            | 24458 | 25306  | 48304 | 123     |
-| addAllowedSender                             | 1007            | 24848 | 25351  | 25351 | 93      |
-| beginDefaultAdminTransfer                    | 12095           | 12095 | 12095  | 12095 | 1       |
-| configureRules                               | 2352            | 22409 | 24252  | 26252 | 96      |
-| deactivateAllRules                           | 2705            | 5308  | 6176   | 6176  | 4       |
-| grantRole                                    | 29689           | 31303 | 29689  | 34533 | 3       |
-| removeAllowedPatterns                        | 2777            | 3363  | 3656   | 3656  | 3       |
-| removeAllowedSender                          | 3006            | 5402  | 6600   | 6600  | 3       |
+| addAllowedPatterns                           | 5406            | 24670 | 25306  | 48304 | 145     |
+| addAllowedSender                             | 1007            | 24888 | 25351  | 25351 | 101     |
+| addAllowedSenderOnchain                      | 2814            | 20709 | 26675  | 26675 | 8       |
+| beginDefaultAdminTransfer                    | 12117           | 12117 | 12117  | 12117 | 1       |
+| configureRules                               | 2352            | 22551 | 24252  | 26252 | 104     |
+| deactivateAllRules                           | 2727            | 5330  | 6198   | 6198  | 4       |
+| grantRole                                    | 29623           | 30161 | 29623  | 34467 | 9       |
+| removeAllowedPatterns                        | 2725            | 3311  | 3604   | 3604  | 3       |
+| removeAllowedSender                          | 2961            | 5363  | 6564   | 6564  | 3       |
 | revokeRole                                   | 2948            | 2948  | 2948   | 2948  | 1       |
-| sphereXValidateInternalPost                  | 458             | 2129  | 1742   | 3677  | 79      |
-| sphereXValidateInternalPre                   | 434             | 4161  | 1962   | 8847  | 86      |
-| sphereXValidatePost                          | 992             | 3147  | 2659   | 4659  | 86      |
-| sphereXValidatePre                           | 926             | 5823  | 2449   | 11334 | 94      |
-| supportsInterface                            | 435             | 435   | 435    | 435   | 49      |
+| sphereXValidateInternalPost                  | 972             | 2640  | 2254   | 4181  | 79      |
+| sphereXValidateInternalPre                   | 653             | 4373  | 2178   | 9063  | 86      |
+| sphereXValidatePost                          | 992             | 3128  | 2659   | 4659  | 96      |
+| sphereXValidatePre                           | 948             | 6134  | 2513   | 11356 | 106     |
+| supportsInterface                            | 435             | 435   | 435    | 435   | 65      |

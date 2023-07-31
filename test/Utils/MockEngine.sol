@@ -6,7 +6,7 @@ pragma solidity >=0.6.2;
 import "../../src/ISphereXEngine.sol";
 import "forge-std/console.sol";
 
-contract mockEngine is ISphereXEngine {
+contract MockEngine is ISphereXEngine {
     uint256[2] public stor;
 
     function sphereXValidatePre(int256 num, address sender, bytes calldata data)
@@ -40,4 +40,6 @@ contract mockEngine is ISphereXEngine {
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(ISphereXEngine).interfaceId;
     }
+
+    function addAllowedSenderOnChain(address sender) external {}
 }

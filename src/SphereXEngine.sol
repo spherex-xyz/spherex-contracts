@@ -32,7 +32,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes32 internal constant DEACTIVATED = bytes32(0);
     uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
 
+    // the index of the addAllowedSenderOnChain in the call flow
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
+
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+    bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
 
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
         grantRole(OPERATOR_ROLE, msg.sender);
@@ -43,9 +47,15 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _;
     }
 
+    modifier onlySenderAdderRole() {
+        require(hasRole(SENDER_ADDER_ROLE, msg.sender), "SphereX error: sender adder required");
+        _;
+    }
+
     event TxStartedAtIrregularDepth();
     event ConfigureRules(bytes8 oldRules, bytes8 newRules);
     event AddedAllowedSenders(address[] senders);
+    event AddedAllowedSenderOnchain(address sender);
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint216[] patterns);
     event RemovedAllowedPatterns(uint216[] patterns);
@@ -109,6 +119,23 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
+     * Adds address that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
+     * @param sender address to add to the set of allowed addresses
+     * @notice This function adds elements to the current pattern in order to guard itself from unwanted calls.
+     * Lets say the client has a contract with SENDER_ADDER role and we approve only function indexed 1 to call addAllowedSenderOnChain.
+     * We will allow the pattern [1, addAllowedSenderOnChain, -addAllowedSenderOnChain ,-1] and by doing so we guarantee no other function
+     * will call addAllowedSenderOnChain.
+     */
+    function addAllowedSenderOnChain(address sender) external returnsIfNotActivated onlySenderAdderRole {
+        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
+
+        _allowedSenders[sender] = true;
+        emit AddedAllowedSenderOnchain(sender);
+               
+        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
+    }
+
+    /**
      * Removes address so that they will not get served when calling the engine. Transaction from these addresses will get reverted.
      * @param senders list of address to stop service.
      */
@@ -140,6 +167,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             _allowedPatterns[patterns[i]] = false;
         }
         emit RemovedAllowedPatterns(patterns);
+    }
+
+    function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
+        _grantRole(SENDER_ADDER_ROLE, newSenderAdder);
     }
 
     // ============ CF ============
