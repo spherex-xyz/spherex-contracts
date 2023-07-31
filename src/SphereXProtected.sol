@@ -37,7 +37,7 @@ abstract contract SphereXProtected {
 
     /**
      * @dev used when the client doesn't use a proxy
-     * @notice constructor visibality is required to support all compiler versions
+     * @notice constructor visibility is required to support all compiler versions
      */
     constructor() internal {
         __SphereXProtected_init();
@@ -64,7 +64,7 @@ abstract contract SphereXProtected {
     }
 
     /**
-     * Stores a new address in an abitrary slot
+     * Stores a new address in an arbitrary slot
      * @param slot where to store the address
      * @param newAddress address to store in given slot
      */
@@ -160,7 +160,7 @@ abstract contract SphereXProtected {
     /**
      *
      * @param newSphereXEngine new address of the spherex engine
-     * @dev this is also used to actually enable the defence
+     * @dev this is also used to actually enable the defense
      * (because as long is this address is 0, the protection is disabled).
      */
     function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
@@ -236,7 +236,7 @@ abstract contract SphereXProtected {
      * @dev internal function for engine communication. We use it to reduce contract size.
      *  Should be called after the code of a function.
      * @param num function identifier
-     * @param gas the gas saved before the original function nody run
+     * @param gas the gas saved before the original function body run
      */
     function _sphereXValidateInternalPost(int256 num, uint256 gas) private returnsIfNotActivated {
         _sphereXEngine().sphereXValidateInternalPost(num, gas - gasleft());
@@ -261,7 +261,7 @@ abstract contract SphereXProtected {
     }
 
     /**
-     *  @dev Modifier to be incorporated in all public rotected non-view functions
+     *  @dev Modifier to be incorporated in all public protected non-view functions
      */
     modifier sphereXGuardPublic(int256 num, bytes4 selector) {
         ModifierLocals memory locals = _sphereXValidatePre(num, msg.sig == selector);

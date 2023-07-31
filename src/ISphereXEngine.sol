@@ -5,8 +5,8 @@ pragma solidity ^0.8.17;
 
 import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
 /**
- * @title Interface for SphereXEngine - defenitions of core functionality
- * @author SphereX Technolegies ltd
+ * @title Interface for SphereXEngine - definitions of core functionality
+ * @author SphereX Technologies ltd
  * @notice This interface is imported by SphereXProtected, so that SphereXProtected can call functions from SphereXEngine
  * @dev Full docs of these functions can be found in SphereXEngine
  */

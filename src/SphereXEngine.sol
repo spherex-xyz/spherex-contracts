@@ -217,7 +217,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num id of function to add. Should be positive
      * @param sender For future use
      * @param data For future use
-     * @return result in the future will return insturction on what storage slots to gather, but not used for now
+     * @return result in the future will return instruction on what storage slots to gather, but not used for now
      */
     function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
