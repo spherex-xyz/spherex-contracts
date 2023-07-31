@@ -87,15 +87,15 @@ contract SphereXEngineTest is Test, CFUtils {
 
     function test_addAllowedPatterns_two_patterns() public activateRule(CF) {
         int16[2] memory allowed_cf = [int16(1), -1];
-        uint256 allowed_cf_hash = 1;
+        uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint256(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash)));
+            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
         }
 
         int16[2] memory allowed_cf_2 = [int16(2), -2];
-        uint256 allowed_cf_hash_2 = 1;
+        uint216 allowed_cf_hash_2 = 1;
         for (uint256 i = 0; i < allowed_cf_2.length; i++) {
-            allowed_cf_hash_2 = uint256(keccak256(abi.encode(int256(allowed_cf_2[i]), allowed_cf_hash_2)));
+            allowed_cf_hash_2 = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf_2[i]), allowed_cf_hash_2))));
         }
 
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_2];
@@ -116,7 +116,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
     function test_removeAllowedPatterns(bytes8 rule) public activateRule(rule) {
         allowed_cf_storage = [int16(1), -1];
-        uint256 allowed_cf_hash = addAllowedPattern();
+        uint216 allowed_cf_hash = addAllowedPattern();
 
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
@@ -129,11 +129,11 @@ contract SphereXEngineTest is Test, CFUtils {
     // remove two cf and check that the first one was removed
     function test_removeAllowedPatterns_check_first_pattern_removed() public activateRule(CF) {
         allowed_cf_storage = [int16(1), -1];
-        uint256 allowed_cf_hash = addAllowedPattern();
+        uint216 allowed_cf_hash = addAllowedPattern();
         allowed_cf_storage = [int16(2), -2];
         addAllowedPattern();
         allowed_cf_storage = [int16(3), -3];
-        uint256 allowed_cf_hash_3 = addAllowedPattern();
+        uint216 allowed_cf_hash_3 = addAllowedPattern();
 
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
@@ -149,11 +149,11 @@ contract SphereXEngineTest is Test, CFUtils {
     // remove two cf and check that the second one was removed
     function test_removeAllowedPatterns_check_second_pattern_removed() public activateRule(CF) {
         allowed_cf_storage = [int16(1), -1];
-        uint256 allowed_cf_hash = addAllowedPattern();
+        uint216 allowed_cf_hash = addAllowedPattern();
         allowed_cf_storage = [int16(2), -2];
         addAllowedPattern();
         allowed_cf_storage = [int16(3), -3];
-        uint256 allowed_cf_hash_3 = addAllowedPattern();
+        uint216 allowed_cf_hash_3 = addAllowedPattern();
 
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
@@ -334,10 +334,8 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         sendNumberToEngine(1);
-        assertEq(
-            vm.load(address(spherex_engine), currentPatternStorageSlot), keccak256(abi.encode(int256(1), uint256(1)))
-        );
-        assertEq(vm.load(address(spherex_engine), cfDepthStorageSlot), bytes32(uint256(2)));
+        assertEq(getCurrentPattern(), uint216(bytes27(keccak256(abi.encode(int256(1), uint256(1))))));
+        assertEq(getCurrentCallDepth(), uint16(2));
 
         sendNumberToEngine(-1);
         assertFlowStorageSlotsInInitialState();
@@ -354,8 +352,8 @@ contract SphereXEngineTest is Test, CFUtils {
             sendNumberToEngine(allowed_cf_storage[i]);
         }
 
-        assertEq(vm.load(address(spherex_engine), currentPatternStorageSlot) != bytes32(uint256(1)), true);
-        assertEq(vm.load(address(spherex_engine), cfDepthStorageSlot), bytes32(uint256(1)));
+        assertEq(getCurrentPattern() != uint216(1), true);
+        assertEq(getCurrentCallDepth(), uint16(1));
     }
 
     // Sanity check, unlike cf the current pattern isnt being cleaned at depth==1 hence this
@@ -465,8 +463,8 @@ contract SphereXEngineTest is Test, CFUtils {
 
         // the slot layout is 0x[32 empty bits][160 bits for origin address][64 bits for block number]
         assertEq(
-            (vm.load(address(spherex_engine), currentBlockStorageSlot)),
-            keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty))
+            getCurrentBlockBoundry(),
+            bytes3(keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty)))
         );
     }
 
