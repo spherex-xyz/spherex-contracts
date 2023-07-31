@@ -25,6 +25,7 @@ contract SphereXEngine is Ownable, ISphereXEngine {
     uint256 private constant PATTERN_START = 1;
     uint256 private constant DEPTH_START = 1;
     bytes32 private constant DEACTIVATED = bytes32(0);
+    uint64 private constant RULES_1_AND_2_TOGETHER = 3;
 
     event TxStartedAtIrregularDepth();
 
@@ -47,14 +48,15 @@ contract SphereXEngine is Ownable, ISphereXEngine {
      * Activate the guardian rules
      * @param rules bytes8 representing the new rules to activate.
      */
-    function activateRules(bytes8 rules) external onlyOwner {
+    function configureRules(bytes8 rules) external onlyOwner {
+        require(RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "Illegal rules combination");
         _engineRules = rules;
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
-    function deactivateRules() external onlyOwner {
+    function deactivateAllRules() external onlyOwner {
         _engineRules = bytes8(uint64(0));
     }
 
