@@ -206,6 +206,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit RemovedAllowedPatterns(patterns);
     }
 
+    /**
+     * Exclude allowed patterns from gas checks during transaction flow.
+     * @param patterns list of flows that should be excluded from gas checks
+     */
     function excludePatternsFromGas(uint200[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
@@ -215,6 +219,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit ExcludePatternsFromGas(patterns);
     }
 
+    /**
+     * Include allowed patterns for gas checks during transaction flow.
+     * @param patterns list of flows that should be included for gas checks
+     */
     function incluePatternsInGas(uint200[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
