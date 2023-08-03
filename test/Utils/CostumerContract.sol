@@ -23,7 +23,7 @@ contract CostumerContractProxy is Proxy {
 contract SomeContract is SphereXProtectedBase {
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
-    function someFunc() external sphereXGuardExternal(100){}
+    function someFunc() external sphereXGuardExternal(100) {}
 }
 
 contract CostumerContract is SphereXProtected {
@@ -91,8 +91,8 @@ contract CostumerContract is SphereXProtected {
         return true;
     }
 
-    function factory() external sphereXGuardExternal(13) returns(address) {
-        someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine()); 
+    function factory() external sphereXGuardExternal(13) returns (address) {
+        someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);
     }

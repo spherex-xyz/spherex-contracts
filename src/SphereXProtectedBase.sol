@@ -38,17 +38,17 @@ abstract contract SphereXProtectedBase {
      * @dev used when the client doesn't use a proxy
      * @notice constructor visibility is required to support all compiler versions
      */
-    constructor(address admin, address operator ,address engine) {
+    constructor(address admin, address operator, address engine) {
         __SphereXProtectedBase_init(admin, operator, engine);
     }
 
     /**
      * @dev used when the client uses a proxy - should be called by the inhereter initialization
      */
-    function __SphereXProtectedBase_init(address admin, address operator ,address engine) internal virtual {
+    function __SphereXProtectedBase_init(address admin, address operator, address engine) internal virtual {
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, admin);
         emit SpherexAdminTransferCompleted(address(0), admin);
-        
+
         _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, operator);
         emit ChangedSpherexOperator(address(0), operator);
 
@@ -199,11 +199,10 @@ abstract contract SphereXProtectedBase {
 
     function _addAllowedSenderOnChain(address newSender) internal {
         ISphereXEngine engine = _sphereXEngine();
-        if (address(engine) != address(0)){
+        if (address(engine) != address(0)) {
             engine.addAllowedSenderOnChain(newSender);
-        }    
+        }
     }
-        
 
     // ============ Hooks ============
 

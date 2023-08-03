@@ -17,17 +17,46 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint16 depth;
         // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
         bytes3 txBoundaryHash;
-        uint216 pattern;
+        uint16 currentGasStrikes;
+        uint200 pattern;
     }
 
-    bytes8 internal _engineRules; // By default the contract will be deployed with no guarding rules activated
-    mapping(address => bool) internal _allowedSenders;
-    mapping(uint216 => bool) internal _allowedPatterns;
+    struct ThesisConfiguration {
+        bytes8 engineRules; // By default the contract will be deployed with no guarding rules activated
+        uint16 gasStrikeOuts;
+    }
 
-    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, bytes3(uint24(1)), PATTERN_START);
+    struct PatternConfig {
+        bool allowed;
+        bool gasBypass;
+        uint32 minGas;
+        uint32 maxGas;
+    }
+
+    struct PatternGasConfig {
+        uint200 pattern;
+        uint32[] gasExact;
+        uint32 minGas;
+        uint32 maxGas;
+    }
+
+    struct GasExactPatterns {
+        uint200 pattern;
+        uint32[] gasExact;
+    }
+
+    ThesisConfiguration internal _thesisConfig;
+
+    mapping(address => bool) internal _allowedSenders;
+    mapping(uint200 => PatternConfig) internal _allowedPatterns;
+    mapping(uint200 => bool) internal _allowedPatternsExactGas;
+
+    FlowConfiguration internal _flowConfig =
+        FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
-    uint216 internal constant PATTERN_START = 1;
+    uint16 internal constant GAS_STRIKES_START = 0;
+    uint200 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
     uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
@@ -57,11 +86,15 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event AddedAllowedSenders(address[] senders);
     event AddedAllowedSenderOnchain(address sender);
     event RemovedAllowedSenders(address[] senders);
-    event AddedAllowedPatterns(uint216[] patterns);
-    event RemovedAllowedPatterns(uint216[] patterns);
+    event AddedAllowedPatterns(uint200[] patterns);
+    event RemovedAllowedPatterns(uint200[] patterns);
+    event AddedAllowedGasPatterns(PatternGasConfig[] gasPatterns);
+    event RemoveGasExactPatterns(PatternGasConfig[] gasPatterns);
+    event ExcludePatternsFromGas(uint200[] patterns);
+    event IncluePatternsInGas(uint200[] patterns);
 
     modifier returnsIfNotActivated() {
-        if (_engineRules == DEACTIVATED) {
+        if (_thesisConfig.engineRules == DEACTIVATED) {
             return;
         }
 
@@ -93,17 +126,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         require(
             RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "SphereX error: illegal rules combination"
         );
-        bytes8 oldRules = _engineRules;
-        _engineRules = rules;
-        emit ConfigureRules(oldRules, _engineRules);
+        bytes8 oldRules = _thesisConfig.engineRules;
+        _thesisConfig.engineRules = rules;
+        emit ConfigureRules(oldRules, _thesisConfig.engineRules);
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
     function deactivateAllRules() external onlyOperator {
-        bytes8 oldRules = _engineRules;
-        _engineRules = bytes8(uint64(0));
+        bytes8 oldRules = _thesisConfig.engineRules;
+        _thesisConfig.engineRules = bytes8(uint64(0));
         emit ConfigureRules(oldRules, 0);
     }
 
@@ -128,11 +161,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function addAllowedSenderOnChain(address sender) external returnsIfNotActivated onlySenderAdderRole {
         _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
-
+        uint256 gas = gasleft();
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
-               
-        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
+
+        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, gas - gasleft(), true);
     }
 
     /**
@@ -150,9 +183,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Add allowed patterns - these are representation of allowed flows of transactions, and prefixes of these flows
      * @param patterns list of flows to allow as valid and non-malicious flows
      */
-    function addAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
+    function addAllowedPatterns(uint200[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = true;
+            PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
+            patternConfig.allowed = true;
+            _allowedPatterns[patterns[i]] = patternConfig;
         }
         emit AddedAllowedPatterns(patterns);
     }
@@ -162,24 +197,104 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * that are no longer considered valid and benign
      * @param patterns list of flows that no longer considered valid and non-malicious
      */
-    function removeAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
+    function removeAllowedPatterns(uint200[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
-            _allowedPatterns[patterns[i]] = false;
+            PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
+            patternConfig.allowed = false;
+            _allowedPatterns[patterns[i]] = patternConfig;
         }
         emit RemovedAllowedPatterns(patterns);
+    }
+
+    function excludePatternsFromGas(uint200[] calldata patterns) external onlyOperator {
+        for (uint256 i = 0; i < patterns.length; ++i) {
+            PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
+            patternConfig.gasBypass = true;
+            _allowedPatterns[patterns[i]] = patternConfig;
+        }
+        emit ExcludePatternsFromGas(patterns);
+    }
+
+    function incluePatternsInGas(uint200[] calldata patterns) external onlyOperator {
+        for (uint256 i = 0; i < patterns.length; ++i) {
+            PatternConfig memory patternConfig = _allowedPatterns[patterns[i]];
+            patternConfig.gasBypass = false;
+            _allowedPatterns[patterns[i]] = patternConfig;
+        }
+        emit IncluePatternsInGas(patterns);
+    }
+
+    /**
+     * Add allowed gas patterns - the allowd gas exact values for each pattern and the pattern's gas range.
+     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
+     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     */
+    function changeGasRangePatterns(PatternGasConfig[] calldata gasPatterns) external onlyOperator {
+        for (uint256 i = 0; i < patterns.length; ++i) {
+            PatternConfig memory patternConfig = _allowedPatterns[gasPatterns[i].pattern];
+            patternConfig.minGas = gasPatterns[i].minGas;
+            patternConfig.maxGas = gasPatterns[i].maxGas;
+            _allowedPatterns[patterns[i].pattern] = patternConfig;
+            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = true;
+            }
+        }
+        emit AddedAllowedGasPatterns(gasPatterns);
+    }
+
+    /**
+     * Add allowed gas exact patterns - the allowd gas exact values for each pattern.
+     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
+     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     */
+    function addGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
+        for (uint256 i = 0; i < patterns.length; ++i) {
+            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = true;
+            }
+        }
+        emit RemoveGasExactPatterns(gasPatterns);
+    }
+
+    /**
+     * Remove allowed gas exact patterns - the allowd gas exact values for each pattern.
+     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
+     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     */
+    function removeGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
+        for (uint256 i = 0; i < patterns.length; ++i) {
+            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = false;
+            }
+        }
+        emit RemoveGasExactPatterns(gasPatterns);
     }
 
     function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
         _grantRole(SENDER_ADDER_ROLE, newSenderAdder);
     }
 
-    // ============ CF ============
+    // ============ Protect logic ============
 
     /**
      * Checks if rule1 is activated.
      */
-    function _isRule1Activated() internal view returns (bool) {
-        return (_engineRules & bytes8(uint64(1))) > 0;
+    function _isCfActivated() internal view returns (bool) {
+        return (_thesisConfig.engineRules & bytes8(uint64(1))) > 0;
+    }
+
+    /**
+     * Checks if rule3 is activated.
+     */
+    function _isGasActivated() internal view returns (bool) {
+        return (_thesisConfig.engineRules & bytes8(uint64(4))) > 0;
+    }
+
+    /**
+     * Returns the number of strike outs allowed for a tx under gas enforcment.
+     */
+    function _getGasStirkeOuts() internal view returns (uint16) {
+        return _thesisConfig.gasStrikeOuts;
     }
 
     /**
@@ -205,7 +320,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
         }
 
-        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         ++flowConfig.depth;
 
         _flowConfig = flowConfig;
@@ -217,21 +332,20 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow. should be negative.
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
-    function _addCfElementFunctionExit(int256 num, bool forceCheck) internal {
+    function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
 
-
-        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;
 
         if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-            _checkCallFlow(flowConfig.pattern);
+            _checkCallFlow(flowConfig, gas);
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // currentPattern
-        if (flowConfig.depth == DEPTH_START && _isRule1Activated()) {
+        if (flowConfig.depth == DEPTH_START && _isCfActivated()) {
             flowConfig.pattern = PATTERN_START;
         }
 
@@ -241,8 +355,36 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(uint216 pattern) internal view {
-        require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
+    function _checkCallFlow(FlowConfiguration memory flowConfig, uint256 gas) internal {
+        PatternState memory patternState = _allowedPatterns[flowConfig.pattern];
+        require(patternState.allowed, "SphereX error: disallowed tx pattern");
+
+        if (!isGasAllowed(patternState, gas)) {
+            flowConfig.currentGasStrikes += 1;
+            if (flowConfig.currentGasStrikes > _getGasStirkeOuts()) {
+                revert("SphereX error: disallowed tx gas pattern");
+            }
+        }
+    }
+
+    function isGasAllowed(PatternState memory patternState, uint256 gas) internal returns (bool) {
+        if (patternState.gasBypass) {
+            return true;
+        }
+        uint200 patternGas = uint200(bytes25(keccak256(abi.encode(patternState, gas))));
+        if (_allowedPatternsExactGas[patternGas]) {
+            return true;
+        }
+        if (0 == patternState.maxGas) {
+            return false;
+        }
+        if (gas < patternState.minGas) {
+            return false;
+        }
+        if (gas > patternState.maxGas) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -277,7 +419,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override returnsIfNotActivated onlyApprovedSenders {
-        _addCfElementFunctionExit(num, true);
+        _addCfElementFunctionExit(num, gas, true);
     }
 
     /**
@@ -306,6 +448,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override returnsIfNotActivated onlyApprovedSenders {
-        _addCfElementFunctionExit(num, false);
+        _addCfElementFunctionExit(num, gas, false);
     }
 }
