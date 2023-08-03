@@ -30,9 +30,9 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
         int256[2] memory allowed_cf = [int256(1), -1];
-        uint216 allowed_cf_hash = 1;
+        uint200 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
+            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
         }
         allowed_patterns.push(allowed_cf_hash);
         allowed_senders.push(address(costumer_contract));

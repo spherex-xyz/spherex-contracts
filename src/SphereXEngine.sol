@@ -45,11 +45,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint32[] gasExact;
     }
 
-    ThesisConfiguration internal _thesisConfig;
-
     mapping(address => bool) internal _allowedSenders;
     mapping(uint200 => PatternConfig) internal _allowedPatterns;
     mapping(uint256 => bool) internal _allowedPatternsExactGas;
+    ThesisConfiguration internal _thesisConfig;
 
     FlowConfiguration internal _flowConfig =
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
@@ -314,6 +313,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (currentTxBoundaryHash != flowConfig.txBoundaryHash) {
             flowConfig.pattern = PATTERN_START;
             flowConfig.txBoundaryHash = currentTxBoundaryHash;
+            flowConfig.currentGasStrikes = GAS_STRIKES_START;
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
@@ -360,7 +360,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         PatternConfig memory patternState = _allowedPatterns[flowConfig.pattern];
         require(patternState.allowed, "SphereX error: disallowed tx pattern");
 
-        if (!isGasAllowed(patternState, gas)) {
+        if (_isGasActivated() && !isGasAllowed(patternState, gas)) {
             flowConfig.currentGasStrikes += 1;
             if (flowConfig.currentGasStrikes > _getGasStirkeOuts()) {
                 revert("SphereX error: disallowed tx gas pattern");
