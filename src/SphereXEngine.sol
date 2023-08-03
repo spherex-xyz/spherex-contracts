@@ -49,7 +49,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     mapping(address => bool) internal _allowedSenders;
     mapping(uint200 => PatternConfig) internal _allowedPatterns;
-    mapping(uint200 => bool) internal _allowedPatternsExactGas;
+    mapping(uint256 => bool) internal _allowedPatternsExactGas;
 
     FlowConfiguration internal _flowConfig =
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
@@ -88,8 +88,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint200[] patterns);
     event RemovedAllowedPatterns(uint200[] patterns);
-    event AddedAllowedGasPatterns(PatternGasConfig[] gasPatterns);
-    event RemoveGasExactPatterns(PatternGasConfig[] gasPatterns);
+    event ChangeGasRangePatterns(PatternGasConfig[] gasPatterns);
+    event AddGasExactPatterns(GasExactPatterns[] gasPatterns);
+    event RemoveGasExactPatterns(GasExactPatterns[] gasPatterns);
     event ExcludePatternsFromGas(uint200[] patterns);
     event IncluePatternsInGas(uint200[] patterns);
 
@@ -230,16 +231,16 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
      */
     function changeGasRangePatterns(PatternGasConfig[] calldata gasPatterns) external onlyOperator {
-        for (uint256 i = 0; i < patterns.length; ++i) {
+        for (uint256 i = 0; i < gasPatterns.length; ++i) {
             PatternConfig memory patternConfig = _allowedPatterns[gasPatterns[i].pattern];
             patternConfig.minGas = gasPatterns[i].minGas;
             patternConfig.maxGas = gasPatterns[i].maxGas;
-            _allowedPatterns[patterns[i].pattern] = patternConfig;
-            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = true;
+            _allowedPatterns[gasPatterns[i].pattern] = patternConfig;
+            for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = true;
             }
         }
-        emit AddedAllowedGasPatterns(gasPatterns);
+        emit ChangeGasRangePatterns(gasPatterns);
     }
 
     /**
@@ -248,12 +249,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
      */
     function addGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
-        for (uint256 i = 0; i < patterns.length; ++i) {
-            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = true;
+        for (uint256 i = 0; i < gasPatterns.length; ++i) {
+            for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = true;
             }
         }
-        emit RemoveGasExactPatterns(gasPatterns);
+        emit AddGasExactPatterns(gasPatterns);
     }
 
     /**
@@ -262,9 +263,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
      */
     function removeGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
-        for (uint256 i = 0; i < patterns.length; ++i) {
-            for (uint256 j = 0; j < patterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[keccak256(abi.encoded(patterns[i].pattern, patterns[i].gasExact[j]))] = false;
+        for (uint256 i = 0; i < gasPatterns.length; ++i) {
+            for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
+                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = false;
             }
         }
         emit RemoveGasExactPatterns(gasPatterns);
@@ -355,8 +356,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(FlowConfiguration memory flowConfig, uint256 gas) internal {
-        PatternState memory patternState = _allowedPatterns[flowConfig.pattern];
+    function _checkCallFlow(FlowConfiguration memory flowConfig, uint256 gas) internal view {
+        PatternConfig memory patternState = _allowedPatterns[flowConfig.pattern];
         require(patternState.allowed, "SphereX error: disallowed tx pattern");
 
         if (!isGasAllowed(patternState, gas)) {
@@ -367,21 +368,21 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function isGasAllowed(PatternState memory patternState, uint256 gas) internal returns (bool) {
-        if (patternState.gasBypass) {
+    function isGasAllowed(PatternConfig memory patternConfig, uint256 gas) internal view returns (bool) {
+        if (patternConfig.gasBypass) {
             return true;
         }
-        uint200 patternGas = uint200(bytes25(keccak256(abi.encode(patternState, gas))));
+        uint200 patternGas = uint200(bytes25(keccak256(abi.encode(patternConfig, gas))));
         if (_allowedPatternsExactGas[patternGas]) {
             return true;
         }
-        if (0 == patternState.maxGas) {
+        if (0 == patternConfig.maxGas) {
             return false;
         }
-        if (gas < patternState.minGas) {
+        if (gas < patternConfig.minGas) {
             return false;
         }
-        if (gas > patternState.maxGas) {
+        if (gas > patternConfig.maxGas) {
             return false;
         }
         return true;
