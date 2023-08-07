@@ -30,7 +30,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.configureRules(CF);
         p_costumerContract = CostumerContract(address(costumer_proxy_contract));
-        p_costumerContract.initialize(address(this));
+        p_costumerContract.initialize(address(this), address(0));
         p_costumerContract.changeSphereXEngine(address(spherex_engine));
 
         costumer_contract = p_costumerContract;

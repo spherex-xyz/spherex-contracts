@@ -21,6 +21,8 @@ contract CFUtils is Test {
     bytes32 constant flowConfigStorageSlot = bytes32(uint256(7));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
+    bytes8 constant GAS = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
+
 
     function getCurrentCallDepth() internal returns (uint16) {
         return uint16(bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 240));

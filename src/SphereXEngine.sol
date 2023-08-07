@@ -33,9 +33,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint32 maxGas;
     }
 
-    struct PatternGasConfig {
+    struct GasRangePatterns {
         uint200 pattern;
-        uint32[] gasExact;
         uint32 minGas;
         uint32 maxGas;
     }
@@ -87,7 +86,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint200[] patterns);
     event RemovedAllowedPatterns(uint200[] patterns);
-    event ChangeGasRangePatterns(PatternGasConfig[] gasPatterns);
+    event ChangeGasRangePatterns(GasRangePatterns[] gasPatterns);
     event AddGasExactPatterns(GasExactPatterns[] gasPatterns);
     event RemoveGasExactPatterns(GasExactPatterns[] gasPatterns);
     event ExcludePatternsFromGas(uint200[] patterns);
@@ -233,19 +232,15 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Add allowed gas patterns - the allowd gas exact values for each pattern and the pattern's gas range.
-     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
-     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     * Add allowed gas range patterns
+     * @param gasPatterns list of patterns with their corresponding gas range.
      */
-    function changeGasRangePatterns(PatternGasConfig[] calldata gasPatterns) external onlyOperator {
+    function changeGasRangePatterns(GasRangePatterns[] calldata gasPatterns) external onlyOperator {
         for (uint256 i = 0; i < gasPatterns.length; ++i) {
             PatternConfig memory patternConfig = _allowedPatterns[gasPatterns[i].pattern];
             patternConfig.minGas = gasPatterns[i].minGas;
             patternConfig.maxGas = gasPatterns[i].maxGas;
             _allowedPatterns[gasPatterns[i].pattern] = patternConfig;
-            for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = true;
-            }
         }
         emit ChangeGasRangePatterns(gasPatterns);
     }
@@ -253,7 +248,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Add allowed gas exact patterns - the allowd gas exact values for each pattern.
      * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
-     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     * @param gasPatterns list of patterns with their corresponding gas exact values.
      */
     function addGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
         for (uint256 i = 0; i < gasPatterns.length; ++i) {
@@ -267,7 +262,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Remove allowed gas exact patterns - the allowd gas exact values for each pattern.
      * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedPatternsExactGas.
-     * @param gasPatterns list of patterns with their corresponding gas exact values and gas range.
+     * @param gasPatterns list of patterns with their corresponding gas exact values.
      */
     function removeGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
         for (uint256 i = 0; i < gasPatterns.length; ++i) {
@@ -276,6 +271,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
         }
         emit RemoveGasExactPatterns(gasPatterns);
+    }
+    
+    /**
+     * Set the new strike out liimit for the gas thesis.
+     * @param newLimit the new strike out limit for the gas thesis.
+     */
+    function setGasStrikeOutsLimit(uint16 newLimit) external onlyOperator {
+        _thesisConfig.gasStrikeOuts = newLimit;
     }
 
     function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
@@ -368,7 +371,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         PatternConfig memory patternState = _allowedPatterns[flowConfig.pattern];
         require(patternState.allowed, "SphereX error: disallowed tx pattern");
 
-        if (_isGasActivated() && !isGasAllowed(patternState, gas)) {
+        if (_isGasActivated() && !isGasAllowed(flowConfig.pattern, patternState, gas)) {
             flowConfig.currentGasStrikes += 1;
             if (flowConfig.currentGasStrikes > _getGasStirkeOuts()) {
                 revert("SphereX error: disallowed tx gas pattern");
@@ -376,21 +379,18 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function isGasAllowed(PatternConfig memory patternConfig, uint256 gas) internal view returns (bool) {
+    function isGasAllowed(uint200 pattern, PatternConfig memory patternConfig, uint256 gas) internal view returns (bool) {
         if (patternConfig.gasBypass) {
             return true;
         }
-        uint200 patternGas = uint200(bytes25(keccak256(abi.encode(patternConfig, gas))));
+        uint256 patternGas = uint256(keccak256(abi.encode(pattern, gas)));
         if (_allowedPatternsExactGas[patternGas]) {
             return true;
         }
-        if (0 == patternConfig.maxGas) {
+        if (gas > patternConfig.maxGas) {
             return false;
         }
         if (gas < patternConfig.minGas) {
-            return false;
-        }
-        if (gas > patternConfig.maxGas) {
             return false;
         }
         return true;
