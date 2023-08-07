@@ -57,7 +57,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint200 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
-    uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
+    uint64 internal constant RULE_GAS = 4;
+    uint64 internal constant RULE_TXF = 2;
+    uint64 internal constant RULE_CF = 1;
+
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -123,8 +126,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function configureRules(bytes8 rules) external onlyOperator {
         require(
-            RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "SphereX error: illegal rules combination"
+            (RULE_CF + RULE_TXF) & uint64(rules) != (RULE_CF + RULE_TXF), "SphereX error: illegal rules combination"
         );
+        require(
+            (RULE_CF + RULE_GAS) & uint64(rules) != (RULE_CF + RULE_GAS), "SphereX error: illegal rules combination"
+        );
+
         bytes8 oldRules = _thesisConfig.engineRules;
         _thesisConfig.engineRules = rules;
         emit ConfigureRules(oldRules, _thesisConfig.engineRules);
