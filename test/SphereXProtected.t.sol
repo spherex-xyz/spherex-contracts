@@ -13,19 +13,36 @@ import "../src/SphereXProtected.sol";
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
+    SphereXEngine.GasRangePatterns[] gasRanges;
+    SphereXEngine.GasExactPatterns[] gasExacts;
+    uint32[] gasNumbersExacts;
 
-    modifier activateRule2() {
+    modifier activateRuleTXF() {
         spherex_engine.configureRules(PREFIX_TX_FLOW);
-        allowed_cf_storage = [int256(1), -1, 11, 12, -12, -11];
-        addAllowedPattern();
+        _;
+    }
+
+    modifier activateRuleCF() {
+        spherex_engine.configureRules(CF);
+        _;
+    }
+
+    modifier activateRuleGAS() {
+        spherex_engine.configureRules(GAS);
+        _;
+    }
+
+    modifier allowPattern_1__1_11_12__12__11() {
         allowed_cf_storage = [int256(1), -1];
         addAllowedPattern();
         allowed_cf_storage = [int256(1), -1, 11, 12, -12];
         addAllowedPattern();
+        allowed_cf_storage = [int256(1), -1, 11, 12, -12, -11];
+        addAllowedPattern();
         _;
     }
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
@@ -39,14 +56,14 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.configureRules(bytes8(uint64(1)));
+        spherex_engine.configureRules(CF);
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
     }
 
     //  ============ Managment functions  ============
 
-    function test_changeSphereXEngine_disable_engine() external {
+    function test_changeSphereXEngine_disable_engine() external activateRuleCF {
         // this test covers enable->disable (by default the engine is enabled in the set up)
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
@@ -54,7 +71,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_enable() external {
+    function test_changeSphereXEngine_disable_enable() external activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -66,7 +83,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_disable() external {
+    function test_changeSphereXEngine_disable_disable() external activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -76,7 +93,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_enable_enable() external {
+    function test_changeSphereXEngine_enable_enable() external activateRuleCF {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
@@ -91,7 +108,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXAdmin() external {
+    function test_changeSphereXAdmin() external activateRuleCF{
         address otherAddress = address(1);
 
         costumer_contract.transferSphereXAdminRole(otherAddress);
@@ -114,27 +131,27 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Call flow thesis tests  ============
 
-    function testAllowed() external {
+    function testAllowed() external activateRuleCF {
         costumer_contract.try_allowed_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testTwoAllowedCall() external {
+    function testTwoAllowedCall() external activateRuleCF {
         costumer_contract.try_allowed_flow();
         costumer_contract.try_allowed_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testBlocked() external {
+    function testBlocked() external activateRuleCF {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertAllowedFlow() external {
+    function testPartialRevertAllowedFlow() external activateRuleCF {
         allowed_cf_storage = [int256(3), 4, -4, -3];
         addAllowedPattern();
         costumer_contract.call_inner();
@@ -142,7 +159,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertNotAllowedFlow() external {
+    function testPartialRevertNotAllowedFlow() external activateRuleCF {
         // create an allowed cf [3,4,5,-5,-4,-3]
         allowed_cf_storage = [int256(3), 4, 5, -5, -4, -3];
         addAllowedPattern();
@@ -158,7 +175,7 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      to the engine at the post call except for the num parameter.
      */
 
-    function testPublicFunction() external {
+    function testPublicFunction() external activateRuleCF {
         allowed_cf_storage = [int256(6), -6];
         addAllowedPattern();
 
@@ -174,7 +191,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalFunction() external {
+    function testExternalFunction() external activateRuleCF {
         bytes memory externalFunctionMsgData = abi.encodeWithSelector(costumer_contract.try_allowed_flow.selector);
         bytes memory engineCallMsgData =
             abi.encodeWithSelector(spherex_engine.sphereXValidatePre.selector, 1, address(1), externalFunctionMsgData);
@@ -185,7 +202,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalCallsInternalFunction() external {
+    function testExternalCallsInternalFunction() external activateRuleCF {
         allowed_cf_storage = [int256(3), 4, -4, -3];
         addAllowedPattern();
 
@@ -203,7 +220,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPublicCallsPublic() external {
+    function testPublicCallsPublic() external activateRuleCF {
         allowed_cf_storage = [int256(7), 6, -6, -7];
         addAllowedPattern();
 
@@ -228,7 +245,7 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      being called externally, will trigger sending msg.data
      *      twice to the engine.
      */
-    function testPublicCallsSamePublic() external {
+    function testPublicCallsSamePublic() external activateRuleCF {
         allowed_cf_storage = [int256(8), 8, -8, -8];
         addAllowedPattern();
 
@@ -249,7 +266,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testArbitraryCall() external {
+    function testArbitraryCall() external activateRuleCF {
         allowed_cf_storage = [int256(10), -10];
         addAllowedPattern();
 
@@ -262,7 +279,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalCallsExternalTwice() external {
+    function testExternalCallsExternalTwice() external activateRuleCF {
         allowed_cf_storage = [int256(11), 12, -12, -11];
         addAllowedPattern();
 
@@ -290,22 +307,22 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Prefix tx flow  ============
     // We initialize the engine (in the activateRule2 modifier) such that
-    // the allowed patterns are calling allowed, and calling allowed,externalCallsExternal
+    // the allowed patterns are allowed, and allowed,externalCallsExternal.
     // calling only externalCallsExternal is prohibited
 
-    function test_PrefixTxFlow_sanity() public activateRule2 {
+    function test_PrefixTxFlow_sanity() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_sanity_revert() public activateRule2 {
+    function test_PrefixTxFlow_sanity_revert() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         vm.roll(2);
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_known_issue_good_scenario() public activateRule2 {
+    function test_PrefixTxFlow_known_issue_good_scenario() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
@@ -318,13 +335,15 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_known_issue_bad_scenario() public activateRule2 {
+    function test_PrefixTxFlow_known_issue_bad_scenario() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_allowed_flow();
     }
+
+    //  ============ Factory scenario  ============
 
     function test_factorySetup() public {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
@@ -415,4 +434,84 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.expectRevert("SphereX error: operator required");
         spherex_engine.grantSenderAdderRole(address(costumer_contract));
     }
+
+    //  ============ Gas thesis tests  ============
+    function test_patternExcludedFromGas() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+
+        spherex_engine.excludePatternsFromGas(allowed_patterns);
+
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_patternIncludedInGas_noRange_noExacts() external activateRuleGAS {
+        
+        vm.expectRevert("SphereX error: disallowed tx gas pattern");
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_exactGas() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+
+        gasNumbersExacts = [uint32(431)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+
+        spherex_engine.addGasExactPatterns(gasExacts);
+
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_exactGas_wrong_gas_value() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+
+        gasNumbersExacts = [uint32(432)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+
+        spherex_engine.addGasExactPatterns(gasExacts);
+
+        vm.expectRevert("SphereX error: disallowed tx gas pattern");
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_gasRange() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+        
+        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 500));
+        
+        spherex_engine.changeGasRangePatterns(gasRanges);
+
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_gasRange_wrong_gas_range() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+        
+        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 400));
+        
+        spherex_engine.changeGasRangePatterns(gasRanges);
+
+        vm.expectRevert("SphereX error: disallowed tx gas pattern");
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_exact_wrong_range_correct() external activateRuleGAS {
+        allowed_cf_storage = [int256(1), -1];
+        allowed_patterns = [addAllowedPattern()];
+
+        gasNumbersExacts = [uint32(432)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 500));
+
+        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.changeGasRangePatterns(gasRanges);
+
+        costumer_contract.try_allowed_flow();
+    }
 }
+
+

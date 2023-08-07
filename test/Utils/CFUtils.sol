@@ -14,6 +14,7 @@ contract CFUtils is Test {
     // This variable exists so we can use memory int16[] parameters in functions
     // it will be used locally in each tests and wont have any meaning between tests.
     int256[] allowed_cf_storage;
+    address random_address = 0x6A08098568eE90b71dD757F070D79364197f944B;
 
     /**
      * @dev obtained using `forge inspect --pretty SphereXEngine storage`
@@ -23,6 +24,29 @@ contract CFUtils is Test {
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
     bytes8 constant GAS = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
 
+    function setUp() public virtual {
+        spherex_engine = new SphereXEngine();
+        allowed_senders.push(address(this));
+        spherex_engine.addAllowedSender(allowed_senders);
+    }
+
+    function sendNumberToEngine(int256 num) internal {
+        if (num > 0) {
+            spherex_engine.sphereXValidateInternalPre(num);
+        } else {
+            bytes32[] memory emptyArray = new bytes32[](0);
+            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
+        }
+    }
+
+    function sendDataToEngine(int256 num, uint256 gas) internal {
+        if (num > 0) {
+            spherex_engine.sphereXValidateInternalPre(num);
+        } else {
+            bytes32[] memory emptyArray = new bytes32[](0);
+            spherex_engine.sphereXValidateInternalPost(num, gas, emptyArray, emptyArray);
+        }
+    }
 
     function getCurrentCallDepth() internal returns (uint16) {
         return uint16(bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 240));

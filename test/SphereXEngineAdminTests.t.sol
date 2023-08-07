@@ -7,23 +7,8 @@ import "forge-std/Test.sol";
 import "./Utils/CFUtils.sol";
 import "../src/SphereXEngine.sol";
 
-contract SphereXEngineAdminFunctionsTest is Test, CFUtils {
-    address random_address = 0x6A08098568eE90b71dD757F070D79364197f944B;
+contract SphereXEngineAdminFunctionsTests is Test, CFUtils {
 
-    function setUp() public {
-        spherex_engine = new SphereXEngine();
-        allowed_senders.push(address(this));
-        spherex_engine.addAllowedSender(allowed_senders);
-    }
-
-    function sendNumberToEngine(int256 num) private {
-        if (num > 0) {
-            spherex_engine.sphereXValidateInternalPre(num);
-        } else {
-            bytes32[] memory emptyArray = new bytes32[](0);
-            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
-        }
-    }
 
     //  ============ Test for the management functions  ============
 
