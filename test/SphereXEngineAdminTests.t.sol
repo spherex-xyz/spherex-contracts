@@ -8,8 +8,6 @@ import "./Utils/CFUtils.sol";
 import "../src/SphereXEngine.sol";
 
 contract SphereXEngineAdminFunctionsTests is Test, CFUtils {
-
-
     //  ============ Test for the management functions  ============
 
     function test_passOwnership() public {
@@ -48,7 +46,7 @@ contract SphereXEngineAdminFunctionsTests is Test, CFUtils {
     function test_addAllowedSender() public {
         allowed_senders = [random_address];
         spherex_engine.addAllowedSender(allowed_senders);
-        
+
         // this is done just to activate the engine, the specific rule does not matter
         spherex_engine.configureRules(bytes8(uint64(1)));
 
@@ -62,7 +60,7 @@ contract SphereXEngineAdminFunctionsTests is Test, CFUtils {
 
         // this is done just to activate the engine, the specific rule does not matter
         spherex_engine.configureRules(bytes8(uint64(1)));
-        
+
         vm.expectRevert("SphereX error: disallowed sender");
         sendNumberToEngine(1);
 

@@ -108,7 +108,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXAdmin() external activateRuleCF{
+    function test_changeSphereXAdmin() external activateRuleCF {
         address otherAddress = address(1);
 
         costumer_contract.transferSphereXAdminRole(otherAddress);
@@ -446,7 +446,6 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_patternIncludedInGas_noRange_noExacts() external activateRuleGAS {
-        
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         costumer_contract.try_allowed_flow();
     }
@@ -479,9 +478,9 @@ contract SphereXProtectedTest is Test, CFUtils {
     function test_gasRange() external activateRuleGAS {
         allowed_cf_storage = [int256(1), -1];
         allowed_patterns = [addAllowedPattern()];
-        
+
         gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 500));
-        
+
         spherex_engine.changeGasRangePatterns(gasRanges);
 
         costumer_contract.try_allowed_flow();
@@ -490,9 +489,9 @@ contract SphereXProtectedTest is Test, CFUtils {
     function test_gasRange_wrong_gas_range() external activateRuleGAS {
         allowed_cf_storage = [int256(1), -1];
         allowed_patterns = [addAllowedPattern()];
-        
+
         gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 400));
-        
+
         spherex_engine.changeGasRangePatterns(gasRanges);
 
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
@@ -513,5 +512,3 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 }
-
-

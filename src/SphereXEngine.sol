@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.17;
 // import "forge-std/console.sol";
+
 import {
     AccessControlDefaultAdminRules, IERC165
 } from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
@@ -60,7 +61,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint64 internal constant RULE_GAS = 4;
     uint64 internal constant RULE_TXF = 2;
     uint64 internal constant RULE_CF = 1;
-
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -260,7 +260,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
         for (uint256 i = 0; i < gasPatterns.length; ++i) {
             for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = true;
+                _allowedPatternsExactGas[uint256(
+                    keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j]))
+                )] = true;
             }
         }
         emit AddGasExactPatterns(gasPatterns);
@@ -274,12 +276,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function removeGasExactPatterns(GasExactPatterns[] calldata gasPatterns) external onlyOperator {
         for (uint256 i = 0; i < gasPatterns.length; ++i) {
             for (uint256 j = 0; j < gasPatterns[i].gasExact.length; ++j) {
-                _allowedPatternsExactGas[uint256(keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j])))] = false;
+                _allowedPatternsExactGas[uint256(
+                    keccak256(abi.encode(gasPatterns[i].pattern, gasPatterns[i].gasExact[j]))
+                )] = false;
             }
         }
         emit RemoveGasExactPatterns(gasPatterns);
     }
-    
+
     /**
      * Set the new strike out liimit for the gas thesis.
      * @param newLimit the new strike out limit for the gas thesis.
@@ -386,7 +390,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function isGasAllowed(uint200 pattern, PatternConfig memory patternConfig, uint256 gas) internal view returns (bool) {
+    function isGasAllowed(uint200 pattern, PatternConfig memory patternConfig, uint256 gas)
+        internal
+        view
+        returns (bool)
+    {
         if (patternConfig.gasBypass) {
             return true;
         }

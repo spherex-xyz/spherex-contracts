@@ -11,8 +11,8 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
     SphereXEngine.GasRangePatterns[] gasRanges;
     SphereXEngine.GasExactPatterns[] gasExacts;
     uint32[] gasNumbersExacts;
-    
-    function setUp() public virtual override{
+
+    function setUp() public virtual override {
         super.setUp();
         spherex_engine.configureRules(GAS);
     }
@@ -24,12 +24,11 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
-        
         sendDataToEngine(allowed_cf_storage[0], 400);
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
-    
+
     function test_changeGasRangePatterns() public {
         allowed_cf_storage = [int256(1), -1];
         uint200 allowed_cf_hash = addAllowedPattern();
@@ -37,9 +36,9 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         gasRanges.push(SphereXEngine.GasRangePatterns(allowed_cf_hash, 399, 401));
-        
+
         spherex_engine.changeGasRangePatterns(gasRanges);
-        
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
 
@@ -56,11 +55,11 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         gasExacts.push(SphereXEngine.GasExactPatterns(allowed_cf_hash, gasNumbersExacts));
 
         spherex_engine.addGasExactPatterns(gasExacts);
-        
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
-    
+
     function test_removeGasExactPatterns() public {
         allowed_cf_storage = [int256(1), -1];
         uint200 allowed_cf_hash = addAllowedPattern();
@@ -71,7 +70,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         gasExacts.push(SphereXEngine.GasExactPatterns(allowed_cf_hash, gasNumbersExacts));
 
         spherex_engine.addGasExactPatterns(gasExacts);
-        
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
 
@@ -81,7 +80,6 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         sendDataToEngine(allowed_cf_storage[0], 400);
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         sendDataToEngine(allowed_cf_storage[1], 400);
-
     }
 
     function test_excludeFromGasChecks() public {
@@ -92,7 +90,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
 
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.excludePatternsFromGas(allowed_patterns);
-      
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
@@ -104,7 +102,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         spherex_engine.incluePatternsInGas(allowed_patterns);
-      
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         sendDataToEngine(allowed_cf_storage[1], 400);
@@ -117,7 +115,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         spherex_engine.incluePatternsInGas(allowed_patterns);
-      
+
         sendDataToEngine(allowed_cf_storage[0], 400);
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         sendDataToEngine(allowed_cf_storage[1], 400);
@@ -125,5 +123,4 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         spherex_engine.setGasStrikeOutsLimit(1);
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
-
 }
