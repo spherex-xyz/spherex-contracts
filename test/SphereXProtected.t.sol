@@ -13,7 +13,6 @@ import "../src/SphereXProtected.sol";
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
-    SphereXEngine.GasRangePatterns[] gasRanges;
     SphereXEngine.GasExactPatterns[] gasExacts;
     uint32[] gasNumbersExacts;
 
@@ -445,7 +444,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    function test_patternIncludedInGas_noRange_noExacts() external activateRuleGAS {
+    function test_patternIncludedInGas_noExacts() external activateRuleGAS {
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         costumer_contract.try_allowed_flow();
     }
@@ -475,40 +474,27 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    function test_gasRange() external activateRuleGAS {
+    function test_gasStrikeOuts_fail_after_two_strikes() external activateRuleGAS {
         allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
+        uint200 allowed_pattern_hash = addAllowedPattern();
+        allowed_cf_storage = [int256(1), -1, 1, -1];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(1), -1, 1, -1 ,1, -1];
+        addAllowedPattern();
+        allowed_cf_storage = [int256(1), -1, 1, -1 ,1, -1, 1, -1];
+        addAllowedPattern();
 
-        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 500));
+        gasNumbersExacts = [uint32(431)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
+        spherex_engine.addGasExactPatterns(gasExacts);
 
-        spherex_engine.changeGasRangePatterns(gasRanges);
+        spherex_engine.setGasStrikeOutsLimit(2);
 
         costumer_contract.try_allowed_flow();
-    }
-
-    function test_gasRange_wrong_gas_range() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
-
-        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 400));
-
-        spherex_engine.changeGasRangePatterns(gasRanges);
-
+        costumer_contract.try_allowed_flow();
+        costumer_contract.try_allowed_flow();
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         costumer_contract.try_allowed_flow();
-    }
 
-    function test_exact_wrong_range_correct() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
-
-        gasNumbersExacts = [uint32(432)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
-        gasRanges.push(SphereXEngine.GasRangePatterns(allowed_patterns[0], 300, 500));
-
-        spherex_engine.addGasExactPatterns(gasExacts);
-        spherex_engine.changeGasRangePatterns(gasRanges);
-
-        costumer_contract.try_allowed_flow();
     }
 }

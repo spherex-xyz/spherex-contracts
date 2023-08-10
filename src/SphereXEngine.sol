@@ -30,14 +30,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct PatternConfig {
         bool allowed;
         bool gasBypass;
-        uint32 minGas;
-        uint32 maxGas;
-    }
-
-    struct GasRangePatterns {
-        uint200 pattern;
-        uint32 minGas;
-        uint32 maxGas;
     }
 
     struct GasExactPatterns {
@@ -89,7 +81,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint200[] patterns);
     event RemovedAllowedPatterns(uint200[] patterns);
-    event ChangeGasRangePatterns(GasRangePatterns[] gasPatterns);
     event AddGasExactPatterns(GasExactPatterns[] gasPatterns);
     event RemoveGasExactPatterns(GasExactPatterns[] gasPatterns);
     event ExcludePatternsFromGas(uint200[] patterns);
@@ -236,20 +227,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             _allowedPatterns[patterns[i]] = patternConfig;
         }
         emit IncluePatternsInGas(patterns);
-    }
-
-    /**
-     * Add allowed gas range patterns
-     * @param gasPatterns list of patterns with their corresponding gas range.
-     */
-    function changeGasRangePatterns(GasRangePatterns[] calldata gasPatterns) external onlyOperator {
-        for (uint256 i = 0; i < gasPatterns.length; ++i) {
-            PatternConfig memory patternConfig = _allowedPatterns[gasPatterns[i].pattern];
-            patternConfig.minGas = gasPatterns[i].minGas;
-            patternConfig.maxGas = gasPatterns[i].maxGas;
-            _allowedPatterns[gasPatterns[i].pattern] = patternConfig;
-        }
-        emit ChangeGasRangePatterns(gasPatterns);
     }
 
     /**
@@ -402,13 +379,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_allowedPatternsExactGas[patternGas]) {
             return true;
         }
-        if (gas > patternConfig.maxGas) {
-            return false;
-        }
-        if (gas < patternConfig.minGas) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
     /**
