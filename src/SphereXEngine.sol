@@ -2,7 +2,6 @@
 // (c) SphereX 2023 Terms&Conditions
 
 pragma solidity ^0.8.17;
-// import "forge-std/console.sol";
 
 import {
     AccessControlDefaultAdminRules, IERC165
@@ -414,7 +413,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override returnsIfNotActivated onlyApprovedSenders {
-        // console.logUint(gas);
         _addCfElementFunctionExit(num, gas, true);
     }
 
