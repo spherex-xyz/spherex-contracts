@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
 
 // Taken from OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 /**
