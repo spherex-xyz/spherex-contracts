@@ -5,7 +5,7 @@ pragma solidity >=0.6.2;
 
 import "forge-std/Test.sol";
 import "../src/SphereXEngine.sol";
-import "../src/SphereXProtected.sol";
+import "spherex-protect-contracts/SphereXProtected.sol";
 import "./SphereXProtected.t.sol";
 
 contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
