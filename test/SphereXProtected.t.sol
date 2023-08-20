@@ -8,7 +8,7 @@ import "./Utils/CFUtils.sol";
 import "./Utils/MockEngine.sol";
 import "./Utils/CostumerContract.sol";
 import "../src/SphereXEngine.sol";
-import "../src/SphereXProtected.sol";
+import "spherex-protect-contracts/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
@@ -334,15 +334,15 @@ contract SphereXProtectedTest is Test, CFUtils {
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
-        assertEq(SphereXProtectedBase(someContract).sphereXEngine(), 
-            SphereXProtected(costumer_contract).sphereXEngine());
+        assertEq(
+            SphereXProtectedBase(someContract).sphereXEngine(), SphereXProtected(costumer_contract).sphereXEngine()
+        );
 
-        assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), 
-            SphereXProtected(costumer_contract).sphereXAdmin());
+        assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), SphereXProtected(costumer_contract).sphereXAdmin());
 
-        assertEq(SphereXProtectedBase(someContract).sphereXOperator(), 
-            SphereXProtected(costumer_contract).sphereXOperator());
-
+        assertEq(
+            SphereXProtectedBase(someContract).sphereXOperator(), SphereXProtected(costumer_contract).sphereXOperator()
+        );
     }
 
     function test_factoryAllowedSender() public {
@@ -353,8 +353,8 @@ contract SphereXProtectedTest is Test, CFUtils {
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
-        
-        // If the factory failed to add the contract to allowed sender 
+
+        // If the factory failed to add the contract to allowed sender
         // we would get SphereX error: disallowed sender.
         vm.expectRevert("SphereX error: disallowed tx pattern");
         SomeContract(someContract).someFunc();
@@ -379,13 +379,13 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_factoryEngineDisabled() public {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        
-        // deactivate the engine and check that the call to create the factory 
+
+        // deactivate the engine and check that the call to create the factory
         // does not fail.
         spherex_engine.deactivateAllRules();
         address someContract = costumer_contract.factory();
-        
-        // activate the engine and see that the new contract is disallowed 
+
+        // activate the engine and see that the new contract is disallowed
         spherex_engine.configureRules(PREFIX_TX_FLOW);
         vm.expectRevert("SphereX error: disallowed sender");
         SomeContract(someContract).someFunc();
@@ -403,7 +403,6 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), address(1));
         vm.prank(address(1));
         spherex_engine.grantSenderAdderRole(address(costumer_contract));
-        
 
         address someContract = costumer_contract.factory();
         SomeContract(someContract).someFunc();

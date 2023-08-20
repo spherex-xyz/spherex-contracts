@@ -6,7 +6,7 @@ pragma solidity ^0.8.17;
 import {
     AccessControlDefaultAdminRules, IERC165
 } from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import {ISphereXEngine} from "./ISphereXEngine.sol";
+import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -131,7 +131,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
-               
+
         _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 
@@ -220,7 +220,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionExit(int256 num, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
-
 
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;

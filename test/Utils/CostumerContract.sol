@@ -4,8 +4,8 @@
 pragma solidity >=0.6.2;
 
 import "./Proxy.sol";
-import "../../src/SphereXProtected.sol";
-import "../../src/SphereXProtectedBase.sol";
+import "spherex-protect-contracts/SphereXProtected.sol";
+import "spherex-protect-contracts/SphereXProtectedBase.sol";
 
 contract CostumerContractProxy is Proxy {
     bytes32 space; // only so the x variable wont be overriden by the _imp variable
@@ -23,7 +23,7 @@ contract CostumerContractProxy is Proxy {
 contract SomeContract is SphereXProtectedBase {
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
-    function someFunc() external sphereXGuardExternal(100){}
+    function someFunc() external sphereXGuardExternal(100) {}
 }
 
 contract CostumerContract is SphereXProtected {
@@ -91,8 +91,8 @@ contract CostumerContract is SphereXProtected {
         return true;
     }
 
-    function factory() external sphereXGuardExternal(13) returns(address) {
-        someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine()); 
+    function factory() external sphereXGuardExternal(13) returns (address) {
+        someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);
     }

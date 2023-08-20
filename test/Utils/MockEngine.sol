@@ -3,7 +3,7 @@
 
 pragma solidity >=0.6.2;
 
-import "../../src/ISphereXEngine.sol";
+import "spherex-protect-contracts/ISphereXEngine.sol";
 import "forge-std/console.sol";
 
 contract MockEngine is ISphereXEngine {
