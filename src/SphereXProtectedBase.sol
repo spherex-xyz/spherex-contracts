@@ -38,17 +38,17 @@ abstract contract SphereXProtectedBase {
      * @dev used when the client doesn't use a proxy
      * @notice constructor visibility is required to support all compiler versions
      */
-    constructor(address admin, address operator ,address engine) {
+    constructor(address admin, address operator, address engine) {
         __SphereXProtectedBase_init(admin, operator, engine);
     }
 
     /**
      * @dev used when the client uses a proxy - should be called by the inhereter initialization
      */
-    function __SphereXProtectedBase_init(address admin, address operator ,address engine) internal virtual {
+    function __SphereXProtectedBase_init(address admin, address operator, address engine) internal virtual {
         _setAddress(SPHEREX_ADMIN_STORAGE_SLOT, admin);
         emit SpherexAdminTransferCompleted(address(0), admin);
-        
+
         _setAddress(SPHEREX_OPERATOR_STORAGE_SLOT, operator);
         emit ChangedSpherexOperator(address(0), operator);
 
@@ -95,7 +95,7 @@ abstract contract SphereXProtectedBase {
         _;
     }
 
-    modifier onlyOperator() {
+    modifier spherexOnlyOperator() {
         require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "SphereX error: operator required");
         _;
     }
@@ -189,7 +189,7 @@ abstract contract SphereXProtectedBase {
      * @dev this is also used to actually enable the defense
      * (because as long is this address is 0, the protection is disabled).
      */
-    function changeSphereXEngine(address newSphereXEngine) external onlyOperator {
+    function changeSphereXEngine(address newSphereXEngine) external spherexOnlyOperator {
         _checkSphereXEngine(newSphereXEngine);
         address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);
@@ -199,11 +199,10 @@ abstract contract SphereXProtectedBase {
 
     function _addAllowedSenderOnChain(address newSender) internal {
         ISphereXEngine engine = _sphereXEngine();
-        if (address(engine) != address(0)){
+        if (address(engine) != address(0)) {
             engine.addAllowedSenderOnChain(newSender);
-        }    
+        }
     }
-        
 
     // ============ Hooks ============
 
