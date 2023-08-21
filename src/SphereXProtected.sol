@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // (c) SphereX 2023 Terms&Conditions
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
 
 import {SphereXProtectedBase} from "./SphereXProtectedBase.sol";
 
