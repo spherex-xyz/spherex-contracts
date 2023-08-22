@@ -6,7 +6,7 @@ pragma solidity ^0.8.17;
 import {
     AccessControlDefaultAdminRules
 } from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import {ISphereXEngine, IERC165} from "spherex-protect-contracts/ISphereXEngine.sol";
+import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -79,7 +79,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         public
         view
         virtual
-        override(AccessControlDefaultAdminRules, IERC165)
+        override(AccessControlDefaultAdminRules, ISphereXEngine)
         returns (bool)
     {
         return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
