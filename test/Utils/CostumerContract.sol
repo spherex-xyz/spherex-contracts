@@ -3,11 +3,12 @@
 
 pragma solidity >=0.6.2;
 
-import "./Proxy.sol";
+import "./Proxy1.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 import "spherex-protect-contracts/SphereXProtectedBase.sol";
 
-contract CostumerContractProxy is Proxy {
+
+contract CostumerContractProxy is Proxy1 {
     bytes32 space; // only so the x variable wont be overriden by the _imp variable
     address private _imp;
 
@@ -24,6 +25,16 @@ contract SomeContract is SphereXProtectedBase {
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
     function someFunc() external sphereXGuardExternal(100) {}
+}
+
+contract CostomerBehindProxy {
+     function try_allowed_flow() external {}
+
+     function try_blocked_flow() external {}
+}
+
+contract CostomerBehindProxy1 {
+    function new_func() external {}
 }
 
 contract CostumerContract is SphereXProtected {

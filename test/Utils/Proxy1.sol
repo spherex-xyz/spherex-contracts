@@ -15,7 +15,7 @@ pragma solidity >=0.6.0;
  *
  * The success and return data of the delegated call will be returned back to the caller of the proxy.
  */
-abstract contract Proxy {
+abstract contract Proxy1 {
     /**
      * @dev Delegates the current call to `implementation`.
      *
