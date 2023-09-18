@@ -28,15 +28,17 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
         }
     }
 
-    function setProtectedSigs(bytes4 key, bool value) public spherexOnlyOperator {
-        _setProtectedSig(key, value);
+    function setProtectedSigs(bytes4[] memory keys) public spherexOnlyOperator {
+        for (uint256 i = 0; i < keys.length; ++i) {
+            _setProtectedSig(keys[i], true);
+        }
     }
 
     function protectedSigs(bytes4 key) public view returns (bool) {
         return _getProtectedSig(key);
     }
 
-    function _protectedDelegate(address implementation) private sphereXGuardExternal(int256(uint256(bytes32(msg.sig)))) returns (bytes memory) {
+    function _protectedDelegate(address implementation) private sphereXGuardExternal(int256(uint256(uint128(bytes16(msg.sig))))) returns (bytes memory) {
         return Address.functionDelegateCall(implementation, msg.data);
     }
 
