@@ -68,7 +68,7 @@ abstract contract SphereXProtectedBase {
      * @param slot where to store the address
      * @param newAddress address to store in given slot
      */
-    function _setAddress(bytes32 slot, address newAddress) private {
+    function _setAddress(bytes32 slot, address newAddress) internal {
         // solhint-disable-next-line no-inline-assembly
         // slither-disable-next-line assembly
         assembly {
@@ -80,7 +80,7 @@ abstract contract SphereXProtectedBase {
      * Returns an address from an arbitrary slot.
      * @param slot to read an address from
      */
-    function _getAddress(bytes32 slot) private view returns (address addr) {
+    function _getAddress(bytes32 slot) internal view returns (address addr) {
         // solhint-disable-next-line no-inline-assembly
         // slither-disable-next-line assembly
         assembly {
