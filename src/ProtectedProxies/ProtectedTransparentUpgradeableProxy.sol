@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/Proxy/transparent/TransparentUpgradeableProxy.sol";
+import "openzeppelin/Proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 
