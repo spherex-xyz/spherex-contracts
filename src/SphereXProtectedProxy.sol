@@ -40,7 +40,7 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
         return Address.functionDelegateCall(implementation, msg.data);
     }
 
-    function _delegate(address implementation) internal override {
+    function _delegate(address implementation) internal virtual override {
         if (protectedSigs(msg.sig)) {
             bytes memory ret_data = _protectedDelegate(implementation);
             uint256 ret_size = ret_data.length;
