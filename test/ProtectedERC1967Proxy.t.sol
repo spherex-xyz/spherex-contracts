@@ -42,7 +42,7 @@ contract ProtectedERC1967ProxyTest is Test, CFUtils {
 
         protected_sigs.push(CostomerBehindProxy.try_allowed_flow.selector);
         protected_sigs.push(CostomerBehindProxy.try_blocked_flow.selector);
-        proxy_contract.setProtectedSigs(protected_sigs);
+        proxy_contract.addProtectedSigs(protected_sigs);
         proxy_contract.changeSphereXEngine(address(spherex_engine));
     }
 

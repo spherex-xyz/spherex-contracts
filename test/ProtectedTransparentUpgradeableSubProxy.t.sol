@@ -60,7 +60,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
 
         protected_sigs.push(CostomerBehindProxy.try_allowed_flow.selector);
         protected_sigs.push(CostomerBehindProxy.try_blocked_flow.selector);
-        ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).setProtectedSigs(protected_sigs);
+        ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).addProtectedSigs(protected_sigs);
         ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).changeSphereXEngine(address(spherex_engine));
     }
 

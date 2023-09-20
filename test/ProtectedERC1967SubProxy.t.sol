@@ -59,7 +59,7 @@ contract ProtectedERC1967SubProxyTest is Test, CFUtils {
 
         protected_sigs.push(bytes4(keccak256(bytes("try_allowed_flow()"))));
         protected_sigs.push(bytes4(keccak256(bytes("try_blocked_flow()"))));
-        ProtectedERC1967SubProxy(payable(proxy_contract)).setProtectedSigs(protected_sigs);
+        ProtectedERC1967SubProxy(payable(proxy_contract)).addProtectedSigs(protected_sigs);
         ProtectedERC1967SubProxy(payable(proxy_contract)).changeSphereXEngine(address(spherex_engine));
     }
 
