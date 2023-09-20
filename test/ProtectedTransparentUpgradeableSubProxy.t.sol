@@ -22,12 +22,12 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
     address spherex_admin = vm.addr(19345098);
 
     ProtectedTransparentUpgradeableSubProxy public protected_proxy_contract;
-    CostomerBehindProxy public customer_contract;
+    CustomerBehindProxy public customer_contract;
     bytes4[] protected_sigs;
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
-        customer_contract = new CostomerBehindProxy();
+        customer_contract = new CustomerBehindProxy();
         protected_proxy_contract =
             new ProtectedTransparentUpgradeableSubProxy(address(customer_contract), spherex_admin, bytes(""));
 
@@ -44,7 +44,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
             initialize_data
         );
 
-        int256 try_allowed_flow_hash = int256(uint256(uint128(bytes16(CostomerBehindProxy.try_allowed_flow.selector))));
+        int256 try_allowed_flow_hash = int256(uint256(uint128(bytes16(CustomerBehindProxy.try_allowed_flow.selector))));
         int256[2] memory allowed_cf = [try_allowed_flow_hash, -try_allowed_flow_hash];
 
         uint216 allowed_cf_hash = 1;
@@ -58,27 +58,27 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.configureRules(CF);
 
-        protected_sigs.push(CostomerBehindProxy.try_allowed_flow.selector);
-        protected_sigs.push(CostomerBehindProxy.try_blocked_flow.selector);
+        protected_sigs.push(CustomerBehindProxy.try_allowed_flow.selector);
+        protected_sigs.push(CustomerBehindProxy.try_blocked_flow.selector);
         ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).addProtectedSigs(protected_sigs);
         ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).changeSphereXEngine(address(spherex_engine));
     }
 
     function testAllowed() external {
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
         assertFlowStorageSlotsInInitialState();
     }
 
     function testTwoAllowedCall() external {
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function testBlocked() external {
         vm.expectRevert("SphereX error: disallowed tx pattern");
-        CostomerBehindProxy(address(proxy_contract)).try_blocked_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -94,27 +94,27 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
     function testTransparentAdminBehavior() external {
         vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
         vm.prank(proxy_admin);
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
     }
 
     function testProtectedTransparentAdminBehavior() external {
         vm.expectRevert("ProtectedTransparentUpgradeableSubProxy: admin cannot fallback to sub-proxy target");
         vm.prank(spherex_admin);
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
     }
 
     function testSubUpdate() external {
-        CostomerBehindProxy1 new_costumer = new CostomerBehindProxy1();
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
         vm.prank(spherex_admin);
         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeTo(address(new_costumer));
 
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CostomerBehindProxy1.new_func.selector));
-        CostomerBehindProxy1(address(proxy_contract)).new_func();
+        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
+        CustomerBehindProxy1(address(proxy_contract)).new_func();
     }
 
     function testSubUpdateAndCall() external {
-        CostomerBehindProxy1 new_costumer = new CostomerBehindProxy1();
-        bytes memory new_func_data = abi.encodeWithSelector(CostomerBehindProxy1.new_func.selector);
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        bytes memory new_func_data = abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector);
 
         vm.prank(spherex_admin);
         vm.expectCall(address(new_costumer), new_func_data);
@@ -122,7 +122,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
     }
 
     function testUpdateTo() external {
-        CostomerBehindProxy1 new_costumer = new CostomerBehindProxy1();
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
         vm.prank(proxy_admin);
         ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
 
@@ -131,7 +131,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
     }
 
     function testUpdateToAndCall() external {
-        CostomerBehindProxy1 new_costumer = new CostomerBehindProxy1();
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
         vm.prank(proxy_admin);
         bytes memory new_func_data = abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()"))));
 
