@@ -8,21 +8,19 @@ import "./Utils/CFUtils.sol";
 
 import "../src/SphereXEngine.sol";
 import "./Utils/CostumerContract.sol";
-import "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
+import "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967Proxy.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 
-contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
-    ProtectedTransparentUpgradeableProxy public proxy_contract;
+contract ProtectedERC1967ProxyTest is Test, CFUtils {
+    ProtectedERC1967Proxy public proxy_contract;
     CostomerBehindProxy public costumer_contract;
-    address proxy_admin = vm.addr(12345);
     bytes4[] protected_sigs;
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostomerBehindProxy();
-        proxy_contract = new ProtectedTransparentUpgradeableProxy(
+        proxy_contract = new ProtectedERC1967Proxy(
             address(costumer_contract),
-            proxy_admin,
             ""
         );
 
@@ -37,7 +35,7 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
         }
         allowed_patterns.push(allowed_cf_hash);
         allowed_senders.push(address(this));
-        allowed_senders.push(address(proxy_contract)); // TODO - this is needed??
+        allowed_senders.push(address(proxy_contract));
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.configureRules(CF);
@@ -65,20 +63,5 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
         CostomerBehindProxy(address(proxy_contract)).try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
-    }
-
-    function testTransparentAdminBehavior() external {
-        vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
-        vm.prank(proxy_admin);
-        CostomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-    }
-
-    function testTransparentUpdate() external {
-        CostomerBehindProxy1 new_costumer = new CostomerBehindProxy1();
-        vm.prank(proxy_admin);
-        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
-
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CostomerBehindProxy1.new_func.selector));
-        CostomerBehindProxy1(address(proxy_contract)).new_func();
     }
 }

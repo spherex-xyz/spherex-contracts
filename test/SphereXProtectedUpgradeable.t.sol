@@ -9,7 +9,7 @@ import "spherex-protect-contracts/SphereXProtected.sol";
 import "./SphereXProtected.t.sol";
 
 contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
-    CostumerContractProxy public costumer_proxy_contract;
+    CustomerContractProxy public costumer_proxy_contract;
     CostumerContract public p_costumerContract;
 
     function setUp() public override {
@@ -17,7 +17,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
 
-        costumer_proxy_contract = new CostumerContractProxy(address(costumer_contract));
+        costumer_proxy_contract = new CustomerContractProxy(address(costumer_contract));
 
         int16[2] memory allowed_cf = [int16(1), -1];
         uint216 allowed_cf_hash = 1;

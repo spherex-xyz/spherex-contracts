@@ -3,12 +3,16 @@
 
 pragma solidity >=0.6.2;
 
+import {Initializable} from "openzeppelin/Proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "openzeppelin/Proxy/utils/UUPSUpgradeable.sol";
+
 import "./Proxy1.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 import "spherex-protect-contracts/SphereXProtectedBase.sol";
 
+import {ProtectedUUPSUpgradeable} from "spherex-protect-contracts/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
 
-contract CostumerContractProxy is Proxy1 {
+contract CustomerContractProxy is Proxy1 {
     bytes32 space; // only so the x variable wont be overriden by the _imp variable
     address private _imp;
 
@@ -28,13 +32,25 @@ contract SomeContract is SphereXProtectedBase {
 }
 
 contract CostomerBehindProxy {
-     function try_allowed_flow() external {}
+    function try_allowed_flow() external {}
 
-     function try_blocked_flow() external {}
+    function try_blocked_flow() external {}
 }
 
 contract CostomerBehindProxy1 {
     function new_func() external {}
+}
+
+contract UUPSCustomerUnderProtectedERC1967SubProxy is ProtectedUUPSUpgradeable, CostomerBehindProxy {
+    function _authorizeUpgrade(address newImplementation) internal virtual override {}
+}
+
+contract UUPSCustomerUnderProtectedERC1967SubProxy1 is ProtectedUUPSUpgradeable, CostomerBehindProxy1 {
+    function _authorizeUpgrade(address newImplementation) internal virtual override {}
+}
+
+contract UUPSCustomer1 is UUPSUpgradeable, CostomerBehindProxy1 {
+    function _authorizeUpgrade(address newImplementation) internal virtual override {}
 }
 
 contract CostumerContract is SphereXProtected {
