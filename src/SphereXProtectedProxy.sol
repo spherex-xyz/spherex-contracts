@@ -3,14 +3,17 @@
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin/Proxy/Proxy.sol";
-import "openzeppelin/Utils/Address.sol";
+import {Proxy} from "openzeppelin/Proxy/Proxy.sol";
+import {Address} from "openzeppelin/Utils/Address.sol";
 
 import {SphereXProtectedBase} from "./SphereXProtectedBase.sol";
 
 abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
     bytes32 private constant PROTECTED_SIG_BASE_POSITION =
         bytes32(uint256(keccak256("eip1967.spherex.protection_sig_base")) - 1);
+
+    event AddedProtectedSigs(bytes4[] patterns);
+    event RemovedProtectedSigs(bytes4[] patterns);
 
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
@@ -21,21 +24,25 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
         }
     }
 
-    function _getProtectedSig(bytes4 key) private view returns (bool value) {
+    function addProtectedSigs(bytes4[] memory keys) public spherexOnlyOperator {
+        for (uint256 i = 0; i < keys.length; ++i) {
+            _setProtectedSig(keys[i], true);
+        }
+        emit AddedProtectedSigs(keys);
+    }
+
+    function removeProtectedSigs(bytes4[] memory keys) public spherexOnlyOperator {
+        for (uint256 i = 0; i < keys.length; ++i) {
+            _setProtectedSig(keys[i], false);
+        }
+        emit RemovedProtectedSigs(keys);
+    }
+
+    function getProtectedSig(bytes4 key) public view returns (bool value) {
         bytes32 position = keccak256(abi.encodePacked(key, PROTECTED_SIG_BASE_POSITION));
         assembly {
             value := sload(position)
         }
-    }
-
-    function setProtectedSigs(bytes4[] memory keys) public spherexOnlyOperator {
-        for (uint256 i = 0; i < keys.length; ++i) {
-            _setProtectedSig(keys[i], true);
-        }
-    }
-
-    function protectedSigs(bytes4 key) public view returns (bool) {
-        return _getProtectedSig(key);
     }
 
     function _protectedDelegate(address implementation)
@@ -47,7 +54,7 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
     }
 
     function _delegate(address implementation) internal virtual override {
-        if (protectedSigs(msg.sig)) {
+        if (getProtectedSig(msg.sig)) {
             bytes memory ret_data = _protectedDelegate(implementation);
             uint256 ret_size = ret_data.length;
 
