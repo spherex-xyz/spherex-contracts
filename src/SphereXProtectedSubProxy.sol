@@ -3,13 +3,32 @@
 
 pragma solidity ^0.8.0;
 
+import {Address} from "openzeppelin/utils/Address.sol";
+
 import {SphereXProtectedProxy} from "./SphereXProtectedProxy.sol";
+import {SphereXInitializable} from "./Utils/SphereXInitializable.sol";
 
-abstract contract SphereXProtectedSubProxy is SphereXProtectedProxy {
+interface ISphereXProtectedSubProxy {
+    function subUpgradeTo(address newImplementation) external;
+    function subUpgradeToAndCall(address newImplementation, bytes memory data) external;
+}
 
-    bytes32 private constant _SPHEREX_IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.spherex.implementation_slot")) - 1);
+abstract contract SphereXProtectedSubProxy is SphereXProtectedProxy, SphereXInitializable {
+    bytes32 private constant _SPHEREX_IMPLEMENTATION_SLOT =
+        bytes32(uint256(keccak256("eip1967.spherex.implementation_slot")) - 1);
 
-    constructor(address admin, address operator, address engine, address _logic) SphereXProtectedProxy(admin, operator, engine) {
+    constructor(address admin, address operator, address engine, address _logic)
+        SphereXProtectedProxy(admin, operator, engine)
+    {
+        _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, _logic);
+        _disableInitializers();
+    }
+
+    function __SphereXProtectedSubProXy_init(address admin, address operator, address engine, address _logic)
+        external
+        initializer
+    {
+        __SphereXProtectedBase_init(admin, operator, engine);
         _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, _logic);
     }
 
@@ -19,5 +38,12 @@ abstract contract SphereXProtectedSubProxy is SphereXProtectedProxy {
 
     function subUpgradeTo(address newImplementation) internal {
         _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, newImplementation);
+    }
+
+    function subUpgradeToAndCall(address newImplementation, bytes memory data) internal {
+        _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, newImplementation);
+        if (data.length > 0) {
+            Address.functionDelegateCall(newImplementation, data);
+        }
     }
 }

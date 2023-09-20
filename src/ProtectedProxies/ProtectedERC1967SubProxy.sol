@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: UNLICENSED
+// (c) SphereX 2023 Terms&Conditions
+
+pragma solidity ^0.8.0;
+
+import {ERC1967Proxy, Proxy} from "openzeppelin/Proxy/ERC1967/ERC1967Proxy.sol";
+import {IERC1822Proxiable} from "openzeppelin/interfaces/draft-IERC1822.sol";
+
+import {SphereXProtectedSubProxy, SphereXProtectedProxy} from "../SphereXProtectedSubProxy.sol";
+
+contract ProtectedERC1967SubProxy is SphereXProtectedSubProxy, ERC1967Proxy, IERC1822Proxiable {
+    constructor(address _logic, bytes memory _data)
+        SphereXProtectedSubProxy(address(0), address(0), address(0), address(0))
+        ERC1967Proxy(_logic, _data)
+    {}
+
+    function proxiableUUID() external view virtual override returns (bytes32) {
+        return _IMPLEMENTATION_SLOT; // Return ERC1967 original's slot to pass the old imp ERC1822 check
+    }
+
+    function _delegate(address implementation) internal virtual override(Proxy, SphereXProtectedProxy) {
+        SphereXProtectedProxy._delegate(implementation);
+    }
+
+    function _implementation()
+        internal
+        view
+        virtual
+        override(SphereXProtectedSubProxy, ERC1967Proxy)
+        returns (address impl)
+    {
+        return SphereXProtectedSubProxy._implementation();
+    }
+}

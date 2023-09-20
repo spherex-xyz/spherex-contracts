@@ -7,7 +7,6 @@ import "openzeppelin/Proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 
-// TODO - we should remember that it is not really transparent because SphereXProtectedProxy brings public functions.
 contract ProtectedTransparentUpgradeableProxy is SphereXProtectedProxy, TransparentUpgradeableProxy {
     constructor(address _logic, address admin_, bytes memory _data)
         SphereXProtectedProxy(msg.sender, address(0), address(0))

@@ -3,28 +3,36 @@
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin/Proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+    TransparentUpgradeableProxy,
+    Proxy,
+    ERC1967Proxy
+} from "openzeppelin/Proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {SphereXProtectedSubProxy} from "../SphereXProtectedSubProxy.sol";
-import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
+import {
+    SphereXProtectedSubProxy, SphereXProtectedProxy, ISphereXProtectedSubProxy
+} from "../SphereXProtectedSubProxy.sol";
 
-interface ISphereXProtectedSubProxy {
-    function subUpgradeTo(address newImplementation) external;
-}
-
-
-// TODO - we should remember that it is not really transparent because SphereXProtectedProxy brings public functions.
 contract ProtectedTransparentUpgradeableSubProxy is SphereXProtectedSubProxy, TransparentUpgradeableProxy {
+    // TODO - i dont want to pass anthing but TransparentUpgradeableProxy c'tor check the logic validity.
     constructor(address _logic, address admin_, bytes memory _data)
-        SphereXProtectedSubProxy(msg.sender, address(0), address(0), _logic)
+        SphereXProtectedSubProxy(address(0), address(0), address(0), address(0))
         TransparentUpgradeableProxy(_logic, admin_, _data)
     {}
 
     function _fallback() internal virtual override(Proxy, TransparentUpgradeableProxy) {
-        if (msg.sender == _getAdmin() && msg.sig == ISphereXProtectedSubProxy.subUpgradeTo.selector) {
-            address newImplementation = abi.decode(msg.data[4:], (address));
-            subUpgradeTo(newImplementation);
+        if (msg.sender == sphereXAdmin()) {
+            if (msg.sig == ISphereXProtectedSubProxy.subUpgradeTo.selector) {
+                address newImplementation = abi.decode(msg.data[4:], (address));
+                subUpgradeTo(newImplementation);
+            } else if (msg.sig == ISphereXProtectedSubProxy.subUpgradeToAndCall.selector) {
+                (address newImplementation, bytes memory data) = abi.decode(msg.data[4:], (address, bytes));
+                subUpgradeToAndCall(newImplementation, data);
+            } else {
+                revert("ProtectedTransparentUpgradeableSubProxy: admin cannot fallback to sub-proxy target");
+            }
         }
+        // TODO - inline assembly return needed like in TransparentUpgradeableProxy's fallback?
         else {
             TransparentUpgradeableProxy._fallback();
         }
@@ -34,7 +42,13 @@ contract ProtectedTransparentUpgradeableSubProxy is SphereXProtectedSubProxy, Tr
         SphereXProtectedProxy._delegate(implementation);
     }
 
-    function _implementation() internal view virtual override(SphereXProtectedSubProxy, ERC1967Proxy) returns (address impl) {
+    function _implementation()
+        internal
+        view
+        virtual
+        override(SphereXProtectedSubProxy, ERC1967Proxy)
+        returns (address impl)
+    {
         return SphereXProtectedSubProxy._implementation();
     }
 }

@@ -8,9 +8,9 @@ import "openzeppelin/Utils/Address.sol";
 
 import {SphereXProtectedBase} from "./SphereXProtectedBase.sol";
 
-
 abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
-    bytes32 private constant PROTECTED_SIG_BASE_POSITION = bytes32(uint256(keccak256("eip1967.spherex.protection_sig_base")) - 1);
+    bytes32 private constant PROTECTED_SIG_BASE_POSITION =
+        bytes32(uint256(keccak256("eip1967.spherex.protection_sig_base")) - 1);
 
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
@@ -38,7 +38,11 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
         return _getProtectedSig(key);
     }
 
-    function _protectedDelegate(address implementation) private sphereXGuardExternal(int256(uint256(uint128(bytes16(msg.sig))))) returns (bytes memory) {
+    function _protectedDelegate(address implementation)
+        private
+        sphereXGuardExternal(int256(uint256(uint128(bytes16(msg.sig)))))
+        returns (bytes memory)
+    {
         return Address.functionDelegateCall(implementation, msg.data);
     }
 
@@ -50,8 +54,7 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
             assembly {
                 return(add(ret_data, 0x20), ret_size)
             }
-        }
-        else {
+        } else {
             super._delegate(implementation);
         }
     }
