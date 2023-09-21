@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
+// Base contract is taken from OpenZeppelin Contracts (last updated v4.9.3) (proxy/utils/Initializable.sol)
 
 pragma solidity ^0.8.2;
 
 import {StorageSlot} from "openzeppelin/utils/StorageSlot.sol";
 
+/**
+ * @title Slim version of OZ's Initializable which uses an arbitrary slot for the _initialized flag,
+ *        designed to be inherited by a proxy who uses unstructured storage
+ */
 abstract contract SphereXInitializable {
     bytes32 private constant _INITIZLIZED_FLAG_SLOT = bytes32(uint256(keccak256("eip1967.initialized_flag_slot")) - 1);
 

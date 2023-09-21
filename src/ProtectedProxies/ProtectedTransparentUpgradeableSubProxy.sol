@@ -13,13 +13,18 @@ import {
     SphereXProtectedSubProxy, SphereXProtectedProxy, ISphereXProtectedSubProxy
 } from "../SphereXProtectedSubProxy.sol";
 
+/**
+ * @dev TransparentUpgradeableProxy implementation with spherex's protection designed to be under another proxy
+ */
 contract ProtectedTransparentUpgradeableSubProxy is SphereXProtectedSubProxy, TransparentUpgradeableProxy {
-    // TODO - i dont want to pass anthing but TransparentUpgradeableProxy c'tor check the logic validity.
     constructor(address _logic, address admin_, bytes memory _data)
-        SphereXProtectedSubProxy(address(0), address(0), address(0), address(0))
+        SphereXProtectedSubProxy(address(0), address(0), address(0))
         TransparentUpgradeableProxy(_logic, admin_, _data)
     {}
 
+    /**
+     * @dev Like in TransparentUpgradeableProxy._fallback, the spherex's admin is directed to the management functions.
+     */
     function _fallback() internal virtual override(Proxy, TransparentUpgradeableProxy) {
         if (msg.sender == sphereXAdmin()) {
             if (msg.sig == ISphereXProtectedSubProxy.subUpgradeTo.selector) {
@@ -38,10 +43,16 @@ contract ProtectedTransparentUpgradeableSubProxy is SphereXProtectedSubProxy, Tr
         }
     }
 
+    /**
+     * @dev This is used since both SphereXProtectedSubProxy and TransparentUpgradeableProxy implements Proxy.sol _delegate.
+     */
     function _delegate(address implementation) internal virtual override(Proxy, SphereXProtectedProxy) {
         SphereXProtectedProxy._delegate(implementation);
     }
 
+    /**
+     * @dev This is used since both SphereXProtectedSubProxy and TransparentUpgradeableProxy implements Proxy.sol _implementation.
+     */
     function _implementation()
         internal
         view
