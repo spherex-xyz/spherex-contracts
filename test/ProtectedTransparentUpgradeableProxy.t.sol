@@ -37,8 +37,7 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
             allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
         }
         allowed_patterns.push(allowed_cf_hash);
-        allowed_senders.push(address(this));
-        allowed_senders.push(address(proxy_contract)); // TODO - this is needed??
+        allowed_senders.push(address(proxy_contract));
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.configureRules(CF);
