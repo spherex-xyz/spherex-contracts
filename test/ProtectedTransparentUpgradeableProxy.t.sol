@@ -29,7 +29,7 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
 
         proxy_contract.changeSphereXOperator(address(this));
 
-        int256 try_allowed_flow_hash = int256(uint256(uint128(bytes16(CustomerBehindProxy.try_allowed_flow.selector))));
+        int256 try_allowed_flow_hash = int256(uint256(uint32(CustomerBehindProxy.try_allowed_flow.selector)));
         int256[2] memory allowed_cf = [try_allowed_flow_hash, -try_allowed_flow_hash];
 
         uint216 allowed_cf_hash = 1;
@@ -45,7 +45,7 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
 
         protected_sigs.push(CustomerBehindProxy.try_allowed_flow.selector);
         protected_sigs.push(CustomerBehindProxy.try_blocked_flow.selector);
-        proxy_contract.addProtectedSigs(protected_sigs);
+        proxy_contract.addProtectedFuncSigs(protected_sigs);
         proxy_contract.changeSphereXEngine(address(spherex_engine));
     }
 
