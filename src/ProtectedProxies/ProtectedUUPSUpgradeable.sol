@@ -10,7 +10,8 @@ import {Address} from "openzeppelin/utils/Address.sol";
  * @dev UUPSUpgradeable implementation designed for implementations under SphereX's ProtectedERC1967SubProxy
  */
 abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
-    // TODO - duplicated code from SphereXProtectedSubProxy (and inherited contracts like base)
+    address private immutable _self = address(this);
+
     bytes32 private constant _SPHEREX_IMPLEMENTATION_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.implementation_slot")) - 1);
 
@@ -26,6 +27,26 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
     }
 
     /**
+     * Returns an address from an arbitrary slot.
+     * @param slot to read an address from
+     */
+    function _getAddress(bytes32 slot) internal view returns (address addr) {
+        assembly {
+            addr := sload(slot)
+        }
+    }
+
+    /**
+     * @dev Check that the execution is being performed through a delegatecall call and that the execution context is
+     * the sub-proxy contract with an implementation (as defined in SphereXProtectedSubProxy) pointing to self.
+     */
+    modifier onlySubProxy() {
+        require(address(this) != _self, "Function must be called through delegatecall");
+        require(_getAddress(_SPHEREX_IMPLEMENTATION_SLOT) == _self, "Function must be called through active proxy");
+        _;
+    }
+
+    /**
      * @dev Return ERC1967 original's slot to pass the old imp ERC1822 check
      */
     function proxiableUUID() external view virtual override notDelegated returns (bytes32) {
@@ -33,17 +54,23 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
     }
 
     /**
-     * @dev Overrid with the same implementation without the onlyProxy modifier since is being called under a sub-proxy
+     * @dev Overrid with the same implementation replacing the onlyProxy modifier since is being called under a sub-proxy
      */
-    function upgradeTo(address newImplementation) public virtual override {
+    function upgradeTo(address newImplementation) public virtual override onlySubProxy {
         _authorizeUpgrade(newImplementation);
         _upgradeToAndCallUUPS(newImplementation, new bytes(0), false);
     }
 
     /**
-     * @dev Overrid with the same implementation without the onlyProxy modifier since is being called under a sub-proxy
+     * @dev Overrid with the same implementation replacing the onlyProxy modifier since is being called under a sub-proxy
      */
-    function upgradeToAndCall(address newImplementation, bytes memory data) public payable virtual override {
+    function upgradeToAndCall(address newImplementation, bytes memory data)
+        public
+        payable
+        virtual
+        override
+        onlySubProxy
+    {
         _authorizeUpgrade(newImplementation);
         _upgradeToAndCallUUPS(newImplementation, data, true);
     }
