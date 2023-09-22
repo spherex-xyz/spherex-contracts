@@ -3,21 +3,21 @@
 
 pragma solidity ^0.8.0;
 
-import {ERC1967Proxy, Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
+import {BeaconProxy, Proxy} from "openzeppelin/proxy/beacon/BeaconProxy.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 
 /**
- * @title ERC1967Proxy implementation with spherex's protection
+ * @title BeaconProxy implementation with spherex's protection
  */
-contract ProtectedERC1967Proxy is SphereXProtectedProxy, ERC1967Proxy {
-    constructor(address _logic, bytes memory _data)
+contract ProtectedBeaconProxy is SphereXProtectedProxy, BeaconProxy {
+    constructor(address beacon, bytes memory data)
         SphereXProtectedProxy(msg.sender, address(0), address(0))
-        ERC1967Proxy(_logic, _data)
+        BeaconProxy(beacon, data)
     {}
 
     /**
-     * @dev This is used since both SphereXProtectedProxy and ERC1967Proxy implements Proxy.sol _delegate.
+     * @dev This is used since both SphereXProtectedProxy and BeaconProxy implements Proxy.sol _delegate.
      */
     function _delegate(address implementation) internal virtual override(Proxy, SphereXProtectedProxy) {
         SphereXProtectedProxy._delegate(implementation);

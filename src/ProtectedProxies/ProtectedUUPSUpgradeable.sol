@@ -3,8 +3,9 @@
 
 pragma solidity ^0.8.0;
 
-import {UUPSUpgradeable} from "openzeppelin/Proxy/utils/UUPSUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import {Address} from "openzeppelin/utils/Address.sol";
+import {StorageSlot} from "openzeppelin/utils/StorageSlot.sol";
 
 /**
  * @dev UUPSUpgradeable implementation designed for implementations under SphereX's ProtectedERC1967SubProxy
@@ -16,24 +17,18 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
         bytes32(uint256(keccak256("eip1967.spherex.implementation_slot")) - 1);
 
     /**
-     * Sets an address value in a given storage slot
-     * @param slot to insert the given addess in
-     * @param newAddress to be inserted in the given slot
+     * Sets an address value in in the sub-imp storage slot
+     * @param newImplementation to be set
      */
-    function _setAddress(bytes32 slot, address newAddress) private {
-        assembly {
-            sstore(slot, newAddress)
-        }
+    function _setSubImplementation(address newImplementation) private {
+        StorageSlot.getAddressSlot(_SPHEREX_IMPLEMENTATION_SLOT).value = newImplementation;
     }
 
     /**
-     * Returns an address from an arbitrary slot.
-     * @param slot to read an address from
+     * Returns an sub-imp address from our arbitrary slot.
      */
-    function _getAddress(bytes32 slot) internal view returns (address addr) {
-        assembly {
-            addr := sload(slot)
-        }
+    function _getSubImplementation() internal view returns (address) {
+        return StorageSlot.getAddressSlot(_SPHEREX_IMPLEMENTATION_SLOT).value;
     }
 
     /**
@@ -42,7 +37,7 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
      */
     modifier onlySubProxy() {
         require(address(this) != _self, "Function must be called through delegatecall");
-        require(_getAddress(_SPHEREX_IMPLEMENTATION_SLOT) == _self, "Function must be called through active proxy");
+        require(_getSubImplementation() == _self, "Function must be called through active proxy");
         _;
     }
 
@@ -81,7 +76,7 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
      */
     function subUpgradeTo(address newImplementation) external {
         _authorizeUpgrade(newImplementation);
-        _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, newImplementation);
+        _setSubImplementation(newImplementation);
     }
 
     /**
@@ -91,7 +86,7 @@ abstract contract ProtectedUUPSUpgradeable is UUPSUpgradeable {
      */
     function subUpgradeToAndCall(address newImplementation, bytes memory data) external {
         _authorizeUpgrade(newImplementation);
-        _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, newImplementation);
+        _setSubImplementation(newImplementation);
         Address.functionDelegateCall(newImplementation, data);
     }
 }
