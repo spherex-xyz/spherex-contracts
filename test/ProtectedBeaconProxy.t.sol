@@ -8,24 +8,21 @@ import "./Utils/CFUtils.sol";
 
 import "../src/SphereXEngine.sol";
 import "./Utils/CostumerContract.sol";
-import "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
-import "spherex-protect-contracts/SphereXProtected.sol";
-import {ITransparentUpgradeableProxy} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
-    ProtectedTransparentUpgradeableProxy public proxy_contract;
+import {ProtectedBeaconProxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedBeaconProxy.sol";
+import {UpgradeableBeacon} from "openzeppelin/proxy/beacon/UpgradeableBeacon.sol";
+
+contract ProtectedBeaconProxyTest is Test, CFUtils {
+    ProtectedBeaconProxy public proxy_contract;
     CustomerBehindProxy public costumer_contract;
-    address proxy_admin = vm.addr(12345);
+    UpgradeableBeacon public beacon;
     bytes4[] protected_sigs;
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CustomerBehindProxy();
-        proxy_contract = new ProtectedTransparentUpgradeableProxy(
-            address(costumer_contract),
-            proxy_admin,
-            ""
-        );
+        beacon = new UpgradeableBeacon(address(costumer_contract));
+        proxy_contract = new ProtectedBeaconProxy(address(beacon), bytes(""));
 
         proxy_contract.changeSphereXOperator(address(this));
 
@@ -67,16 +64,26 @@ contract ProtectedTransparentUpgradeableProxyTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testTransparentAdminBehavior() external {
-        vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
-        vm.prank(proxy_admin);
-        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-    }
-
-    function testTransparentUpdate() external {
+    function testUpdate() external {
         CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
-        vm.prank(proxy_admin);
-        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
+        beacon.upgradeTo(address(new_costumer));
+
+        protected_sigs.push(CustomerBehindProxy1.new_func.selector);
+        proxy_contract.addProtectedFuncSigs(protected_sigs);
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy1(address(proxy_contract)).new_func();
+
+        int256 new_funcflow_hash = int256(uint256(uint32(CustomerBehindProxy1.new_func.selector)));
+        int256[2] memory allowed_cf = [new_funcflow_hash, -new_funcflow_hash];
+
+        uint216 allowed_cf_hash = 1;
+        for (uint256 i = 0; i < allowed_cf.length; i++) {
+            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
+        }
+
+        allowed_patterns.push(allowed_cf_hash);
+        spherex_engine.addAllowedPatterns(allowed_patterns);
 
         vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
         CustomerBehindProxy1(address(proxy_contract)).new_func();

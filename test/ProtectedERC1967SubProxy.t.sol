@@ -18,8 +18,8 @@ import {
 } from "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967SubProxy.sol";
 import {ProtectedUUPSUpgradeable} from "spherex-protect-contracts/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
 
-import {ERC1967Proxy} from "openzeppelin/Proxy/ERC1967/ERC1967Proxy.sol";
-import {UUPSUpgradeable} from "openzeppelin/Proxy/Utils/UUPSUpgradeable.sol";
+import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
+import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 
 contract ProtectedERC1967SubProxyTest is Test, CFUtils {
     ERC1967Proxy public proxy_contract;

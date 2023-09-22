@@ -14,7 +14,7 @@ import "spherex-protect-contracts/SphereXProtected.sol";
 import {
     TransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
-} from "openzeppelin/Proxy/transparent/TransparentUpgradeableProxy.sol";
+} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
     TransparentUpgradeableProxy public proxy_contract;

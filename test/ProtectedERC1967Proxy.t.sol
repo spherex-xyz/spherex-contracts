@@ -13,12 +13,12 @@ import "spherex-protect-contracts/SphereXProtected.sol";
 
 contract ProtectedERC1967ProxyTest is Test, CFUtils {
     ProtectedERC1967Proxy public proxy_contract;
-    CustomerBehindProxy public costumer_contract;
+    UUPSCustomer public costumer_contract;
     bytes4[] protected_sigs;
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
-        costumer_contract = new CustomerBehindProxy();
+        costumer_contract = new UUPSCustomer();
         proxy_contract = new ProtectedERC1967Proxy(
             address(costumer_contract),
             ""
@@ -62,5 +62,13 @@ contract ProtectedERC1967ProxyTest is Test, CFUtils {
         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
+    }
+
+    function testUpdate() external {
+        UUPSCustomer1 new_costumer = new UUPSCustomer1();
+        UUPSUpgradeable(address(proxy_contract)).upgradeTo(address(new_costumer));
+
+        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
+        UUPSCustomer1(address(proxy_contract)).new_func();
     }
 }

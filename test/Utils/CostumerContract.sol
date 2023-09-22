@@ -3,9 +3,9 @@
 
 pragma solidity >=0.6.2;
 
-import {Initializable} from "openzeppelin/Proxy/utils/Initializable.sol";
-import {Proxy} from "openzeppelin/Proxy/Proxy.sol";
-import {UUPSUpgradeable} from "openzeppelin/Proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
+import {Proxy} from "openzeppelin/proxy/Proxy.sol";
+import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 
 import "spherex-protect-contracts/SphereXProtected.sol";
 import "spherex-protect-contracts/SphereXProtectedBase.sol";
@@ -46,6 +46,10 @@ contract UUPSCustomerUnderProtectedERC1967SubProxy is ProtectedUUPSUpgradeable, 
 }
 
 contract UUPSCustomerUnderProtectedERC1967SubProxy1 is ProtectedUUPSUpgradeable, CustomerBehindProxy1 {
+    function _authorizeUpgrade(address newImplementation) internal virtual override {}
+}
+
+contract UUPSCustomer is UUPSUpgradeable, CustomerBehindProxy {
     function _authorizeUpgrade(address newImplementation) internal virtual override {}
 }
 
