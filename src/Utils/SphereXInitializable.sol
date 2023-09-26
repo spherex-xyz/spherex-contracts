@@ -10,7 +10,8 @@ import {StorageSlot} from "openzeppelin/utils/StorageSlot.sol";
  *        designed to be inherited by a proxy who uses unstructured storage
  */
 abstract contract SphereXInitializable {
-    bytes32 private constant _INITIZLIZED_FLAG_SLOT = bytes32(uint256(keccak256("eip1967.initialized_flag_slot")) - 1);
+    bytes32 private constant _INITIZLIZED_FLAG_SLOT =
+        bytes32(uint256(keccak256("eip1967.spherex.initialized_flag_slot")) - 1);
 
     modifier initializer() {
         require(!isInitialized(), "SphereXInitializable: contract is already initialized");
