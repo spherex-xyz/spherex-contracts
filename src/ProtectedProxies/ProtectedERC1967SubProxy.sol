@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.0;
 
-import {ERC1967Proxy, Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-import {IERC1822Proxiable} from "openzeppelin/interfaces/draft-IERC1822.sol";
+import {ERC1967Proxy, Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
 
 import {SphereXProtectedSubProxy, SphereXProtectedProxy} from "../SphereXProtectedSubProxy.sol";
 

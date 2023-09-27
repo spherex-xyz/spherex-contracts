@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import {BeaconProxy, Proxy} from "openzeppelin/proxy/beacon/BeaconProxy.sol";
+import {BeaconProxy, Proxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 

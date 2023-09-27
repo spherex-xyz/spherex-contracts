@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.0;
 
-import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
-import {Address} from "openzeppelin/utils/Address.sol";
-import {StorageSlot} from "openzeppelin/utils/StorageSlot.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {StorageSlot} from "@openzeppelin/contracts/utils/StorageSlot.sol";
 
 /**
  * @dev UUPSUpgradeable implementation designed for implementations under SphereX's ProtectedERC1967SubProxy
