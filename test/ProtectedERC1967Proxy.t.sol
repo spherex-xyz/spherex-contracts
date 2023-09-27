@@ -8,7 +8,7 @@ import "./Utils/CFUtils.sol";
 
 import "../src/SphereXEngine.sol";
 import "./Utils/CostumerContract.sol";
-import "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967Proxy.sol";
+import {ProtectedERC1967Proxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967Proxy.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 
 contract ProtectedERC1967ProxyTest is Test, CFUtils {

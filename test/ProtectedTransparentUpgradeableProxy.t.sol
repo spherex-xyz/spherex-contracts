@@ -8,7 +8,8 @@ import "./Utils/CFUtils.sol";
 
 import "../src/SphereXEngine.sol";
 import "./Utils/CostumerContract.sol";
-import "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
+import {ProtectedTransparentUpgradeableProxy} from
+    "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 import {ITransparentUpgradeableProxy} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 

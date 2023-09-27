@@ -8,7 +8,11 @@ import "./Utils/CFUtils.sol";
 
 import "../src/SphereXEngine.sol";
 import "./Utils/CostumerContract.sol";
-import "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
+import {
+    ProtectedTransparentUpgradeableSubProxy,
+    SphereXProtectedSubProxy,
+    ISphereXProtectedSubProxy
+} from "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
 import "spherex-protect-contracts/SphereXProtected.sol";
 
 import {
