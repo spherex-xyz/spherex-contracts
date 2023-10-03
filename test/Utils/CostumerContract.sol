@@ -31,10 +31,80 @@ contract SomeContract is SphereXProtectedBase {
     function someFunc() external sphereXGuardExternal(100) {}
 }
 
+contract SomeContractBehindProxy {
+    constructor() {}
+
+    function someFunc() external {}
+}
+
 contract CustomerBehindProxy {
+    uint256 public slot0 = 5;
+
+    SomeContractBehindProxy internal someContract;
+
+    function initialize(address owner) public {
+        slot0 = 5;
+    }
+
     function try_allowed_flow() external {}
 
     function try_blocked_flow() external {}
+
+    function call_inner() external {
+        inner();
+    }
+
+    function inner() private {
+        try CostumerContract(address(this)).reverts() {} catch {}
+    }
+
+    function reverts() external {
+        require(1 == 2, "revert!");
+    }
+
+    function publicFunction() public returns (bool) {
+        return true;
+    }
+
+    function publicCallsPublic() public returns (bool) {
+        return publicFunction();
+    }
+
+    function publicCallsSamePublic(bool callInternal) public returns (bool) {
+        if (callInternal) {
+            return publicCallsSamePublic(false);
+        } else {
+            return true;
+        }
+    }
+
+    function changex() public {
+        slot0 = 6;
+    }
+
+    function arbitraryCall(address to, bytes calldata data) external {
+        (bool success, bytes memory result) = to.call(data);
+        require(success, "arbitrary call reverted");
+    }
+
+    function externalCallsExternal() external returns (bool) {
+        return this.externalCallee();
+    }
+
+    function externalCallee() external returns (bool) {
+        return true;
+    }
+
+    function factory() external returns (address) {
+        someContract = new SomeContractBehindProxy();
+        return address(someContract);
+    }
+
+    function static_method() external pure returns (uint256) {
+        return 5;
+    }
+
+    function to_block_2() external {}
 }
 
 contract CustomerBehindProxy1 {
