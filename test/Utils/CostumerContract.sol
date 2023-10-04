@@ -139,33 +139,41 @@ contract CostumerContract is SphereXProtected {
         __SphereXProtectedBase_init(owner, msg.sender, address(0));
     }
 
-    function try_allowed_flow() external sphereXGuardExternal(1) {}
+    function try_allowed_flow() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {}
 
-    function try_blocked_flow() external sphereXGuardExternal(2) {}
+    function try_blocked_flow() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {}
 
-    function call_inner() external sphereXGuardExternal(3) {
+    function call_inner() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {
         inner();
     }
 
-    function inner() private sphereXGuardInternal(4) {
+    function inner() private sphereXGuardInternal(int256(uint256(uint32(msg.sig)))) {
         try CostumerContract(address(this)).reverts() {} catch {}
     }
 
-    function reverts() external sphereXGuardExternal(5) {
+    function reverts() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {
         require(1 == 2, "revert!");
     }
 
-    function publicFunction() public sphereXGuardPublic(6, this.publicFunction.selector) returns (bool) {
+    function publicFunction()
+        public
+        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicFunction.selector)
+        returns (bool)
+    {
         return true;
     }
 
-    function publicCallsPublic() public sphereXGuardPublic(7, this.publicCallsPublic.selector) returns (bool) {
+    function publicCallsPublic()
+        public
+        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicCallsPublic.selector)
+        returns (bool)
+    {
         return publicFunction();
     }
 
     function publicCallsSamePublic(bool callInternal)
         public
-        sphereXGuardPublic(8, this.publicCallsSamePublic.selector)
+        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicCallsSamePublic.selector)
         returns (bool)
     {
         if (callInternal) {
@@ -175,24 +183,27 @@ contract CostumerContract is SphereXProtected {
         }
     }
 
-    function changex() public sphereXGuardPublic(9, this.changex.selector) {
+    function changex() public sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.changex.selector) {
         slot0 = 6;
     }
 
-    function arbitraryCall(address to, bytes calldata data) external sphereXGuardExternal(10) {
+    function arbitraryCall(address to, bytes calldata data)
+        external
+        sphereXGuardExternal(int256(uint256(uint32(msg.sig))))
+    {
         (bool success, bytes memory result) = to.call(data);
         require(success, "arbitrary call reverted");
     }
 
-    function externalCallsExternal() external sphereXGuardExternal(11) returns (bool) {
+    function externalCallsExternal() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
         return this.externalCallee();
     }
 
-    function externalCallee() external sphereXGuardExternal(12) returns (bool) {
+    function externalCallee() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
         return true;
     }
 
-    function factory() external sphereXGuardExternal(13) returns (address) {
+    function factory() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (address) {
         someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);

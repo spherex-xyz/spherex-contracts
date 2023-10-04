@@ -1,144 +1,181 @@
-// // SPDX-License-Identifier: UNLICENSED
-// // (c) SphereX 2023 Terms&Conditions
+// SPDX-License-Identifier: UNLICENSED
+// (c) SphereX 2023 Terms&Conditions
 
-// pragma solidity >=0.6.2;
+pragma solidity >=0.6.2;
 
-// import "forge-std/Test.sol";
-// import "./Utils/CFUtils.sol";
+import {SphereXProtectedSubProxyTest} from "./SphereXProtectedSubProxy.t.sol";
+import {CustomerBehindProxy, CustomerBehindProxy1} from "../Utils/CostumerContract.sol";
 
-// import "../src/SphereXEngine.sol";
-// import "./Utils/CostumerContract.sol";
-// import {
-//     ProtectedTransparentUpgradeableSubProxy,
-//     SphereXProtectedSubProxy,
-//     ISphereXProtectedSubProxy
-// } from "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
-// import "spherex-protect-contracts/SphereXProtected.sol";
+import {
+    ProtectedTransparentUpgradeableSubProxy,
+    ISphereXProtectedSubProxy
+} from "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
+import {SphereXProtectedSubProxy} from "spherex-protect-contracts/SphereXProtectedSubProxy.sol";
 
-// import {
-//     TransparentUpgradeableProxy,
-//     ITransparentUpgradeableProxy
-// } from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+    TransparentUpgradeableProxy,
+    ITransparentUpgradeableProxy
+} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-// contract ProtectedTransparentUpgradeableSubProxyTest is Test, CFUtils {
-//     TransparentUpgradeableProxy public proxy_contract;
-//     address proxy_admin = vm.addr(12345);
-//     address spherex_admin = vm.addr(19345098);
+contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxyTest {
+    TransparentUpgradeableProxy public main_proxy;
+    address proxy_admin = vm.addr(1);
+    address spherex_admin = vm.addr(2);
 
-//     ProtectedTransparentUpgradeableSubProxy public protected_proxy_contract;
-//     CustomerBehindProxy public customer_contract;
-//     bytes4[] protected_sigs;
+    ProtectedTransparentUpgradeableSubProxy public protected_proxy_contract;
 
-//     function setUp() public virtual {
-//         spherex_engine = new SphereXEngine();
-//         customer_contract = new CustomerBehindProxy();
-//         protected_proxy_contract =
-//             new ProtectedTransparentUpgradeableSubProxy(address(customer_contract), spherex_admin, bytes(""));
+    function setUp() public virtual override {
+        p_costumer_contract = new CustomerBehindProxy();
+        protected_proxy_contract =
+            new ProtectedTransparentUpgradeableSubProxy(address(p_costumer_contract), spherex_admin, bytes(""));
 
-//         bytes memory initialize_data = abi.encodeWithSelector(
-//             SphereXProtectedSubProxy.__SphereXProtectedSubProXy_init.selector,
-//             spherex_admin,
-//             address(this),
-//             address(0),
-//             address(customer_contract)
-//         );
-//         proxy_contract = new TransparentUpgradeableProxy(
-//             address(protected_proxy_contract),
-//             address(proxy_admin),
-//             initialize_data
-//         );
+        bytes memory initialize_data = abi.encodeWithSelector(
+            SphereXProtectedSubProxy.__SphereXProtectedSubProXy_init.selector,
+            address(this), // admin
+            address(this), //  operator
+            address(0), // engine
+            address(p_costumer_contract) // logic
+        );
+        main_proxy = new TransparentUpgradeableProxy(
+            address(protected_proxy_contract),
+            address(proxy_admin),
+            initialize_data
+        );
+        proxy_contract = SphereXProtectedSubProxy(payable(main_proxy));
 
-//         int256 try_allowed_flow_hash = int256(uint256(uint32(CustomerBehindProxy.try_allowed_flow.selector)));
-//         int256[2] memory allowed_cf = [try_allowed_flow_hash, -try_allowed_flow_hash];
+        super.setUp();
 
-//         uint216 allowed_cf_hash = 1;
-//         for (uint256 i = 0; i < allowed_cf.length; i++) {
-//             allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
-//         }
-//         allowed_patterns.push(allowed_cf_hash);
-//         allowed_senders.push(address(proxy_contract));
-//         spherex_engine.addAllowedSender(allowed_senders);
-//         spherex_engine.addAllowedPatterns(allowed_patterns);
-//         spherex_engine.configureRules(CF);
+        // Since in ProtectedTransparentUpgradeableSubProxy admin (address(this)) cannot fallback
+        SphereXProtectedSubProxy(payable(main_proxy)).transferSphereXAdminRole(spherex_admin);
+        vm.prank(spherex_admin);
+        SphereXProtectedSubProxy(payable(main_proxy)).acceptSphereXAdminRole();
+    }
 
-//         protected_sigs.push(CustomerBehindProxy.try_allowed_flow.selector);
-//         protected_sigs.push(CustomerBehindProxy.try_blocked_flow.selector);
-//         ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).addProtectedFuncSigs(protected_sigs);
-//         ProtectedTransparentUpgradeableSubProxy(payable(proxy_contract)).changeSphereXEngine(address(spherex_engine));
-//     }
+    // Overrided from SphereXProtect.t.sol since spherex admin here is not address(this)
+    function test_changeSphereXAdmin() external override {
+        address otherAddress = address(3);
 
-//     function testAllowed() external {
-//         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-//         assertFlowStorageSlotsInInitialState();
-//     }
+        vm.prank(spherex_admin);
+        costumer_contract.transferSphereXAdminRole(otherAddress);
+        vm.prank(otherAddress);
+        costumer_contract.acceptSphereXAdminRole();
 
-//     function testTwoAllowedCall() external {
-//         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-//         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+        vm.expectRevert("SphereX error: admin required");
+        costumer_contract.transferSphereXAdminRole(address(this));
+        vm.prank(otherAddress);
+        costumer_contract.transferSphereXAdminRole(address(this));
 
-//         assertFlowStorageSlotsInInitialState();
-//     }
+        vm.prank(otherAddress);
+        vm.expectRevert("SphereX error: not the pending account");
+        costumer_contract.acceptSphereXAdminRole();
 
-//     function testBlocked() external {
-//         vm.expectRevert("SphereX error: disallowed tx pattern");
-//         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
+        costumer_contract.acceptSphereXAdminRole();
 
-//         assertFlowStorageSlotsInInitialState();
-//     }
+        assertFlowStorageSlotsInInitialState();
+    }
 
-//     function testReInitialize() external {
-//         vm.expectRevert("SphereXInitializable: contract is already initialized");
-//         vm.prank(spherex_admin);
-//         SphereXProtectedSubProxy(payable(proxy_contract)).__SphereXProtectedSubProXy_init(
-//             address(this), address(0), address(0), address(0)
-//         );
-//     }
+    function testAdminToFallback() external {
+        vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
+        vm.prank(proxy_admin);
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+    }
 
-//     function testTransparentAdminBehavior() external {
-//         vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
-//         vm.prank(proxy_admin);
-//         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-//     }
+    function testAdminToAdminGetter() external {
+        vm.prank(proxy_admin);
+        assertEq(ITransparentUpgradeableProxy(address(proxy_contract)).admin(), proxy_admin);
+    }
 
-//     function testProtectedTransparentAdminBehavior() external {
-//         vm.expectRevert("ProtectedTransparentUpgradeableSubProxy: admin cannot fallback to sub-proxy target");
-//         vm.prank(spherex_admin);
-//         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
-//     }
+    function testUserToAdminGetter() external {
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).admin();
+    }
 
-//     function testSubUpdate() external {
-//         CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
-//         vm.prank(spherex_admin);
-//         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeTo(address(new_costumer));
+    function testAdminToImpGetter() external {
+        vm.prank(proxy_admin);
+        assertEq(
+            ITransparentUpgradeableProxy(address(proxy_contract)).implementation(), address(protected_proxy_contract)
+        );
+    }
 
-//         vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
-//         CustomerBehindProxy1(address(proxy_contract)).new_func();
-//     }
+    function testUserToImpGetter() external {
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).implementation();
+    }
 
-//     function testSubUpdateAndCall() external {
-//         CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
-//         bytes memory new_func_data = abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector);
+    function testAdminToChangeAdmin() external {
+        address new_admin = vm.addr(4);
 
-//         vm.prank(spherex_admin);
-//         vm.expectCall(address(new_costumer), new_func_data);
-//         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeToAndCall(address(new_costumer), new_func_data);
-//     }
+        vm.prank(proxy_admin);
+        ITransparentUpgradeableProxy(address(proxy_contract)).changeAdmin(new_admin);
 
-//     function testUpdateTo() external {
-//         CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
-//         vm.prank(proxy_admin);
-//         ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).admin();
 
-//         vm.expectCall(address(proxy_contract), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
-//         UUPSCustomer1(address(proxy_contract)).new_func();
-//     }
+        vm.prank(new_admin);
+        assertEq(ITransparentUpgradeableProxy(address(proxy_contract)).admin(), new_admin);
+    }
 
-//     function testUpdateToAndCall() external {
-//         CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
-//         vm.prank(proxy_admin);
-//         bytes memory new_func_data = abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()"))));
+    function testUserToChangeAdmin() external {
+        address new_admin = vm.addr(4);
 
-//         vm.expectCall(address(new_costumer), new_func_data);
-//         ITransparentUpgradeableProxy(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
-//     }
-// }
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).changeAdmin(new_admin);
+    }
+
+    function testAdminToUpdateTo() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        vm.prank(proxy_admin);
+        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
+
+        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
+        CustomerBehindProxy1(address(proxy_contract)).new_func();
+    }
+
+    function testUserToUpdateTo() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeTo(address(new_costumer));
+    }
+
+    function testAdminToUpdateToAndCall() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        bytes memory new_func_data = abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector);
+
+        vm.prank(proxy_admin);
+        vm.expectCall(address(new_costumer), new_func_data);
+        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
+    }
+
+    function testUserToUpdateToAndCall() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        bytes memory new_func_data = abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector);
+
+        vm.expectRevert();
+        ITransparentUpgradeableProxy(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
+    }
+
+    function testProtectedTransparentAdminBehavior() external {
+        vm.expectRevert("ProtectedTransparentUpgradeableSubProxy: admin cannot fallback to sub-proxy target");
+        vm.prank(spherex_admin);
+        CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+    }
+
+    function testSubUpdate() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        vm.prank(spherex_admin);
+        ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeTo(address(new_costumer));
+
+        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
+        CustomerBehindProxy1(address(proxy_contract)).new_func();
+    }
+
+    function testSubUpdateAndCall() external {
+        CustomerBehindProxy1 new_costumer = new CustomerBehindProxy1();
+        bytes memory new_func_data = abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector);
+
+        vm.prank(spherex_admin);
+        vm.expectCall(address(new_costumer), new_func_data);
+        ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeToAndCall(address(new_costumer), new_func_data);
+    }
+}

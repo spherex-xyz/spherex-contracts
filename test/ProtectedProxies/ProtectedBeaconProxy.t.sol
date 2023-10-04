@@ -31,7 +31,7 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         CustomerBehindProxy1(address(proxy_contract)).new_func();
 
-        allowed_patterns.push(calc_allowed_cf(CustomerBehindProxy1.new_func.selector));
+        allowed_patterns.push(calc_pattern_by_selector(CustomerBehindProxy1.new_func.selector));
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));

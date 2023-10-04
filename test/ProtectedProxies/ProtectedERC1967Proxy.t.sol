@@ -28,4 +28,12 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         vm.expectCall(address(proxy_contract), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
         UUPSCustomer1(address(proxy_contract)).new_func();
     }
+
+    function testUpdateToAndCall() external {
+        UUPSCustomer1 new_costumer = new UUPSCustomer1();
+        bytes memory new_func_data = abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()"))));
+
+        vm.expectCall(address(new_costumer), new_func_data);
+        UUPSCustomer1(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
+    }
 }

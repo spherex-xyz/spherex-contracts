@@ -28,18 +28,15 @@ contract SphereXProtectedTest is Test, CFUtils {
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
+
         costumer_contract.changeSphereXOperator(address(this));
-        int256[2] memory allowed_cf = [int256(1), -1];
-        uint216 allowed_cf_hash = 1;
-        for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
-        }
-        allowed_patterns.push(allowed_cf_hash);
+
+        allowed_patterns.push(calc_pattern_by_selector(CostumerContract.try_allowed_flow.selector));
         allowed_senders.push(address(costumer_contract));
 
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
-        spherex_engine.configureRules(bytes8(uint64(1)));
+        spherex_engine.configureRules(CF);
 
         costumer_contract.changeSphereXEngine(address(spherex_engine));
     }
@@ -91,7 +88,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXAdmin() external {
+    function test_changeSphereXAdmin() external virtual {
         address otherAddress = address(1);
 
         costumer_contract.transferSphereXAdminRole(otherAddress);
@@ -134,13 +131,18 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    // function testPartialRevertAllowedFlow() external {
-    //     allowed_cf_storage = [int256(3), 4, -4, -3];
-    //     addAllowedPattern();
-    //     costumer_contract.call_inner();
+    function testPartialRevertAllowedFlow() external {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.call_inner.selector),
+            to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(costumer_contract.call_inner.selector)
+        ];
+        addAllowedPattern();
+        costumer_contract.call_inner();
 
-    //     assertFlowStorageSlotsInInitialState();
-    // }
+        assertFlowStorageSlotsInInitialState();
+    }
 
     // function testPartialRevertNotAllowedFlow() external {
     //     // create an allowed cf [3,4,5,-5,-4,-3]

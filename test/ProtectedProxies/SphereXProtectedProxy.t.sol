@@ -14,17 +14,6 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
 
     bytes4[] protected_sigs;
 
-    function calc_allowed_cf(bytes4 func_selector) internal pure returns (uint216) {
-        int256 func_hash = int256(uint256(uint32(func_selector)));
-        int256[2] memory allowed_cf = [func_hash, -func_hash];
-
-        uint216 allowed_cf_hash = 1;
-        for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
-        }
-        return allowed_cf_hash;
-    }
-
     function setUp() public virtual override {
         require(
             address(proxy_contract) != address(0),
@@ -34,7 +23,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         spherex_engine = new SphereXEngine();
         proxy_contract.changeSphereXOperator(address(this));
 
-        allowed_patterns.push(calc_allowed_cf(CustomerBehindProxy.try_allowed_flow.selector));
+        allowed_patterns.push(calc_pattern_by_selector(CustomerBehindProxy.try_allowed_flow.selector));
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         protected_sigs.push(CustomerBehindProxy.initialize.selector);
