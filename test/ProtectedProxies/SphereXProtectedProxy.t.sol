@@ -5,7 +5,7 @@ pragma solidity >=0.6.2;
 
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
-import {CustomerBehindProxy, CostumerContract} from "../Utils/CostumerContract.sol";
+import {CustomerBehindProxy, CostumerContract, SomeContract} from "../Utils/CostumerContract.sol";
 import {SphereXProtectedTest} from "../SphereXProtected.t.sol";
 
 abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
@@ -94,4 +94,39 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
 
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
     }
+
+    function testPartialRevertAllowedFlow() external override {
+        allowed_cf_storage =
+            [to_int256(costumer_contract.call_inner.selector), -to_int256(costumer_contract.call_inner.selector)];
+        addAllowedPattern();
+        costumer_contract.call_inner();
+
+        assertFlowStorageSlotsInInitialState();
+    }
+
+    function testPartialRevertNotAllowedFlow() external override {
+        // create an allowed cf [3,4,5,-5,-4,-3]
+        allowed_cf_storage = [
+            to_int256(costumer_contract.call_inner.selector),
+            to_int256(costumer_contract.reverts.selector),
+            -to_int256(costumer_contract.reverts.selector) - to_int256(costumer_contract.call_inner.selector)
+        ];
+        addAllowedPattern();
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        costumer_contract.call_inner();
+
+        assertFlowStorageSlotsInInitialState();
+    }
+
+    // It is a redundent test for proxy but it would fail if not overrided
+    function testExternalCallsInternalFunction() external override {}
+    function testPublicCallsPublic() external override {}
+    function testPublicCallsSamePublic() external override {}
+    function test_factorySetup() public override {}
+    function test_factoryAllowedSender() public override {}
+    function test_factoryfailsAllowedSender() public override {}
+    function test_factory_callCreatedContract() public override {}
+    function test_factoryEngineDisabled() public override {}
+    function test_grantSenderAdderRoleOnlyOperator() public override {}
 }

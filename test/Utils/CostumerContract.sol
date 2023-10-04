@@ -28,7 +28,7 @@ contract CustomerContractProxy is Proxy {
 contract SomeContract is SphereXProtectedBase {
     constructor(address admin, address operator, address engine) SphereXProtectedBase(admin, operator, engine) {}
 
-    function someFunc() external sphereXGuardExternal(100) {}
+    function someFunc() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {}
 }
 
 contract SomeContractBehindProxy {
