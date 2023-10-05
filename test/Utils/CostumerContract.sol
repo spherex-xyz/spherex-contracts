@@ -147,7 +147,7 @@ contract CostumerContract is SphereXProtected {
         inner();
     }
 
-    function inner() private sphereXGuardInternal(int256(uint256(uint32(msg.sig)))) {
+    function inner() private sphereXGuardInternal(int256(uint256(uint32(bytes4(keccak256(bytes("inner()"))))))) {
         try CostumerContract(address(this)).reverts() {} catch {}
     }
 
@@ -157,7 +157,7 @@ contract CostumerContract is SphereXProtected {
 
     function publicFunction()
         public
-        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicFunction.selector)
+        sphereXGuardPublic(int256(uint256(uint32(this.publicFunction.selector))), this.publicFunction.selector)
         returns (bool)
     {
         return true;
@@ -165,7 +165,7 @@ contract CostumerContract is SphereXProtected {
 
     function publicCallsPublic()
         public
-        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicCallsPublic.selector)
+        sphereXGuardPublic(int256(uint256(uint32(this.publicCallsPublic.selector))), this.publicCallsPublic.selector)
         returns (bool)
     {
         return publicFunction();
@@ -173,7 +173,10 @@ contract CostumerContract is SphereXProtected {
 
     function publicCallsSamePublic(bool callInternal)
         public
-        sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.publicCallsSamePublic.selector)
+        sphereXGuardPublic(
+            int256(uint256(uint32(this.publicCallsSamePublic.selector))),
+            this.publicCallsSamePublic.selector
+        )
         returns (bool)
     {
         if (callInternal) {
@@ -183,7 +186,10 @@ contract CostumerContract is SphereXProtected {
         }
     }
 
-    function changex() public sphereXGuardPublic(int256(uint256(uint32(msg.sig))), this.changex.selector) {
+    function changex()
+        public
+        sphereXGuardPublic(int256(uint256(uint32(this.changex.selector))), this.changex.selector)
+    {
         slot0 = 6;
     }
 
