@@ -6,6 +6,8 @@ pragma solidity ^0.8.0;
 import {BeaconProxy, Proxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
+import {ISphereXEngine} from "../ISphereXEngine.sol";
+import {ISphereXBeacon} from "./ISphereXBeacon.sol";
 
 /**
  * @title BeaconProxy implementation with spherex's protection
@@ -21,5 +23,13 @@ contract ProtectedBeaconProxy is SphereXProtectedProxy, BeaconProxy {
      */
     function _delegate(address implementation) internal virtual override(Proxy, SphereXProtectedProxy) {
         SphereXProtectedProxy._delegate(implementation);
+    }
+
+    function _sphereXEngine() internal view override returns (ISphereXEngine) {
+        return ISphereXBeacon(_getBeacon()).sphereXEngine();
+    }
+
+    function isProtectedFuncSig(bytes4 func_sig) public view override returns (bool value) {
+        return ISphereXBeacon(_getBeacon()).isProtectedFuncSig(func_sig);
     }
 }

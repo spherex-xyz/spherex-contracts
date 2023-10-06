@@ -62,7 +62,7 @@ abstract contract SphereXProtectedProxy is SphereXProtectedBase, Proxy {
      * Getter for a specific function signature in the protected map
      * @param func_sig of the wanted function
      */
-    function isProtectedFuncSig(bytes4 func_sig) public view returns (bool value) {
+    function isProtectedFuncSig(bytes4 func_sig) public view virtual returns (bool value) {
         bytes32 position = keccak256(abi.encodePacked(func_sig, PROTECTED_FUNC_SIG_BASE_POSITION));
         assembly {
             value := sload(position)
