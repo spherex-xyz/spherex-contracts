@@ -12,7 +12,7 @@ contract SphereXUpgradeableBeacon is SphereXProtectedProxy, UpgradeableBeacon {
         UpgradeableBeacon(implementation)
     {}
 
-    function upgradeTo(address newImplementation) public virtual override spherexOnlyOperator {
+    function upgradeTo(address newImplementation) public virtual override onlySphereXAdmin {
         super.upgradeTo(newImplementation);
     }
 
