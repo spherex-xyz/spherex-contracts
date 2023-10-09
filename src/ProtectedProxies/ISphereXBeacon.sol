@@ -10,6 +10,5 @@ import {ISphereXEngine} from "../ISphereXEngine.sol";
  */
 
 interface ISphereXBeacon {
-    function isProtectedFuncSig(bytes4 func_sig) external view returns (bool value);
-    function sphereXEngine() external view returns (ISphereXEngine);
+    function protectionInfo(bytes4 func_sig) external view returns (address, address, bool);
 }

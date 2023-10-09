@@ -4,6 +4,7 @@
 pragma solidity ^0.8.0;
 
 import {BeaconProxy, Proxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 import {ISphereXEngine} from "../ISphereXEngine.sol";
@@ -25,11 +26,38 @@ contract ProtectedBeaconProxy is SphereXProtectedProxy, BeaconProxy {
         SphereXProtectedProxy._delegate(implementation);
     }
 
-    function _sphereXEngine() internal view override returns (ISphereXEngine) {
-        return ISphereXBeacon(_getBeacon()).sphereXEngine();
+    function _before(address engine) private returns (ModifierLocals memory locals) {
+        locals.storageSlots =
+            ISphereXEngine(engine).sphereXValidatePre(int256(uint256(uint32(msg.sig))), msg.sender, msg.data);
+        locals.valuesBefore = _readStorage(locals.storageSlots);
+        locals.gas = gasleft();
+
+        return locals;
     }
 
-    function isProtectedFuncSig(bytes4 func_sig) public view override returns (bool value) {
-        return ISphereXBeacon(_getBeacon()).isProtectedFuncSig(func_sig);
+    function _after(address engine, ModifierLocals memory locals) private {
+        uint256 gas = locals.gas - gasleft();
+        bytes32[] memory valuesAfter;
+        valuesAfter = _readStorage(locals.storageSlots);
+
+        ISphereXEngine(engine).sphereXValidatePost(
+            -int256(uint256(uint32(msg.sig))), gas, locals.valuesBefore, valuesAfter
+        );
+    }
+
+    function _fallback() internal virtual override {
+        (address imp, address engine, bool isProtectedFuncSig) = ISphereXBeacon(_getBeacon()).protectionInfo(msg.sig);
+        if (isProtectedFuncSig && engine != address(0)) {
+            ModifierLocals memory locals = _before(engine);
+            bytes memory ret_data = Address.functionDelegateCall(imp, msg.data);
+            _after(engine, locals);
+
+            uint256 ret_size = ret_data.length;
+            assembly {
+                return(add(ret_data, 0x20), ret_size)
+            }
+        } else {
+            super._delegate(imp);
+        }
     }
 }
