@@ -17,7 +17,7 @@ contract SphereXUpgradeableBeacon is SphereXProxyBase, UpgradeableBeacon, ISpher
         super.upgradeTo(newImplementation);
     }
 
-    function protectionInfo(bytes4 func_sig) external view returns (address, address, bool) {
+    function protectedImplementation(bytes4 func_sig) external view returns (address, address, bool) {
         return (implementation(), sphereXEngine(), isProtectedFuncSig(func_sig));
     }
 }

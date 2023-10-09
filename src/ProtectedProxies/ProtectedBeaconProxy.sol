@@ -46,7 +46,8 @@ contract ProtectedBeaconProxy is SphereXProtectedProxy, BeaconProxy {
     }
 
     function _fallback() internal virtual override {
-        (address imp, address engine, bool isProtectedFuncSig) = ISphereXBeacon(_getBeacon()).protectionInfo(msg.sig);
+        (address imp, address engine, bool isProtectedFuncSig) =
+            ISphereXBeacon(_getBeacon()).protectedImplementation(msg.sig);
         if (isProtectedFuncSig && engine != address(0)) {
             ModifierLocals memory locals = _before(engine);
             bytes memory ret_data = Address.functionDelegateCall(imp, msg.data);

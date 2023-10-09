@@ -59,7 +59,7 @@ abstract contract SphereXProtectedBase {
 
     // ============ Helper functions ============
 
-    function _sphereXEngine() internal view virtual returns (ISphereXEngine) {
+    function _sphereXEngine() private view returns (ISphereXEngine) {
         return ISphereXEngine(_getAddress(SPHEREX_ENGINE_STORAGE_SLOT));
     }
 
