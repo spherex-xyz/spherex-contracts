@@ -6,13 +6,13 @@ pragma solidity ^0.8.0;
 import {Proxy} from "@openzeppelin/contracts/proxy/Proxy.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-import {SphereXProxyStorage} from "./SphereXProxyStorage.sol";
+import {SphereXProxyBase} from "./SphereXProxyStorage.sol";
 
 /**
  * @title SphereX abstract proxt contract which implements OZ's Proxy intereface.
  */
-abstract contract SphereXProtectedProxy is SphereXProxyStorage, Proxy {
-    constructor(address admin, address operator, address engine) SphereXProxyStorage(admin, operator, engine) {}
+abstract contract SphereXProtectedProxy is SphereXProxyBase, Proxy {
+    constructor(address admin, address operator, address engine) SphereXProxyBase(admin, operator, engine) {}
 
     /**
      * The main point of the contract, wrap the delegate operation with SphereX's protection modfifier
