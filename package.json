@@ -1,0 +1,26 @@
+{
+    "name": "@spherex-xyz/contracts",
+    "version": "1.0.3",
+    "description": "",
+    "files": [
+        "src/**/*.sol",
+        "artifacts/src/**/*.json"
+    ],
+    "scripts": {
+        "test": "forge test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/spherex-xyz/spherex-protect-contracts.git"
+    },
+    "author": "SphereX Technologies LTD",
+    "license": "UNLICENSED",
+    "bugs": {
+        "url": "https://github.com/spherex-xyz/spherex-protect-contracts/issues"
+    },
+    "homepage": "https://github.com/spherex-xyz/spherex-protect-contracts#readme",
+    "devDependencies": {
+        "@nomicfoundation/hardhat-foundry": "^1.1.1",
+        "hardhat": "^2.18.0"
+    }
+}
