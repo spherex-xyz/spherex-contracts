@@ -25,7 +25,7 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         UUPSCustomer1 new_costumer = new UUPSCustomer1();
         UUPSUpgradeable(address(proxy_contract)).upgradeTo(address(new_costumer));
 
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
+        vm.expectCall(address(new_costumer), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
         UUPSCustomer1(address(proxy_contract)).new_func();
     }
 

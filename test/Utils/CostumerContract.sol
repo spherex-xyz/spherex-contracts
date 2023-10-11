@@ -105,6 +105,7 @@ contract CustomerBehindProxy {
     }
 
     function to_block_2() external {}
+    function to_block_3() external {}
 }
 
 contract CustomerBehindProxy1 {

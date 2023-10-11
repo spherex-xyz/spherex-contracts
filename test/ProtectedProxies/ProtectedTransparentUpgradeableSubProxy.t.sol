@@ -166,7 +166,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         vm.prank(spherex_admin);
         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeTo(address(new_costumer));
 
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
+        vm.expectCall(address(new_costumer), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
         CustomerBehindProxy1(address(proxy_contract)).new_func();
     }
 

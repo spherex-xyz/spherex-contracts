@@ -47,7 +47,7 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
         UUPSCustomerUnderProtectedERC1967SubProxy1 new_costumer = new UUPSCustomerUnderProtectedERC1967SubProxy1();
         ProtectedUUPSUpgradeable(address(proxy_contract)).subUpgradeTo(address(new_costumer));
 
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
+        vm.expectCall(address(new_costumer), abi.encodeWithSelector(bytes4(keccak256(bytes("new_func()")))));
         UUPSCustomerUnderProtectedERC1967SubProxy1(address(proxy_contract)).new_func();
     }
 

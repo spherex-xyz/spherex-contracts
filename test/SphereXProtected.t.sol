@@ -60,7 +60,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Managment functions  ============
 
-    function test_changeSphereXEngine_disable_engine() external {
+    function test_changeSphereXEngine_disable_engine() external virtual {
         // this test covers enable->disable (by default the engine is enabled in the set up)
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
@@ -68,7 +68,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_enable() external {
+    function test_changeSphereXEngine_disable_enable() external virtual {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -80,7 +80,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_disable() external {
+    function test_changeSphereXEngine_disable_disable() external virtual {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -90,7 +90,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_enable_enable() external {
+    function test_changeSphereXEngine_enable_enable() external virtual {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
@@ -358,7 +358,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Storage thesis helper function test  ============
 
-    function test_readSlot() external {
+    function test_readSlot() external virtual {
         MockEngine mock_spherex_engine = new MockEngine();
         uint256 before = costumer_contract.slot0();
         costumer_contract.changeSphereXEngine(address(mock_spherex_engine));
