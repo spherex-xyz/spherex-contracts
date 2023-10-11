@@ -7,23 +7,37 @@ import {BeaconProxy, Proxy} from "@openzeppelin/contracts/proxy/beacon/BeaconPro
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
-import {ISphereXEngine} from "../ISphereXEngine.sol";
+import {ISphereXEngine, ModifierLocals} from "../ISphereXEngine.sol";
 import {ISphereXBeacon} from "./ISphereXBeacon.sol";
 
 /**
  * @title BeaconProxy implementation with spherex's protection
  */
-contract ProtectedBeaconProxy is SphereXProtectedProxy, BeaconProxy {
-    constructor(address beacon, bytes memory data)
-        SphereXProtectedProxy(msg.sender, address(0), address(0))
-        BeaconProxy(beacon, data)
-    {}
+contract ProtectedBeaconProxy is BeaconProxy {
+    constructor(address beacon, bytes memory data) BeaconProxy(beacon, data) {}
 
     /**
-     * @dev This is used since both SphereXProtectedProxy and BeaconProxy implements Proxy.sol _delegate.
+     * Internal function that reads values from given storage slots and returns them
+     * @param storageSlots list of storage slots to read
+     * @return list of values read from the various storage slots
      */
-    function _delegate(address implementation) internal virtual override(Proxy, SphereXProtectedProxy) {
-        SphereXProtectedProxy._delegate(implementation);
+    function _readStorage(bytes32[] memory storageSlots) internal view returns (bytes32[] memory) {
+        uint256 arrayLength = storageSlots.length;
+        bytes32[] memory values = new bytes32[](arrayLength);
+        // create the return array data
+
+        for (uint256 i = 0; i < arrayLength; i++) {
+            bytes32 slot = storageSlots[i];
+            bytes32 temp_value;
+            // solhint-disable-next-line no-inline-assembly
+            // slither-disable-next-line assembly
+            assembly {
+                temp_value := sload(slot)
+            }
+
+            values[i] = temp_value;
+        }
+        return values;
     }
 
     function _before(address engine) private returns (ModifierLocals memory locals) {
