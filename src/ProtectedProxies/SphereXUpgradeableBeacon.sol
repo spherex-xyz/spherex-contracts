@@ -8,8 +8,8 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {ISphereXBeacon} from "./ISphereXBeacon.sol";
 
 contract SphereXUpgradeableBeacon is SphereXProxyBase, UpgradeableBeacon, ISphereXBeacon {
-    constructor(address implementation)
-        SphereXProxyBase(msg.sender, address(0), address(0))
+    constructor(address implementation, address admin, address operator, address engine)
+        SphereXProxyBase(admin, operator, engine)
         UpgradeableBeacon(implementation)
     {}
 

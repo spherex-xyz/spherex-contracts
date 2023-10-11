@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import {ISphereXEngine} from "./ISphereXEngine.sol";
+import {ISphereXEngine, ModifierLocals} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX base Customer contract template
@@ -19,15 +19,6 @@ abstract contract SphereXProtectedBase {
     bytes32 private constant SPHEREX_OPERATOR_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.operator")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
-
-    /**
-     * @dev this struct is used to reduce the stack usage of the modifiers.
-     */
-    struct ModifierLocals {
-        bytes32[] storageSlots;
-        bytes32[] valuesBefore;
-        uint256 gas;
-    }
 
     event ChangedSpherexOperator(address oldSphereXAdmin, address newSphereXAdmin);
     event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
