@@ -18,7 +18,7 @@ import {
  */
 contract ProtectedTransparentUpgradeableSubProxy is SphereXProtectedSubProxy, TransparentUpgradeableProxy {
     constructor(address _logic, address admin_, bytes memory _data)
-        SphereXProtectedSubProxy(address(0), address(0), address(0))
+        SphereXProtectedSubProxy()
         TransparentUpgradeableProxy(_logic, admin_, _data)
     {}
 

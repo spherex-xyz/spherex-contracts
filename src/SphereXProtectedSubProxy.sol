@@ -30,19 +30,22 @@ abstract contract SphereXProtectedSubProxy is SphereXProtectedProxy, SphereXInit
      * as extra protection to prevent an attacker from initializing it.
      * SEE: https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/2
      */
-    constructor(address admin, address operator, address engine) SphereXProtectedProxy(admin, operator, engine) {
+    constructor() SphereXProtectedProxy(address(0), address(0), address(0)) {
         _disableInitializers();
     }
 
     /**
      * Used when the client uses a proxy - should be called by the inhereter initialization
      */
-    function __SphereXProtectedSubProXy_init(address admin, address operator, address engine, address _logic)
-        external
-        initializer
-    {
+    function __SphereXProtectedSubProXy_init(
+        address admin,
+        address operator,
+        address engine,
+        address _logic,
+        bytes memory data
+    ) external initializer {
         __SphereXProtectedBase_init(admin, operator, engine);
-        _setAddress(_SPHEREX_IMPLEMENTATION_SLOT, _logic);
+        subUpgradeToAndCall(_logic, data);
     }
 
     /**
