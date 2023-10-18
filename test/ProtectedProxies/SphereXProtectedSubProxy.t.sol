@@ -5,6 +5,7 @@ pragma solidity >=0.6.2;
 
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 import {SphereXProtectedSubProxy} from "spherex-protect-contracts/SphereXProtectedSubProxy.sol";
+import {CustomerBehindProxy} from "../Utils/CostumerContract.sol";
 
 abstract contract SphereXProtectedSubProxyTest is SphereXProtectedProxyTest {
     function setUp() public virtual override {
@@ -16,5 +17,9 @@ abstract contract SphereXProtectedSubProxyTest is SphereXProtectedProxyTest {
         SphereXProtectedSubProxy(payable(proxy_contract)).__SphereXProtectedSubProXy_init(
             address(this), address(0), address(0), address(0), new bytes(0)
         );
+    }
+
+    function testInitializeImp() external {
+        assertEq(CustomerBehindProxy(address(proxy_contract)).getOwner(), address(this));
     }
 }
