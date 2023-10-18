@@ -9,6 +9,7 @@ import {CustomerBehindProxy, CustomerBehindProxy1, CostumerContract} from "../Ut
 import {MockEngine} from "../Utils/MockEngine.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 import {ProtectedBeaconProxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedBeaconProxy.sol";
+import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
 import {SphereXUpgradeableBeacon} from "spherex-protect-contracts/ProtectedProxies/SphereXUpgradeableBeacon.sol";
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
@@ -19,10 +20,8 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         spherex_engine = new SphereXEngine();
 
         p_costumer_contract = new CustomerBehindProxy();
-        beacon = new SphereXUpgradeableBeacon(address(p_costumer_contract));
-        proxy_contract = new ProtectedBeaconProxy(address(beacon), bytes(""));
-
-        beacon.changeSphereXOperator(address(this));
+        beacon = new SphereXUpgradeableBeacon(address(p_costumer_contract), address(this), address(this), address(0));
+        proxy_contract = SphereXProtectedProxy(payable(new ProtectedBeaconProxy(address(beacon), bytes(""))));
 
         allowed_patterns.push(calc_pattern_by_selector(CustomerBehindProxy.try_allowed_flow.selector));
         spherex_engine.addAllowedPatterns(allowed_patterns);
