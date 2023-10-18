@@ -34,7 +34,8 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
             address(this), // admin
             address(this), // operator
             address(0), // engine
-            address(uups_costumer_contract) // logic
+            address(uups_costumer_contract), // logic
+            new bytes(0)
         );
 
         main_proxy = new ERC1967Proxy(address(protected_proxy_contract), initialize_data);

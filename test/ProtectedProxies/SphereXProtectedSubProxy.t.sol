@@ -14,7 +14,7 @@ abstract contract SphereXProtectedSubProxyTest is SphereXProtectedProxyTest {
     function testReInitialize() external {
         vm.expectRevert("SphereXInitializable: contract is already initialized");
         SphereXProtectedSubProxy(payable(proxy_contract)).__SphereXProtectedSubProXy_init(
-            address(this), address(0), address(0), address(0)
+            address(this), address(0), address(0), address(0), new bytes(0)
         );
     }
 }

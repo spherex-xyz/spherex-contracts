@@ -34,7 +34,8 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
             address(this), // admin
             address(this), //  operator
             address(0), // engine
-            address(p_costumer_contract) // logic
+            address(p_costumer_contract), // logic
+            new bytes(0)
         );
         main_proxy = new TransparentUpgradeableProxy(
             address(protected_proxy_contract),
