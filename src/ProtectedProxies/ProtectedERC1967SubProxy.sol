@@ -12,10 +12,7 @@ import {SphereXProtectedSubProxy, SphereXProtectedProxy} from "../SphereXProtect
  * @dev ERC1967Proxy implementation with spherex's protection designed to be under another proxy
  */
 contract ProtectedERC1967SubProxy is SphereXProtectedSubProxy, ERC1967Proxy, IERC1822Proxiable {
-    constructor(address _logic, bytes memory _data)
-        SphereXProtectedSubProxy(address(0), address(0), address(0))
-        ERC1967Proxy(_logic, _data)
-    {}
+    constructor(address _logic, bytes memory _data) SphereXProtectedSubProxy() ERC1967Proxy(_logic, _data) {}
 
     /**
      * @dev Return ERC1967 original's slot to pass the old imp ERC1822 check

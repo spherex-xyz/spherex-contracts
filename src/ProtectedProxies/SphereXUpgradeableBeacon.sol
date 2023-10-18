@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import {SphereXProxyBase} from "../SphereXProxyStorage.sol";
+import {SphereXProxyBase} from "../SphereXProxyBase.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {ISphereXBeacon} from "./ISphereXBeacon.sol";
 

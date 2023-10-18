@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 import {Proxy} from "@openzeppelin/contracts/proxy/Proxy.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-import {SphereXProxyBase} from "./SphereXProxyStorage.sol";
+import {SphereXProxyBase} from "./SphereXProxyBase.sol";
 
 /**
  * @title SphereX abstract proxt contract which implements OZ's Proxy intereface.
