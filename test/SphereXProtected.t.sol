@@ -121,8 +121,6 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.expectRevert("SphereX error: not the pending account");
         costumer_contract.acceptSphereXAdminRole();
 
-        costumer_contract.acceptSphereXAdminRole();
-
         assertFlowStorageSlotsInInitialState();
     }
 
