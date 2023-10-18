@@ -9,6 +9,7 @@ import {CustomerBehindProxy, CustomerBehindProxy1, CostumerContract} from "../Ut
 import {MockEngine} from "../Utils/MockEngine.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 import {ProtectedBeaconProxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedBeaconProxy.sol";
+import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
 import {SphereXUpgradeableBeacon} from "spherex-protect-contracts/ProtectedProxies/SphereXUpgradeableBeacon.sol";
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
@@ -16,13 +17,11 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
     SphereXUpgradeableBeacon public beacon;
 
     function setUp() public virtual override {
-        p_costumer_contract = new CustomerBehindProxy();
-
-        beacon = new SphereXUpgradeableBeacon(address(p_costumer_contract));
-        beacon.changeSphereXOperator(address(this));
-
-        proxy_contract = new ProtectedBeaconProxy(address(beacon), bytes(""));
         spherex_engine = new SphereXEngine();
+
+        p_costumer_contract = new CustomerBehindProxy();
+        beacon = new SphereXUpgradeableBeacon(address(p_costumer_contract), address(this), address(this), address(0));
+        proxy_contract = SphereXProtectedProxy(payable(new ProtectedBeaconProxy(address(beacon), bytes(""))));
 
         allowed_patterns.push(calc_pattern_by_selector(CustomerBehindProxy.try_allowed_flow.selector));
         spherex_engine.addAllowedPatterns(allowed_patterns);
@@ -40,7 +39,6 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         protected_sigs.push(CustomerBehindProxy.externalCallsExternal.selector);
         protected_sigs.push(CustomerBehindProxy.externalCallee.selector);
         protected_sigs.push(CustomerBehindProxy.factory.selector);
-        beacon.changeSphereXOperator(address(this));
         beacon.addProtectedFuncSigs(protected_sigs);
 
         allowed_senders.push(address(proxy_contract));
@@ -144,6 +142,15 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         assertFlowStorageSlotsInInitialState();
     }
 
+    function testAddStaticMethod() external virtual override {
+        bytes4[] memory new_protected_sigs = new bytes4[](1);
+        new_protected_sigs[0] = (CustomerBehindProxy.static_method.selector);
+        beacon.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert();
+        CustomerBehindProxy(address(costumer_contract)).static_method();
+    }
+
     function testAddAlreadyExistsProtectedFuncSig() external virtual override {
         bytes4[] memory new_protected_sigs = new bytes4[](1);
         new_protected_sigs[0] = (CustomerBehindProxy.try_allowed_flow.selector);
@@ -164,6 +171,22 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
     }
 
+    function testAddTwoNewProtectedFuncSig() external virtual override {
+        CustomerBehindProxy(address(proxy_contract)).to_block_2(); // Should work since it is not in protected sigs
+        CustomerBehindProxy(address(proxy_contract)).to_block_3(); // Should work since it is not in protected sigs
+
+        bytes4[] memory new_protected_sigs = new bytes4[](2);
+        new_protected_sigs[0] = (CustomerBehindProxy.to_block_2.selector);
+        new_protected_sigs[1] = (CustomerBehindProxy.to_block_3.selector);
+        beacon.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
+    }
+
     function testRemoveProtectedFuncSig() external virtual override {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
@@ -173,6 +196,27 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         beacon.removeProtectedFuncSigs(remove_protected_sigs);
 
         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
+    }
+
+    function testRemoveTwoProtectedFuncSig() external virtual override {
+        CustomerBehindProxy(address(proxy_contract)).to_block_2(); // Should work since it is not in protected sigs
+        CustomerBehindProxy(address(proxy_contract)).to_block_3(); // Should work since it is not in protected sigs
+
+        bytes4[] memory new_protected_sigs = new bytes4[](2);
+        new_protected_sigs[0] = (CustomerBehindProxy.to_block_2.selector);
+        new_protected_sigs[1] = (CustomerBehindProxy.to_block_3.selector);
+        beacon.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
+
+        beacon.removeProtectedFuncSigs(new_protected_sigs);
+
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
     }
 
     function testRemoveAlreadyRemovedProtectedFuncSig() external virtual override {

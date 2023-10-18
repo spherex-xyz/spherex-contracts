@@ -29,17 +29,22 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         protected_proxy_contract =
             new ProtectedTransparentUpgradeableSubProxy(address(p_costumer_contract), spherex_admin, bytes(""));
 
-        bytes memory initialize_data = abi.encodeWithSelector(
+        bytes memory imp_initialize_data =
+            abi.encodeWithSelector(CustomerBehindProxy.initialize.selector, address(this));
+
+        bytes memory sub_initialize_data = abi.encodeWithSelector(
             SphereXProtectedSubProxy.__SphereXProtectedSubProXy_init.selector,
             address(this), // admin
             address(this), //  operator
             address(0), // engine
-            address(p_costumer_contract) // logic
+            address(p_costumer_contract), // logic
+            imp_initialize_data // init data for imp
         );
+
         main_proxy = new TransparentUpgradeableProxy(
             address(protected_proxy_contract),
             address(proxy_admin),
-            initialize_data
+            sub_initialize_data
         );
         proxy_contract = SphereXProtectedSubProxy(payable(main_proxy));
 
@@ -166,7 +171,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         vm.prank(spherex_admin);
         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeTo(address(new_costumer));
 
-        vm.expectCall(address(proxy_contract), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
+        vm.expectCall(address(new_costumer), abi.encodeWithSelector(CustomerBehindProxy1.new_func.selector));
         CustomerBehindProxy1(address(proxy_contract)).new_func();
     }
 

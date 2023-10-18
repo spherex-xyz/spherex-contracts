@@ -17,7 +17,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
     function setUp() public virtual override {
         require(
             address(proxy_contract) != address(0),
-            "SphereXProtectedProxyTest.setUp must be called as super from another setUp."
+            "SphereXProtectedProxyTest.setUp must be called as super from another setUp, and proxy_contract must be set before"
         );
 
         spherex_engine = new SphereXEngine();
@@ -54,6 +54,15 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         assertEq(CustomerBehindProxy(address(costumer_contract)).static_method(), 5);
     }
 
+    function testAddStaticMethod() external virtual {
+        bytes4[] memory new_protected_sigs = new bytes4[](1);
+        new_protected_sigs[0] = (CustomerBehindProxy.static_method.selector);
+        proxy_contract.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert();
+        CustomerBehindProxy(address(costumer_contract)).static_method();
+    }
+
     function testAddAlreadyExistsProtectedFuncSig() external virtual {
         bytes4[] memory new_protected_sigs = new bytes4[](1);
         new_protected_sigs[0] = (CustomerBehindProxy.try_allowed_flow.selector);
@@ -74,6 +83,22 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
     }
 
+    function testAddTwoNewProtectedFuncSig() external virtual {
+        CustomerBehindProxy(address(proxy_contract)).to_block_2(); // Should work since it is not in protected sigs
+        CustomerBehindProxy(address(proxy_contract)).to_block_3(); // Should work since it is not in protected sigs
+
+        bytes4[] memory new_protected_sigs = new bytes4[](2);
+        new_protected_sigs[0] = (CustomerBehindProxy.to_block_2.selector);
+        new_protected_sigs[1] = (CustomerBehindProxy.to_block_3.selector);
+        proxy_contract.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
+    }
+
     function testRemoveProtectedFuncSig() external virtual {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
@@ -83,6 +108,27 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         proxy_contract.removeProtectedFuncSigs(remove_protected_sigs);
 
         CustomerBehindProxy(address(proxy_contract)).try_blocked_flow();
+    }
+
+    function testRemoveTwoProtectedFuncSig() external virtual {
+        CustomerBehindProxy(address(proxy_contract)).to_block_2(); // Should work since it is not in protected sigs
+        CustomerBehindProxy(address(proxy_contract)).to_block_3(); // Should work since it is not in protected sigs
+
+        bytes4[] memory new_protected_sigs = new bytes4[](2);
+        new_protected_sigs[0] = (CustomerBehindProxy.to_block_2.selector);
+        new_protected_sigs[1] = (CustomerBehindProxy.to_block_3.selector);
+        proxy_contract.addProtectedFuncSigs(new_protected_sigs);
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
+
+        proxy_contract.removeProtectedFuncSigs(new_protected_sigs);
+
+        CustomerBehindProxy(address(proxy_contract)).to_block_2();
+        CustomerBehindProxy(address(proxy_contract)).to_block_3();
     }
 
     function testRemoveAlreadyRemovedProtectedFuncSig() external virtual {
@@ -109,7 +155,8 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         allowed_cf_storage = [
             to_int256(costumer_contract.call_inner.selector),
             to_int256(costumer_contract.reverts.selector),
-            -to_int256(costumer_contract.reverts.selector) - to_int256(costumer_contract.call_inner.selector)
+            -to_int256(costumer_contract.reverts.selector),
+            -to_int256(costumer_contract.call_inner.selector)
         ];
         addAllowedPattern();
 
