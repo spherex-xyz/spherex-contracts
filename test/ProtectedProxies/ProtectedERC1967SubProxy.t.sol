@@ -29,12 +29,16 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
         uups_costumer_contract = new UUPSCustomerUnderProtectedERC1967SubProxy();
         protected_proxy_contract = new ProtectedERC1967SubProxy(address(uups_costumer_contract), bytes(""));
 
+        bytes memory imp_initialize_data =
+            abi.encodeWithSelector(CustomerBehindProxy.initialize.selector, address(this));
+
         bytes memory initialize_data = abi.encodeWithSelector(
             SphereXProtectedSubProxy.__SphereXProtectedSubProXy_init.selector,
             address(this), // admin
             address(this), // operator
             address(0), // engine
-            address(uups_costumer_contract) // logic
+            address(uups_costumer_contract), // logic
+            imp_initialize_data // init data for imp
         );
 
         main_proxy = new ERC1967Proxy(address(protected_proxy_contract), initialize_data);

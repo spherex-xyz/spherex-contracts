@@ -39,11 +39,17 @@ contract SomeContractBehindProxy {
 
 contract CustomerBehindProxy {
     uint256 public slot0 = 5;
+    address private _owner;
 
     SomeContractBehindProxy internal someContract;
 
     function initialize(address owner) public {
         slot0 = 5;
+        _owner = owner;
+    }
+
+    function getOwner() external view returns (address) {
+        return _owner;
     }
 
     function try_allowed_flow() external {}
