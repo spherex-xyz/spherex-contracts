@@ -16,6 +16,7 @@ contract ProtectedTransparentUpgradeableProxyTest is SphereXProtectedProxyTest {
 
     function setUp() public override {
         p_costumer_contract = new CustomerBehindProxy();
+        vm.prank(address(this), address(this));
         proxy_contract = new ProtectedTransparentUpgradeableProxy(
             address(p_costumer_contract),
             proxy_admin,

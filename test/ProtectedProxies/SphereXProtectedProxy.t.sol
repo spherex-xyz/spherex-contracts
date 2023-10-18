@@ -7,6 +7,7 @@ import {SphereXEngine} from "../../src/SphereXEngine.sol";
 import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
 import {CustomerBehindProxy, CostumerContract, SomeContract} from "../Utils/CostumerContract.sol";
 import {SphereXProtectedTest} from "../SphereXProtected.t.sol";
+import "forge-std/console.sol";
 
 abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
     SphereXProtectedProxy public proxy_contract;

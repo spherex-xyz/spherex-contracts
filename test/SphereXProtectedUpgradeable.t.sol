@@ -14,6 +14,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
 
     function setUp() public override {
         spherex_engine = new SphereXEngine();
+        vm.prank(address(this), address(this));
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
 
