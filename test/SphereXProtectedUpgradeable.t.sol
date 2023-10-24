@@ -9,7 +9,7 @@ import "spherex-protect-contracts/SphereXProtected.sol";
 import "./SphereXProtected.t.sol";
 
 contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
-    CostumerContractProxy public costumer_proxy_contract;
+    CustomerContractProxy public costumer_proxy_contract;
     CostumerContract public p_costumerContract;
 
     function setUp() public override {
@@ -17,14 +17,10 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
 
-        costumer_proxy_contract = new CostumerContractProxy(address(costumer_contract));
+        costumer_proxy_contract = new CustomerContractProxy(address(costumer_contract));
 
-        int16[2] memory allowed_cf = [int16(1), -1];
-        uint216 allowed_cf_hash = 1;
-        for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
-        }
-        allowed_patterns.push(allowed_cf_hash);
+        allowed_patterns.push(calc_pattern_by_selector(CostumerContract.try_allowed_flow.selector));
+
         allowed_senders.push(address(costumer_proxy_contract));
         spherex_engine.addAllowedSender(allowed_senders);
         spherex_engine.addAllowedPatterns(allowed_patterns);
