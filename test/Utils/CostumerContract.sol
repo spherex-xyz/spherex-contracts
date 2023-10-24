@@ -118,7 +118,7 @@ contract CustomerBehindProxy1 {
     function new_func() external {}
 }
 
-contract UUPSCustomerUnderProtectedERC1967SubProxy is ProtectedUUPSUpgradeable, CustomerBehindProxy {
+contract UUPSCustomerUnderProtectedERC1967SubProxy is CustomerBehindProxy, ProtectedUUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal virtual override {}
 }
 
