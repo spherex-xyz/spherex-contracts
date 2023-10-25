@@ -126,13 +126,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * We will allow the pattern [1, addAllowedSenderOnChain, -addAllowedSenderOnChain ,-1] and by doing so we guarantee no other function
      * will call addAllowedSenderOnChain.
      */
-    function addAllowedSenderOnChain(address sender) external returnsIfNotActivated onlySenderAdderRole {
-        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
-
+    function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
-
-        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, true);
     }
 
     /**
