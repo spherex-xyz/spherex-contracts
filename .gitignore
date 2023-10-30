@@ -1,6 +1,8 @@
 # Compiler files
 cache/
+cache_hardhat/
 out/
+node_modules/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -12,3 +14,10 @@ docs/
 
 # Dotenv file
 .env
+
+coverage
+coverage.json
+typechain
+typechain-types
+artifacts/*
+!artifacts/src

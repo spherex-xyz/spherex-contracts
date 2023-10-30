@@ -1,0 +1,27 @@
+{
+    "name": "@spherex-xyz/engine-contracts",
+    "version": "0.0.1",
+    "description": "Creating with stable version at commit bc93042e5d3f467372daf628418fb3e99333f9db with engine ctor args changed.",
+    "files": [
+        "src/**/*.sol",
+        "artifacts/src/**/*.json"
+    ],
+    "scripts": {
+        "test": "forge test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/spherex-xyz/spherex-engine-contracts.git"
+    },
+    "author": "SphereX Technologies LTD",
+    "license": "UNLICENSED",
+    "bugs": {
+        "url": "https://github.com/spherex-xyz/sspherex-engine-contracts/issues"
+    },
+    "homepage": "https://github.com/spherex-xyz/spherex-engine-contracts#readme",
+    "devDependencies": {
+        "@nomicfoundation/hardhat-foundry": "^1.1.1",
+        "@spherex-xyz/contracts": "^1.0.5",
+        "hardhat": "^2.17.3"
+    }
+}
