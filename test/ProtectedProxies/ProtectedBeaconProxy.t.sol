@@ -17,7 +17,7 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
     SphereXUpgradeableBeacon public beacon;
 
     function setUp() public virtual override {
-        spherex_engine = new SphereXEngine();
+        spherex_engine = new SphereXEngine(0, address(this));
 
         p_costumer_contract = new CustomerBehindProxy();
         beacon = new SphereXUpgradeableBeacon(address(p_costumer_contract), address(this), address(this), address(0));

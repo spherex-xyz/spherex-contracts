@@ -13,7 +13,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     CostumerContract public p_costumerContract;
 
     function setUp() public override {
-        spherex_engine = new SphereXEngine();
+        spherex_engine = new SphereXEngine(0, address(this));
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
 

@@ -20,7 +20,7 @@ contract SphereXEngineTest is Test, CFUtils {
     }
 
     function setUp() public {
-        spherex_engine = new SphereXEngine();
+        spherex_engine = new SphereXEngine(0, address(this));
         allowed_senders.push(address(this));
         spherex_engine.addAllowedSender(allowed_senders);
     }

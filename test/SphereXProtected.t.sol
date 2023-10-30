@@ -43,7 +43,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function setUp() public virtual {
-        spherex_engine = new SphereXEngine();
+        spherex_engine = new SphereXEngine(0, address(this));
         costumer_contract = new CostumerContract();
 
         costumer_contract.changeSphereXOperator(address(this));
@@ -407,14 +407,12 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_factorySetup() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            -to_int256(costumer_contract.factory.selector)
-        ];
+        allowed_cf_storage =
+            [to_int256(costumer_contract.factory.selector), -to_int256(costumer_contract.factory.selector)];
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
-        
+
         assertEq(
             SphereXProtectedBase(someContract).sphereXEngine(), SphereXProtected(costumer_contract).sphereXEngine()
         );
@@ -427,10 +425,8 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_factoryAllowedSender() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            -to_int256(costumer_contract.factory.selector)
-        ];
+        allowed_cf_storage =
+            [to_int256(costumer_contract.factory.selector), -to_int256(costumer_contract.factory.selector)];
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
@@ -448,10 +444,8 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_factory_callCreatedContract() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            -to_int256(costumer_contract.factory.selector)
-        ];
+        allowed_cf_storage =
+            [to_int256(costumer_contract.factory.selector), -to_int256(costumer_contract.factory.selector)];
         addAllowedPattern();
         allowed_cf_storage = [to_int256(SomeContract.someFunc.selector), -to_int256(SomeContract.someFunc.selector)];
         addAllowedPattern();
@@ -474,10 +468,8 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_grantSenderAdderRoleOnlyOperator() public virtual {
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            -to_int256(costumer_contract.factory.selector)
-        ];
+        allowed_cf_storage =
+            [to_int256(costumer_contract.factory.selector), -to_int256(costumer_contract.factory.selector)];
         addAllowedPattern();
         allowed_cf_storage = [to_int256(SomeContract.someFunc.selector), -to_int256(SomeContract.someFunc.selector)];
         addAllowedPattern();
