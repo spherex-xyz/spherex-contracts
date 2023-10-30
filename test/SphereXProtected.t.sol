@@ -409,23 +409,15 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
         allowed_cf_storage = [
             to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX
-        ];
-        addAllowedPattern();
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
             -to_int256(costumer_contract.factory.selector)
         ];
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
+        
         assertEq(
             SphereXProtectedBase(someContract).sphereXEngine(), SphereXProtected(costumer_contract).sphereXEngine()
         );
-
         assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), SphereXProtected(costumer_contract).sphereXAdmin());
 
         assertEq(
@@ -437,14 +429,6 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
         allowed_cf_storage = [
             to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX
-        ];
-        addAllowedPattern();
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
             -to_int256(costumer_contract.factory.selector)
         ];
         addAllowedPattern();
@@ -466,14 +450,6 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
         allowed_cf_storage = [
             to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX
-        ];
-        addAllowedPattern();
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
             -to_int256(costumer_contract.factory.selector)
         ];
         addAllowedPattern();
@@ -491,23 +467,15 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.deactivateAllRules();
         address someContract = costumer_contract.factory();
 
-        // activate the engine and see that the new contract is disallowed
+        // activate the engine and see that the new contract is allowed and the pattern is not
         spherex_engine.configureRules(PREFIX_TX_FLOW);
-        vm.expectRevert("SphereX error: disallowed sender");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         SomeContract(someContract).someFunc();
     }
 
     function test_grantSenderAdderRoleOnlyOperator() public virtual {
         allowed_cf_storage = [
             to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX
-        ];
-        addAllowedPattern();
-        allowed_cf_storage = [
-            to_int256(costumer_contract.factory.selector),
-            ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
-            -ADD_ALLOWED_SENDER_ONCHAIN_INDEX,
             -to_int256(costumer_contract.factory.selector)
         ];
         addAllowedPattern();
