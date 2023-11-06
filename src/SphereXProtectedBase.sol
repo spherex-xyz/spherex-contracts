@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import {ISphereXEngine} from "./ISphereXEngine.sol";
+import {ISphereXEngine, ModifierLocals} from "./ISphereXEngine.sol";
 
 /**
  * @title SphereX base Customer contract template
@@ -19,15 +19,6 @@ abstract contract SphereXProtectedBase {
     bytes32 private constant SPHEREX_OPERATOR_STORAGE_SLOT = bytes32(uint256(keccak256("eip1967.spherex.operator")) - 1);
     bytes32 private constant SPHEREX_ENGINE_STORAGE_SLOT =
         bytes32(uint256(keccak256("eip1967.spherex.spherex_engine")) - 1);
-
-    /**
-     * @dev this struct is used to reduce the stack usage of the modifiers.
-     */
-    struct ModifierLocals {
-        bytes32[] storageSlots;
-        bytes32[] valuesBefore;
-        uint256 gas;
-    }
 
     event ChangedSpherexOperator(address oldSphereXAdmin, address newSphereXAdmin);
     event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
@@ -68,7 +59,7 @@ abstract contract SphereXProtectedBase {
      * @param slot where to store the address
      * @param newAddress address to store in given slot
      */
-    function _setAddress(bytes32 slot, address newAddress) private {
+    function _setAddress(bytes32 slot, address newAddress) internal {
         // solhint-disable-next-line no-inline-assembly
         // slither-disable-next-line assembly
         assembly {
@@ -80,7 +71,7 @@ abstract contract SphereXProtectedBase {
      * Returns an address from an arbitrary slot.
      * @param slot to read an address from
      */
-    function _getAddress(bytes32 slot) private view returns (address addr) {
+    function _getAddress(bytes32 slot) internal view returns (address addr) {
         // solhint-disable-next-line no-inline-assembly
         // slither-disable-next-line assembly
         assembly {
