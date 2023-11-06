@@ -45,7 +45,7 @@ contract SphereXEngineFlowThesesTests is Test, CFUtils {
             sendNumberToEngine(allowed_cf_2[i]);
         }
 
-        // assertFlowStorageSlotsInInitialState(); // TODO: uncomment
+        assertFlowStorageSlotsInInitialState();
     }
 
     function test_removeAllowedPatterns(bytes8 rule) public activateRule(rule) {

@@ -8,11 +8,10 @@ import "./Utils/CFUtils.sol";
 import "./Utils/MockEngine.sol";
 import "./Utils/CostumerContract.sol";
 import "../src/SphereXEngine.sol";
-import "../src/SphereXProtected.sol";
+import "spherex-protect-contracts/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
     SphereXEngine.GasExactPatterns[] gasExacts;
     uint32[] gasNumbersExacts;
 
@@ -31,26 +30,39 @@ contract SphereXProtectedTest is Test, CFUtils {
         _;
     }
 
-    modifier allowPattern_1__1_11_12__12__11() {
-        allowed_cf_storage = [int256(1), -1];
+   modifier allowPattern_1__1_11_12__12__11() {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallsExternal.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 11, 12, -12];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 11, 12, -12, -11];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector)
+        ];
         addAllowedPattern();
         _;
     }
 
     function setUp() public virtual override {
-        spherex_engine = new SphereXEngine();
+        super.setUp();
+
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
-        int256[2] memory allowed_cf = [int256(1), -1];
-        uint200 allowed_cf_hash = 1;
-        for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
-        }
-        allowed_patterns.push(allowed_cf_hash);
+
+        allowed_patterns.push(calc_pattern_by_selector(CostumerContract.try_allowed_flow.selector));
         allowed_senders.push(address(costumer_contract));
 
         spherex_engine.addAllowedSender(allowed_senders);
@@ -62,7 +74,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Managment functions  ============
 
-    function test_changeSphereXEngine_disable_engine() external activateRuleCF {
+    function test_changeSphereXEngine_disable_engine() external virtual activateRuleCF {
         // this test covers enable->disable (by default the engine is enabled in the set up)
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
@@ -70,7 +82,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_enable() external activateRuleCF {
+    function test_changeSphereXEngine_disable_enable() external virtual activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -82,7 +94,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_disable() external activateRuleCF {
+    function test_changeSphereXEngine_disable_disable() external virtual activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -92,7 +104,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_enable_enable() external activateRuleCF {
+    function test_changeSphereXEngine_enable_enable() external virtual activateRuleCF {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
@@ -107,7 +119,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXAdmin() external activateRuleCF {
+    function test_changeSphereXAdmin() external virtual activateRuleCF {
         address otherAddress = address(1);
 
         costumer_contract.transferSphereXAdminRole(otherAddress);
@@ -123,12 +135,10 @@ contract SphereXProtectedTest is Test, CFUtils {
         vm.expectRevert("SphereX error: not the pending account");
         costumer_contract.acceptSphereXAdminRole();
 
-        costumer_contract.acceptSphereXAdminRole();
-
         assertFlowStorageSlotsInInitialState();
     }
 
-    //  ============ Call flow thesis tests  ============
+    // //  ============ Call flow thesis tests  ============
 
     function testAllowed() external activateRuleCF {
         costumer_contract.try_allowed_flow();
@@ -150,17 +160,28 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertAllowedFlow() external activateRuleCF {
-        allowed_cf_storage = [int256(3), 4, -4, -3];
+    function testPartialRevertAllowedFlow() external virtual activateRuleCF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.call_inner.selector),
+            to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(costumer_contract.call_inner.selector)
+        ];
         addAllowedPattern();
         costumer_contract.call_inner();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertNotAllowedFlow() external activateRuleCF {
-        // create an allowed cf [3,4,5,-5,-4,-3]
-        allowed_cf_storage = [int256(3), 4, 5, -5, -4, -3];
+    function testPartialRevertNotAllowedFlow() external virtual activateRuleCF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.call_inner.selector),
+            to_int256(bytes4(keccak256(bytes("inner()")))),
+            to_int256(costumer_contract.reverts.selector),
+            -to_int256(costumer_contract.reverts.selector),
+            - to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(costumer_contract.call_inner.selector)
+        ];
         addAllowedPattern();
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
@@ -168,6 +189,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         assertFlowStorageSlotsInInitialState();
     }
+
     /**
      * @dev this test will fail if we add a storage logic!
      *      for now it checks that nothing is being sent
@@ -175,12 +197,19 @@ contract SphereXProtectedTest is Test, CFUtils {
      */
 
     function testPublicFunction() external activateRuleCF {
-        allowed_cf_storage = [int256(6), -6];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicFunction.selector),
+            -to_int256(costumer_contract.publicFunction.selector)
+        ];
         addAllowedPattern();
 
         bytes memory publicFunctionMsgData = abi.encodeWithSelector(costumer_contract.publicFunction.selector);
-        bytes memory engineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidatePre.selector, 6, address(1), publicFunctionMsgData);
+        bytes memory engineCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidatePre.selector,
+            to_int256(costumer_contract.publicFunction.selector),
+            address(1),
+            publicFunctionMsgData
+        );
         bytes memory engineCallnoMsgData = abi.encodeWithSelector(spherex_engine.sphereXValidatePost.selector);
         vm.expectCall(address(spherex_engine), engineCallMsgData);
         vm.expectCall(address(spherex_engine), engineCallnoMsgData);
@@ -192,8 +221,12 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function testExternalFunction() external activateRuleCF {
         bytes memory externalFunctionMsgData = abi.encodeWithSelector(costumer_contract.try_allowed_flow.selector);
-        bytes memory engineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidatePre.selector, 1, address(1), externalFunctionMsgData);
+        bytes memory engineCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidatePre.selector,
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            address(1),
+            externalFunctionMsgData
+        );
         vm.expectCall(address(spherex_engine), engineCallMsgData);
         vm.prank(address(1));
         costumer_contract.try_allowed_flow();
@@ -201,15 +234,25 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalCallsInternalFunction() external activateRuleCF {
-        allowed_cf_storage = [int256(3), 4, -4, -3];
+    function testExternalCallsInternalFunction() external virtual activateRuleCF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.call_inner.selector),
+            to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(costumer_contract.call_inner.selector)
+        ];
         addAllowedPattern();
 
         bytes memory externalFunctionMsgData = abi.encodeWithSelector(costumer_contract.call_inner.selector);
-        bytes memory engineExternalCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidatePre.selector, 3, address(1), externalFunctionMsgData);
-        bytes memory engineInternalCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, 4);
+        bytes memory engineExternalCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidatePre.selector,
+            to_int256(costumer_contract.call_inner.selector),
+            address(1),
+            externalFunctionMsgData
+        );
+        bytes memory engineInternalCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidateInternalPre.selector, to_int256(bytes4(keccak256(bytes("inner()"))))
+        );
 
         vm.expectCall(address(spherex_engine), engineExternalCallMsgData);
         vm.expectCall(address(spherex_engine), engineInternalCallMsgData);
@@ -219,16 +262,26 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPublicCallsPublic() external activateRuleCF {
-        allowed_cf_storage = [int256(7), 6, -6, -7];
+    function testPublicCallsPublic() external virtual activateRuleCF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicCallsPublic.selector),
+            to_int256(costumer_contract.publicFunction.selector),
+            -to_int256(costumer_contract.publicFunction.selector),
+            -to_int256(costumer_contract.publicCallsPublic.selector)
+        ];
         addAllowedPattern();
 
         bytes memory publicCallsPublicMsgData = abi.encodeWithSelector(costumer_contract.publicCallsPublic.selector);
-        bytes memory publicCallsPublicEngineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidatePre.selector, 7, address(1), publicCallsPublicMsgData);
+        bytes memory publicCallsPublicEngineCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidatePre.selector,
+            to_int256(costumer_contract.publicCallsPublic.selector),
+            address(1),
+            publicCallsPublicMsgData
+        );
 
-        bytes memory publicFunctionEngineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, 6);
+        bytes memory publicFunctionEngineCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidateInternalPre.selector, to_int256(costumer_contract.publicFunction.selector)
+        );
 
         vm.expectCall(address(spherex_engine), publicCallsPublicEngineCallMsgData);
         vm.expectCall(address(spherex_engine), publicFunctionEngineCallMsgData);
@@ -244,17 +297,29 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      being called externally, will trigger sending msg.data
      *      twice to the engine.
      */
-    function testPublicCallsSamePublic() external activateRuleCF {
-        allowed_cf_storage = [int256(8), 8, -8, -8];
+    function testPublicCallsSamePublic() external virtual activateRuleCF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicCallsSamePublic.selector),
+            to_int256(costumer_contract.publicCallsSamePublic.selector),
+            -to_int256(costumer_contract.publicCallsSamePublic.selector),
+            -to_int256(costumer_contract.publicCallsSamePublic.selector)
+        ];
         addAllowedPattern();
 
-        allowed_cf_storage = [int256(8), 8, -8];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicCallsSamePublic.selector),
+            to_int256(costumer_contract.publicCallsSamePublic.selector),
+            -to_int256(costumer_contract.publicCallsSamePublic.selector)
+        ];
         addAllowedPattern();
 
         bytes memory publicCallsSamePublicMsgData =
             abi.encodeWithSelector(costumer_contract.publicCallsSamePublic.selector, true);
         bytes memory engineCallMsgData = abi.encodeWithSelector(
-            spherex_engine.sphereXValidatePre.selector, 8, address(1), publicCallsSamePublicMsgData
+            spherex_engine.sphereXValidatePre.selector,
+            to_int256(costumer_contract.publicCallsSamePublic.selector),
+            address(1),
+            publicCallsSamePublicMsgData
         );
 
         vm.expectCall(address(spherex_engine), engineCallMsgData);
@@ -266,11 +331,13 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function testArbitraryCall() external activateRuleCF {
-        allowed_cf_storage = [int256(10), -10];
+        allowed_cf_storage =
+            [to_int256(costumer_contract.arbitraryCall.selector), -to_int256(costumer_contract.arbitraryCall.selector)];
         addAllowedPattern();
 
-        bytes memory engineCallMsgData =
-            abi.encodeWithSelector(spherex_engine.sphereXValidateInternalPre.selector, int256(10));
+        bytes memory engineCallMsgData = abi.encodeWithSelector(
+            spherex_engine.sphereXValidateInternalPre.selector, to_int256(costumer_contract.arbitraryCall.selector)
+        );
 
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.arbitraryCall(address(spherex_engine), engineCallMsgData);
@@ -280,9 +347,20 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function testExternalCallsExternalTwice() external activateRuleCF {
         allowed_cf_storage = [int256(11), 12, -12, -11];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallsExternal.selector)
+        ];
         addAllowedPattern();
 
         allowed_cf_storage = [int256(11), 12, -12];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector)
+        ];
         addAllowedPattern();
 
         costumer_contract.externalCallsExternal();
@@ -293,7 +371,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Storage thesis helper function test  ============
 
-    function test_readSlot() external {
+    function test_readSlot() external virtual {
         MockEngine mock_spherex_engine = new MockEngine();
         uint256 before = costumer_contract.slot0();
         costumer_contract.changeSphereXEngine(address(mock_spherex_engine));
@@ -342,20 +420,19 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    //  ============ Factory scenario  ============
-
-    function test_factorySetup() public {
+    function test_factorySetup() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
-        addAllowedPattern();
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.factory.selector),
+            -to_int256(costumer_contract.factory.selector)
+        ];
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
+        
         assertEq(
             SphereXProtectedBase(someContract).sphereXEngine(), SphereXProtected(costumer_contract).sphereXEngine()
         );
-
         assertEq(SphereXProtectedBase(someContract).sphereXAdmin(), SphereXProtected(costumer_contract).sphereXAdmin());
 
         assertEq(
@@ -363,11 +440,12 @@ contract SphereXProtectedTest is Test, CFUtils {
         );
     }
 
-    function test_factoryAllowedSender() public {
+    function test_factoryAllowedSender() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
-        addAllowedPattern();
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.factory.selector),
+            -to_int256(costumer_contract.factory.selector)
+        ];
         addAllowedPattern();
 
         address someContract = costumer_contract.factory();
@@ -378,24 +456,25 @@ contract SphereXProtectedTest is Test, CFUtils {
         SomeContract(someContract).someFunc();
     }
 
-    function test_factoryfailsAllowedSender() public {
+    function test_factoryfailsAllowedSender() public virtual {
         vm.expectRevert("SphereX error: sender adder required");
         address someContract = costumer_contract.factory();
     }
 
-    function test_factory_callCreatedContract() public {
+    function test_factory_callCreatedContract() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.factory.selector),
+            -to_int256(costumer_contract.factory.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
-        addAllowedPattern();
-        allowed_cf_storage = [int256(100), -100];
+        allowed_cf_storage = [to_int256(SomeContract.someFunc.selector), -to_int256(SomeContract.someFunc.selector)];
         addAllowedPattern();
         address someContract = costumer_contract.factory();
         SomeContract(someContract).someFunc();
     }
 
-    function test_factoryEngineDisabled() public {
+    function test_factoryEngineDisabled() public virtual {
         spherex_engine.grantRole(spherex_engine.SENDER_ADDER_ROLE(), address(costumer_contract));
 
         // deactivate the engine and check that the call to create the factory
@@ -403,18 +482,19 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.deactivateAllRules();
         address someContract = costumer_contract.factory();
 
-        // activate the engine and see that the new contract is disallowed
+        // activate the engine and see that the new contract is allowed and the pattern is not
         spherex_engine.configureRules(PREFIX_TX_FLOW);
-        vm.expectRevert("SphereX error: disallowed sender");
+        vm.expectRevert("SphereX error: disallowed tx pattern");
         SomeContract(someContract).someFunc();
     }
 
-    function test_grantSenderAdderRoleOnlyOperator() public {
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX];
+    function test_grantSenderAdderRoleOnlyOperator() public virtual {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.factory.selector),
+            -to_int256(costumer_contract.factory.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(13), ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -ADD_ALLOWED_SENDER_ONCHAIN_INDEX, -13];
-        addAllowedPattern();
-        allowed_cf_storage = [int256(100), -100];
+        allowed_cf_storage = [to_int256(SomeContract.someFunc.selector), -to_int256(SomeContract.someFunc.selector)];
         addAllowedPattern();
 
         spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), address(this));
@@ -436,8 +516,6 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Gas thesis tests  ============
     function test_patternExcludedFromGas() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
 
         spherex_engine.excludePatternsFromGas(allowed_patterns);
 
@@ -450,9 +528,6 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_exactGas() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
-
         gasNumbersExacts = [uint32(431)];
         gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
 
@@ -462,9 +537,6 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_exactGas_wrong_gas_value() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
-        allowed_patterns = [addAllowedPattern()];
-
         gasNumbersExacts = [uint32(432)];
         gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
 
@@ -475,13 +547,38 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_gasStrikeOuts_fail_after_two_strikes() external activateRuleGAS {
-        allowed_cf_storage = [int256(1), -1];
+        allowed_cf_storage = [to_int256(costumer_contract.try_allowed_flow.selector),
+        -to_int256(costumer_contract.try_allowed_flow.selector)];
         uint200 allowed_pattern_hash = addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 1, -1];
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 1, -1 ,1, -1];
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 1, -1 ,1, -1, 1, -1];
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
         addAllowedPattern();
 
         gasNumbersExacts = [uint32(431)];

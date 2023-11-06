@@ -4,9 +4,9 @@
 pragma solidity ^0.8.17;
 
 import {
-    AccessControlDefaultAdminRules, IERC165
+    AccessControlDefaultAdminRules
 } from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import {ISphereXEngine} from "./ISphereXEngine.sol";
+import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -104,7 +104,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         public
         view
         virtual
-        override(AccessControlDefaultAdminRules, IERC165)
+        override(AccessControlDefaultAdminRules, ISphereXEngine)
         returns (bool)
     {
         return interfaceId == type(ISphereXEngine).interfaceId || super.supportsInterface(interfaceId);
@@ -155,13 +155,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * We will allow the pattern [1, addAllowedSenderOnChain, -addAllowedSenderOnChain ,-1] and by doing so we guarantee no other function
      * will call addAllowedSenderOnChain.
      */
-    function addAllowedSenderOnChain(address sender) external returnsIfNotActivated onlySenderAdderRole {
-        _addCfElementFunctionEntry(ADD_ALLOWED_SENDER_ONCHAIN_INDEX);
-        uint256 gas = gasleft();
+    function addAllowedSenderOnChain(address sender) external onlySenderAdderRole {
         _allowedSenders[sender] = true;
         emit AddedAllowedSenderOnchain(sender);
-
-        _addCfElementFunctionExit(-ADD_ALLOWED_SENDER_ONCHAIN_INDEX, gas - gasleft(), true);
     }
 
     /**

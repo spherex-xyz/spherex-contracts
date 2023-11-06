@@ -21,12 +21,8 @@ Currently, there are two variants of one thesis implemented in SphereXEngine (th
       - [Transaction flow considerations and implementation](#transaction-flow-considerations-and-implementation)
       - [Call flow considerations and implementation](#call-flow-considerations-and-implementation)
     - [Additional Notes and Known Issues](#additional-notes-and-known-issues)
-  - [Storage](#storage)
-    - [Basic idea](#basic-idea-1)
-    - [Variations](#variations-1)
-    - [Implementations](#implementations-1)
-    - [Additional Notes and Known Issues](#additional-notes-and-known-issues-1)
-# List of Theses
+  - [Future Features](#Future)
+# Existing Theses
 
 ## Call-Flow (and Transaction-Flow)
 
@@ -96,19 +92,6 @@ Unfortunately, this mechanism can be attacked and bypassed using arbitrary exter
 - If the same user managed to execute 2 distinct transactions that touch our contracts in the same block in some way, without any other user executing a transaction that touches the protocol, those 2 distinct transactions will be interpreted as a ***Single transaction***.
 
 
-## Storage
-
-We've made some preparations for this thesis, but nothing is in use currently
-### Basic idea
-
-> TBD
-
-### Variations
-
-> TBD
-
-### Implementations
-
-> TBD
-### Additional Notes and Known Issues
+## Future
+Future theses include different features that are currently under research, such as storage, gas, etc.
 

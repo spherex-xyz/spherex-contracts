@@ -48,6 +48,37 @@ contract CFUtils is Test {
         }
     }
 
+    function to_int256(bytes4 func_selector) internal pure returns (int256) {
+        return int256(uint256(uint32(func_selector)));
+    }
+
+    function calc_pattern_by_selector(bytes4 func_selector) internal pure returns (uint200) {
+        int256 func_hash = to_int256(func_selector);
+        int256[2] memory allowed_cf = [func_hash, -func_hash];
+
+        uint200 allowed_cf_hash = 1;
+        for (uint256 i = 0; i < allowed_cf.length; i++) {
+            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
+        }
+        return allowed_cf_hash;
+    }
+
+    function calc_pattern_by_selectors(bytes4[] memory func_selectors) internal pure returns (uint200) {
+        uint200 allowed_cf_hash = 1;
+
+        for (uint256 i = 0; i < func_selectors.length; i++) {
+            int256 func_hash = int256(uint256(uint32(func_selectors[i])));
+            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(func_hash, allowed_cf_hash))));
+        }
+
+        for (int256 i = int256(func_selectors.length) - 1; i >= 0; i--) {
+            int256 func_hash = -int256(uint256(uint32(func_selectors[uint256(i)])));
+            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(func_hash, allowed_cf_hash))));
+        }
+
+        return allowed_cf_hash;
+    }
+
     function getCurrentCallDepth() internal returns (uint16) {
         return uint16(bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 240));
     }
