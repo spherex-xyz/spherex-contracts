@@ -53,9 +53,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint64 internal constant RULE_TXF = 2;
     uint64 internal constant RULE_CF = 1;
 
-    // the index of the addAllowedSenderOnChain in the call flow
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
-
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
 
@@ -371,10 +368,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             return true;
         }
         uint256 patternGas = uint256(keccak256(abi.encode(pattern, gas)));
-        if (_allowedPatternsExactGas[patternGas]) {
-            return true;
-        }
-        return false;
+        return _allowedPatternsExactGas[patternGas]
     }
 
     /**
