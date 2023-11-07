@@ -13,6 +13,7 @@ import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedP
 import {SphereXUpgradeableBeacon} from "spherex-protect-contracts/ProtectedProxies/SphereXUpgradeableBeacon.sol";
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
+
 contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
     SphereXUpgradeableBeacon public beacon;
 
@@ -227,5 +228,63 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         beacon.removeProtectedFuncSigs(remove_protected_sigs);
 
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
+    }
+
+    function test_exactGas() external override activateRuleGAS {
+        gasNumbersExacts = [uint32(3728)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+
+        spherex_engine.addGasExactPatterns(gasExacts);
+
+        costumer_contract.try_allowed_flow();
+    }
+
+    function test_gasStrikeOuts_fail_after_two_strikes() external override activateRuleGAS {
+        allowed_cf_storage = [to_int256(costumer_contract.try_allowed_flow.selector),
+        -to_int256(costumer_contract.try_allowed_flow.selector)];
+        uint200 allowed_pattern_hash = addAllowedPattern();
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
+        addAllowedPattern();
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
+        addAllowedPattern();
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector),
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
+        addAllowedPattern();
+
+        gasNumbersExacts = [uint32(3728)];
+        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
+        spherex_engine.addGasExactPatterns(gasExacts);
+
+        spherex_engine.setGasStrikeOutsLimit(2);
+
+        costumer_contract.try_allowed_flow();
+        costumer_contract.try_allowed_flow();
+        costumer_contract.try_allowed_flow();
+        vm.expectRevert("SphereX error: disallowed tx gas pattern");
+        costumer_contract.try_allowed_flow();
+
     }
 }

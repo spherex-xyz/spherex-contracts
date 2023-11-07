@@ -527,7 +527,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    function test_exactGas() external activateRuleGAS {
+    function test_exactGas() external virtual activateRuleGAS {
         gasNumbersExacts = [uint32(431)];
         gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
 
@@ -546,7 +546,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    function test_gasStrikeOuts_fail_after_two_strikes() external activateRuleGAS {
+    function test_gasStrikeOuts_fail_after_two_strikes() external virtual activateRuleGAS {
         allowed_cf_storage = [to_int256(costumer_contract.try_allowed_flow.selector),
         -to_int256(costumer_contract.try_allowed_flow.selector)];
         uint200 allowed_pattern_hash = addAllowedPattern();
