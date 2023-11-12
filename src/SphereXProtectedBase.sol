@@ -24,6 +24,7 @@ abstract contract SphereXProtectedBase {
     event ChangedSpherexEngineAddress(address oldEngineAddress, address newEngineAddress);
     event SpherexAdminTransferStarted(address currentAdmin, address pendingAdmin);
     event SpherexAdminTransferCompleted(address oldAdmin, address newAdmin);
+    event NewAllowedSenderOnchain(address sender);
 
     /**
      * @dev used when the client doesn't use a proxy
@@ -193,6 +194,7 @@ abstract contract SphereXProtectedBase {
         if (address(engine) != address(0)) {
             engine.addAllowedSenderOnChain(newSender);
         }
+        emit NewAllowedSenderOnchain(newSender);
     }
 
     // ============ Hooks ============
