@@ -41,8 +41,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     mapping(uint256 => bool) internal _allowedPatternsExactGas;
     ThesisConfiguration internal _thesisConfig;
 
+
     FlowConfiguration internal _flowConfig =
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
+    uint32[] internal currentGasStack = [uint32(0)];
+
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint16 internal constant GAS_STRIKES_START = 0;
@@ -305,6 +308,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             flowConfig.pattern = PATTERN_START;
             flowConfig.txBoundaryHash = currentTxBoundaryHash;
             flowConfig.currentGasStrikes = GAS_STRIKES_START;
+            currentGasStack = [uint32(0)];
+
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
@@ -314,6 +319,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         ++flowConfig.depth;
+        currentGasStack.push(0);
 
         _flowConfig = flowConfig;
     }
@@ -331,8 +337,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;
 
+        uint32 gas_sub = currentGasStack[currentGasStack.length - 1];
+        currentGasStack.pop();
+        currentGasStack[currentGasStack.length - 1] += uint32(gas);
+
         if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-            _checkCallFlow(flowConfig, gas);
+            _checkCallFlow(flowConfig, gas - gas_sub);
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
@@ -368,7 +378,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             return true;
         }
         uint256 patternGas = uint256(keccak256(abi.encode(pattern, gas)));
-        return _allowedPatternsExactGas[patternGas]
+        return _allowedPatternsExactGas[patternGas];
     }
 
     /**
