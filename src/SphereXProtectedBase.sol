@@ -28,7 +28,6 @@ abstract contract SphereXProtectedBase {
 
     /**
      * @dev used when the client doesn't use a proxy
-     * @notice constructor visibility is required to support all compiler versions
      */
     constructor(address admin, address operator, address engine) {
         __SphereXProtectedBase_init(admin, operator, engine);
