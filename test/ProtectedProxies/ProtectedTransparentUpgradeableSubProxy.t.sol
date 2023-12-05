@@ -188,9 +188,9 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
 
     function test_exactGas() external override activateRuleGAS {
         gasNumbersExacts = [uint32(4095)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
 
-        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         costumer_contract.try_allowed_flow();
     }
@@ -231,8 +231,8 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         addAllowedPattern();
 
         gasNumbersExacts = [uint32(4095)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
-        spherex_engine.addGasExactPatterns(gasExacts);
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         spherex_engine.setGasStrikeOutsLimit(2);
 

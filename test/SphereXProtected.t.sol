@@ -12,7 +12,7 @@ import "spherex-protect-contracts/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
-    SphereXEngine.GasExactPatterns[] gasExacts;
+    SphereXEngine.GasExactFunctions[] gasExacts;
     uint32[] gasNumbersExacts;
 
     modifier activateRuleTXF() {
@@ -26,7 +26,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     modifier activateRuleGAS() {
-        spherex_engine.configureRules(GAS);
+        spherex_engine.configureRules(GAS_PATTERN);
         _;
     }
 
@@ -529,18 +529,18 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     function test_exactGas() external virtual activateRuleGAS {
         gasNumbersExacts = [uint32(431)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
 
-        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         costumer_contract.try_allowed_flow();
     }
 
     function test_exactGas_wrong_gas_value() external activateRuleGAS {
         gasNumbersExacts = [uint32(432)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_patterns[0], gasNumbersExacts));
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
 
-        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         costumer_contract.try_allowed_flow();
@@ -582,8 +582,8 @@ contract SphereXProtectedTest is Test, CFUtils {
         addAllowedPattern();
 
         gasNumbersExacts = [uint32(431)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
-        spherex_engine.addGasExactPatterns(gasExacts);
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         spherex_engine.setGasStrikeOutsLimit(2);
 

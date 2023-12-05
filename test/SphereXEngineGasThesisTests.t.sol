@@ -10,12 +10,12 @@ import "../src/SphereXEngine.sol";
 
 
 contract SphereXEngineGasThesisTests is Test, CFUtils {
-    SphereXEngine.GasExactPatterns[] gasExacts;
+    SphereXEngine.GasExactFunctions[] gasExacts;
     uint32[] gasNumbersExacts;
 
     function setUp() public virtual override {
         super.setUp();
-        spherex_engine.configureRules(GAS);
+        spherex_engine.configureRules(GAS_PATTERN);
     }
     //  ============ Test for the management functions  ============
 
@@ -29,34 +29,34 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
 
-    function test_addGasExactPatterns() public {
+    function test_addGasExactFunctions() public {
         allowed_cf_storage = [to_int256(CostumerContract.try_allowed_flow.selector),
         -to_int256(CostumerContract.try_allowed_flow.selector)];
         uint200 allowed_pattern_hash = addAllowedPattern();
 
         gasNumbersExacts = [uint32(400)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(to_int256(CostumerContract.try_allowed_flow.selector)), gasNumbersExacts));
 
-        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
     }
 
-    function test_removeGasExactPatterns() public {
+    function test_removeGasExactFunctions() public {
         allowed_cf_storage = [to_int256(CostumerContract.try_allowed_flow.selector),
         -to_int256(CostumerContract.try_allowed_flow.selector)];
         uint200 allowed_pattern_hash = addAllowedPattern();
 
         gasNumbersExacts = [uint32(400)];
-        gasExacts.push(SphereXEngine.GasExactPatterns(allowed_pattern_hash, gasNumbersExacts));
+        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(to_int256(CostumerContract.try_allowed_flow.selector)), gasNumbersExacts));
 
-        spherex_engine.addGasExactPatterns(gasExacts);
+        spherex_engine.addGasExactFunctions(gasExacts);
 
         sendDataToEngine(allowed_cf_storage[0], 400);
         sendDataToEngine(allowed_cf_storage[1], 400);
 
-        spherex_engine.removeGasExactPatterns(gasExacts);
+        spherex_engine.removeGasExactFunctions(gasExacts);
         vm.roll(2);
 
         sendDataToEngine(allowed_cf_storage[0], 400);
