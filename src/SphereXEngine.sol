@@ -3,15 +3,14 @@
 
 pragma solidity ^0.8.17;
 
-import {
-    AccessControlDefaultAdminRules
-} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {AccessControlDefaultAdminRules} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 import "forge-std/console.sol";
 /**
  * @title SphereX Engine
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
+
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct FlowConfiguration {
         uint16 depth;
@@ -41,7 +40,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     mapping(uint256 => bool) internal _allowedPatternsExactGas;
     ThesisConfiguration internal _thesisConfig;
 
-
     FlowConfiguration internal _flowConfig =
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
 
@@ -49,7 +47,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     uint32[] internal currentGasStack = [uint32(0)];
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
-
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint16 internal constant GAS_STRIKES_START = 0;
@@ -225,7 +222,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit IncluePatternsInGas(patterns);
     }
 
-/**
+    /**
      * Add allowed gas exact patterns - the allowd gas exact values for each pattern.
      * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedFunctionsExactGas.
      * @param gasFunctions list of functions with their corresponding gas exact values.
@@ -338,7 +335,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;
-        
+
         uint32 gas_sub;
         if (_isGasFuncActivated(rules)) {
             gas_sub = currentGasStack[currentGasStack.length - 1];
@@ -362,7 +359,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(FlowConfiguration memory flowConfig, uint256 gas, bytes8 rules, uint16 gasStrikeOuts, int256 num) internal view {
+    function _checkCallFlow(
+        FlowConfiguration memory flowConfig,
+        uint256 gas,
+        bytes8 rules,
+        uint16 gasStrikeOuts,
+        int256 num
+    ) internal view {
         PatternConfig memory patternState = _allowedPatterns[flowConfig.pattern];
         require(patternState.allowed, "SphereX error: disallowed tx pattern");
 
@@ -382,7 +385,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (patternConfig.gasBypass) {
             return true;
         }
-        if (_isGasFuncActivated(rules)){
+        if (_isGasFuncActivated(rules)) {
             uint256 functionGas = uint256(keccak256(abi.encode(num >= 0 ? num : -num, gas)));
             return _allowedFunctionsExactGas[functionGas];
         }

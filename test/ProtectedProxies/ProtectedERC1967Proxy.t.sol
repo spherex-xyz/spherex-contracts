@@ -11,7 +11,6 @@ import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts/proxy/utils/UUPSUpgradeable.sol";
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
-
 contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
     function setUp() public virtual override {
         p_costumer_contract = new UUPSCustomer();
@@ -39,19 +38,25 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         UUPSCustomer1(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
     }
 
-    function test_exactGas() external override activateRuleGAS {
+    function test_exactGas() external override activateRuleGASTXF {
         gasNumbersExacts = [uint32(4101)];
-        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
+            )
+        );
 
         spherex_engine.addGasExactFunctions(gasExacts);
 
         costumer_contract.try_allowed_flow();
     }
 
-    function test_gasStrikeOuts_fail_after_two_strikes() external override activateRuleGAS {
-        allowed_cf_storage = [to_int256(costumer_contract.try_allowed_flow.selector),
-        -to_int256(costumer_contract.try_allowed_flow.selector)];
-        uint200 allowed_pattern_hash = addAllowedPattern();
+    function test_gasStrikeOuts_fail_after_two_strikes() external override activateRuleGASTXF {
+        allowed_cf_storage = [
+            to_int256(costumer_contract.try_allowed_flow.selector),
+            -to_int256(costumer_contract.try_allowed_flow.selector)
+        ];
+        addAllowedPattern();
 
         allowed_cf_storage = [
             to_int256(costumer_contract.try_allowed_flow.selector),
@@ -84,7 +89,11 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         addAllowedPattern();
 
         gasNumbersExacts = [uint32(4101)];
-        gasExacts.push(SphereXEngine.GasExactFunctions(uint256(uint32(bytes4(keccak256(bytes("try_allowed_flow()"))))), gasNumbersExacts));
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
+            )
+        );
         spherex_engine.addGasExactFunctions(gasExacts);
 
         spherex_engine.setGasStrikeOutsLimit(2);
@@ -94,6 +103,5 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         costumer_contract.try_allowed_flow();
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
         costumer_contract.try_allowed_flow();
-
     }
 }

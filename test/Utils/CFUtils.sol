@@ -22,10 +22,9 @@ contract CFUtils is Test {
     bytes32 constant flowConfigStorageSlot = bytes32(uint256(7));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
-    bytes8 constant GAS_PATTERN_AND_TXF = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
-    bytes8 constant GAS_PATTERN = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
-    bytes8 constant GAS_FUNCTION = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
-    bytes8 constant GAS_FUNCTION_AND_CF = bytes8(uint64(6)); // only gas is 4, but for now gas must be activated with txf
+    bytes8 constant GAS_FUNCTION = bytes8(uint64(4));
+    bytes8 constant GAS_FUNCTION_AND_CF = bytes8(uint64(5));
+    bytes8 constant GAS_FUNCTION_AND_TXF = bytes8(uint64(6));
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
