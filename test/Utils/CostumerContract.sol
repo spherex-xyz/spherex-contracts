@@ -112,6 +112,21 @@ contract CustomerBehindProxy {
 
     function to_block_2() external {}
     function to_block_3() external {}
+
+    function three_gas_usages(uint256 x) external {
+        if (x == 1) {
+            x = x * 2;
+        }
+        if (x == 2) {
+            x = x * 2;
+            x = x + 3;
+        }
+        if (x == 3) {
+            x = x * 2;
+            x = x + 3;
+            x = x + 4;
+        }
+    }
 }
 
 contract CustomerBehindProxy1 {
@@ -220,5 +235,20 @@ contract CostumerContract is SphereXProtected {
         someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);
+    }
+
+    function three_gas_usages(uint256 x) external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {
+        if (x == 1) {
+            x = x * 2;
+        }
+        if (x == 2) {
+            x = x * 2;
+            x = x + 3;
+        }
+        if (x == 3) {
+            x = x * 2;
+            x = x + 3;
+            x = x + 4;
+        }
     }
 }

@@ -97,55 +97,55 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
 
     function test_gasStrikeOuts_fail_after_two_strikes() external override activateRuleGASTXF {
         allowed_cf_storage = [
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector)
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector)
         ];
         addAllowedPattern();
 
         allowed_cf_storage = [
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector)
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector)
         ];
         addAllowedPattern();
 
         allowed_cf_storage = [
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector)
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector)
         ];
         addAllowedPattern();
 
         allowed_cf_storage = [
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector),
-            to_int256(costumer_contract.try_allowed_flow.selector),
-            -to_int256(costumer_contract.try_allowed_flow.selector)
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector),
+            to_int256(costumer_contract.three_gas_usages.selector),
+            -to_int256(costumer_contract.three_gas_usages.selector)
         ];
         addAllowedPattern();
 
-        gasNumbersExacts = [uint32(4181)];
+        gasNumbersExacts = [uint32(4635)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
-                uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
+                uint256(to_int256(costumer_contract.three_gas_usages.selector)), gasNumbersExacts
             )
         );
         spherex_engine.addGasExactFunctions(gasExacts);
 
         spherex_engine.setGasStrikeOutsLimit(2);
 
-        costumer_contract.try_allowed_flow();
-        costumer_contract.try_allowed_flow();
-        costumer_contract.try_allowed_flow();
+        costumer_contract.three_gas_usages(1);
+        costumer_contract.three_gas_usages(2);
+        costumer_contract.three_gas_usages(2);
         vm.expectRevert("SphereX error: disallowed tx gas pattern");
-        costumer_contract.try_allowed_flow();
+        costumer_contract.three_gas_usages(2);
     }
 }

@@ -424,6 +424,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override returnsIfNotActivated onlyApprovedSenders {
+        console.logUint(gas);
         _addCfElementFunctionExit(num, gas, true);
     }
 

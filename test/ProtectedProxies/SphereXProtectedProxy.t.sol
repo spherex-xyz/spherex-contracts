@@ -39,6 +39,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         protected_sigs.push(CustomerBehindProxy.externalCallsExternal.selector);
         protected_sigs.push(CustomerBehindProxy.externalCallee.selector);
         protected_sigs.push(CustomerBehindProxy.factory.selector);
+        protected_sigs.push(CustomerBehindProxy.three_gas_usages.selector);
         proxy_contract.addProtectedFuncSigs(protected_sigs);
 
         allowed_senders.push(address(proxy_contract));
