@@ -276,6 +276,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
+     * Checks if call flow is activated.
+     */
+    function _isTxfActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(RULE_TXF)) > 0;
+    }
+
+    /**
      * Checks if gas function is activated.
      */
     function _isGasFuncActivated(bytes8 rules) internal view returns (bool) {
@@ -296,6 +303,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionEntry(int256 num) internal {
         require(num > 0, "SphereX error: expected positive num");
         FlowConfiguration memory flowConfig = _flowConfig;
+        bytes8 rules = _thesisConfig.engineRules;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
@@ -316,9 +324,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
 
         flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
-        ++flowConfig.depth;
-        currentGasStack.push(0);
 
+        
+        ++flowConfig.depth;
+        if (_isGasFuncActivated(rules)) {
+            currentGasStack.push(0);
+        }
         _flowConfig = flowConfig;
     }
 
@@ -367,8 +378,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         int256 num
     ) internal view {
         PatternConfig memory patternState = _allowedPatterns[flowConfig.pattern];
-        require(patternState.allowed, "SphereX error: disallowed tx pattern");
-
+        if (_isCfActivated(rules )|| _isTxfActivated(rules)) {
+            require(patternState.allowed, "SphereX error: disallowed tx pattern");
+        }
         if (!isGasAllowed(patternState, rules, gas, num)) {
             flowConfig.currentGasStrikes += 1;
             if (flowConfig.currentGasStrikes > _getGasStirkeOuts()) {

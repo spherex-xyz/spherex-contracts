@@ -114,4 +114,14 @@ contract CFUtils is Test {
         spherex_engine.addAllowedPatterns(allowed_patterns);
         return allowed_cf_hash;
     }
+
+    // helper function to calc pattern hash (read the array from
+    // allowed_cf_storage) into allowed_patterns.
+    function calcPatternHash() internal {
+        uint200 allowed_cf_hash = 1;
+        for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
+            allowed_cf_hash = uint200(bytes25((keccak256(abi.encode(int256(allowed_cf_storage[i]), allowed_cf_hash)))));
+        }
+        allowed_patterns = [allowed_cf_hash];
+    }
 }
