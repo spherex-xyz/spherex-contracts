@@ -5,7 +5,6 @@ pragma solidity ^0.8.17;
 
 import {AccessControlDefaultAdminRules} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
-import "forge-std/console.sol";
 /**
  * @title SphereX Engine
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
@@ -57,7 +56,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
         grantRole(OPERATOR_ROLE, msg.sender);
 
-        for ( uint32 i; i < 30; i++ ){
+        for (uint32 i; i < 30; i++) {
             _currentGasStack[i] = 1;
         }
     }
@@ -222,7 +221,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             for (uint256 j = 0; j < gasFunctions[i].gasExact.length; ++j) {
                 // the -1 is because we initialize the array in storage to 1
                 _allowedFunctionsExactGas[uint256(
-                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j] - 1)) 
+                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j] - 1))
                 )] = true;
             }
         }

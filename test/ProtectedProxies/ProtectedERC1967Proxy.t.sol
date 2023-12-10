@@ -14,10 +14,7 @@ import {SphereXEngine} from "../../src/SphereXEngine.sol";
 contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
     function setUp() public virtual override {
         p_costumer_contract = new UUPSCustomer();
-        proxy_contract = new ProtectedERC1967Proxy(
-            address(p_costumer_contract),
-            ""
-        );
+        proxy_contract = new ProtectedERC1967Proxy(address(p_costumer_contract), "");
 
         super.setUp();
     }

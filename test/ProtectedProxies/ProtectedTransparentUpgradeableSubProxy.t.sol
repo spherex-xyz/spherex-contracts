@@ -44,9 +44,7 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         );
 
         main_proxy = new TransparentUpgradeableProxy(
-            address(protected_proxy_contract),
-            address(proxy_admin),
-            sub_initialize_data
+            address(protected_proxy_contract), address(proxy_admin), sub_initialize_data
         );
         proxy_contract = SphereXProtectedSubProxy(payable(main_proxy));
 

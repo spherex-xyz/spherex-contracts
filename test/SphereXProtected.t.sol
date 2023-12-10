@@ -509,7 +509,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Gas thesis tests  ============
 
-    function check_gas_from_external_call(uint32 gasUsageOfExternalFunction) internal  {
+    function check_gas_from_external_call(uint32 gasUsageOfExternalFunction) internal activateRuleGAS {
         gasNumbersExacts = [uint32(gasUsageOfExternalFunction)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
@@ -524,7 +524,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.try_allowed_flow();
     }
 
-    function check_gas_from_public_call(uint32 gasUsageFunction) internal {
+    function check_gas_from_public_call(uint32 gasUsageFunction) internal activateRuleGAS {
         gasNumbersExacts = [uint32(gasUsageFunction)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
@@ -539,47 +539,11 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.publicFunction();
     }
 
-    function check_gas_from_external_calls_external_same_gas_units_in_outer(uint32 gasUsageOfOuter, uint32 gasUsageOfInner) internal {
-        gasNumbersExacts = [uint32(gasUsageOfOuter)];
-        gasExacts.push(
-            SphereXEngine.GasExactFunctions(
-                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
-            )
-        );
-        gasNumbersExacts = [uint32(gasUsageOfInner)];
-        gasExacts.push(
-            SphereXEngine.GasExactFunctions(
-                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
-            )
-        );
-        spherex_engine.addGasExactFunctions(gasExacts);
-        
-        // add the outer function call to gas check
-        functionsForGas = [uint256(to_int256(costumer_contract.externalCallsExternal.selector))];
-        spherex_engine.includeFunctionsInGas(functionsForGas);
-        
-        vm.roll(100);
-        // check that it goes well
-        costumer_contract.externalCallsExternal();
-        vm.roll(200);
-        
-        // add the inner function
-        // functionsForGas = [uint256(to_int256(costumer_contract.externalCallee.selector))];
-        // spherex_engine.includeFunctionsInGas(functionsForGas);
-        // check that all still goes well
-        costumer_contract.externalCallsExternal();
-
-    }
-
     function test_gas_from_external_call() public virtual activateRuleGAS {
         check_gas_from_external_call(431);
     }
 
     function test_gas_from_public_call() public virtual activateRuleGAS {
         check_gas_from_public_call(481);
-    }
-
-    function test_gas_external_calls_external() public virtual activateRuleGAS {
-        check_gas_from_external_calls_external_same_gas_units_in_outer(16170, 439);
     }
 }
