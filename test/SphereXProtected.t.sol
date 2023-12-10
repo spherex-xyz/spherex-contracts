@@ -14,6 +14,7 @@ contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
     SphereXEngine.GasExactFunctions[] gasExacts;
     uint32[] gasNumbersExacts;
+    uint256[] functionsForGas;
 
     modifier activateRuleTXF() {
         spherex_engine.configureRules(PREFIX_TX_FLOW);
@@ -25,8 +26,8 @@ contract SphereXProtectedTest is Test, CFUtils {
         _;
     }
 
-    modifier activateRuleGASTXF() {
-        spherex_engine.configureRules(GAS_FUNCTION_AND_TXF);
+    modifier activateRuleGAS() {
+        spherex_engine.configureRules(GAS_FUNCTION);
         _;
     }
 
@@ -507,19 +508,9 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     //  ============ Gas thesis tests  ============
-    function test_patternExcludedFromGas() external activateRuleGASTXF {
-        spherex_engine.excludePatternsFromGas(allowed_patterns);
 
-        costumer_contract.try_allowed_flow();
-    }
-
-    function test_patternIncludedInGas_noExacts() external activateRuleGASTXF {
-        vm.expectRevert("SphereX error: disallowed tx gas pattern");
-        costumer_contract.try_allowed_flow();
-    }
-
-    function test_exactGas() external virtual activateRuleGASTXF {
-        gasNumbersExacts = [uint32(431)];
+    function check_gas_from_external_call(uint32 gasUsageOfExternalFunction) internal  {
+        gasNumbersExacts = [uint32(gasUsageOfExternalFunction)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
                 uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
@@ -527,76 +518,68 @@ contract SphereXProtectedTest is Test, CFUtils {
         );
 
         spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [uint256(to_int256(costumer_contract.try_allowed_flow.selector))];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
 
         costumer_contract.try_allowed_flow();
     }
 
-    function test_exactGas_wrong_gas_value() external activateRuleGASTXF {
-        gasNumbersExacts = [uint32(432)];
+    function check_gas_from_public_call(uint32 gasUsageFunction) internal {
+        gasNumbersExacts = [uint32(gasUsageFunction)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
-                uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
+                uint256(to_int256(costumer_contract.publicFunction.selector)), gasNumbersExacts
             )
         );
 
         spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [uint256(to_int256(costumer_contract.publicFunction.selector))];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
 
-        vm.expectRevert("SphereX error: disallowed tx gas pattern");
-        costumer_contract.try_allowed_flow();
+        costumer_contract.publicFunction();
     }
 
-    function test_gasStrikeOuts_fail_after_two_strikes() external virtual activateRuleGASTXF {
-        allowed_cf_storage = [
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector)
-        ];
-
-        addAllowedPattern();
-
-        allowed_cf_storage = [
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector)
-        ];
-        addAllowedPattern();
-
-        allowed_cf_storage = [
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector)
-        ];
-        addAllowedPattern();
-
-        allowed_cf_storage = [
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector),
-            to_int256(costumer_contract.three_gas_usages.selector),
-            -to_int256(costumer_contract.three_gas_usages.selector)
-        ];
-        addAllowedPattern();
-
-        gasNumbersExacts = [uint32(772)];
+    function check_gas_from_external_calls_external_same_gas_units_in_outer(uint32 gasUsageOfOuter, uint32 gasUsageOfInner) internal {
+        gasNumbersExacts = [uint32(gasUsageOfOuter)];
         gasExacts.push(
             SphereXEngine.GasExactFunctions(
-                uint256(to_int256(costumer_contract.three_gas_usages.selector)), gasNumbersExacts
+                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+        gasNumbersExacts = [uint32(gasUsageOfInner)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
             )
         );
         spherex_engine.addGasExactFunctions(gasExacts);
+        
+        // add the outer function call to gas check
+        functionsForGas = [uint256(to_int256(costumer_contract.externalCallsExternal.selector))];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+        
+        vm.roll(100);
+        // check that it goes well
+        costumer_contract.externalCallsExternal();
+        vm.roll(200);
+        
+        // add the inner function
+        // functionsForGas = [uint256(to_int256(costumer_contract.externalCallee.selector))];
+        // spherex_engine.includeFunctionsInGas(functionsForGas);
+        // check that all still goes well
+        costumer_contract.externalCallsExternal();
 
-        spherex_engine.setGasStrikeOutsLimit(2);
+    }
 
-        costumer_contract.three_gas_usages(1);
-        costumer_contract.three_gas_usages(2);
-        costumer_contract.three_gas_usages(2);
-        vm.expectRevert("SphereX error: disallowed tx gas pattern");
-        costumer_contract.three_gas_usages(2);
+    function test_gas_from_external_call() public virtual activateRuleGAS {
+        check_gas_from_external_call(431);
+    }
+
+    function test_gas_from_public_call() public virtual activateRuleGAS {
+        check_gas_from_public_call(481);
+    }
+
+    function test_gas_external_calls_external() public virtual activateRuleGAS {
+        check_gas_from_external_calls_external_same_gas_units_in_outer(16170, 439);
     }
 }
