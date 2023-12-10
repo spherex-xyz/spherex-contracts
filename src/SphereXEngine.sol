@@ -299,7 +299,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             flowConfig.txBoundaryHash = currentTxBoundaryHash;
             flowConfig.currentGasStrikes = GAS_STRIKES_START;
             _currentGasStack[0] = 1;
-            // currentGasStack = [uint32(0)];
+
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
@@ -311,9 +311,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
         }
 
-        // if (_isGasFuncActivated(rules)) {
-        //     currentGasStack.push(0);
-        // }
 
         ++flowConfig.depth;
         _flowConfig = flowConfig;
@@ -335,7 +332,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_isGasFuncActivated(thesisConfig.engineRules)) {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
             _currentGasStack[flowConfig.depth] = 1;
-            // currentGasStack.pop();
             _currentGasStack[flowConfig.depth - 1] += uint32(gas);
             _checkGas(flowConfig, gas - gas_sub, thesisConfig.gasStrikeOuts, num);
         }
