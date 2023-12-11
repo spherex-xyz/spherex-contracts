@@ -9,7 +9,7 @@ import "../../src/SphereXEngine.sol";
 contract CFUtils is Test {
     SphereXEngine public spherex_engine;
     address[] allowed_senders;
-    uint200[] allowed_patterns;
+    uint216[] allowed_patterns;
 
     // This variable exists so we can use memory int16[] parameters in functions
     // it will be used locally in each tests and wont have any meaning between tests.
@@ -54,61 +54,61 @@ contract CFUtils is Test {
         return int256(uint256(uint32(func_selector)));
     }
 
-    function calc_pattern_by_selector(bytes4 func_selector) internal pure returns (uint200) {
+    function calc_pattern_by_selector(bytes4 func_selector) internal pure returns (uint216) {
         int256 func_hash = to_int256(func_selector);
         int256[2] memory allowed_cf = [func_hash, -func_hash];
 
-        uint200 allowed_cf_hash = 1;
+        uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf.length; i++) {
-            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
+            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(int256(allowed_cf[i]), allowed_cf_hash))));
         }
         return allowed_cf_hash;
     }
 
-    function calc_pattern_by_selectors(bytes4[] memory func_selectors) internal pure returns (uint200) {
-        uint200 allowed_cf_hash = 1;
+    function calc_pattern_by_selectors(bytes4[] memory func_selectors) internal pure returns (uint216) {
+        uint216 allowed_cf_hash = 1;
 
         for (uint256 i = 0; i < func_selectors.length; i++) {
             int256 func_hash = int256(uint256(uint32(func_selectors[i])));
-            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(func_hash, allowed_cf_hash))));
+            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(func_hash, allowed_cf_hash))));
         }
 
         for (int256 i = int256(func_selectors.length) - 1; i >= 0; i--) {
             int256 func_hash = -int256(uint256(uint32(func_selectors[uint256(i)])));
-            allowed_cf_hash = uint200(bytes25(keccak256(abi.encode(func_hash, allowed_cf_hash))));
+            allowed_cf_hash = uint216(bytes27(keccak256(abi.encode(func_hash, allowed_cf_hash))));
         }
 
         return allowed_cf_hash;
     }
 
-    function getCurrentCallDepth() internal returns (uint16) {
-        return uint16(bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 240));
+    function getCurrentCallDepth() internal returns (uint8) {
+        return uint8(bytes1(vm.load(address(spherex_engine), flowConfigStorageSlot) << 248));
     }
 
-    function getCurrentPattern() internal returns (uint200) {
-        return uint200(bytes25(vm.load(address(spherex_engine), flowConfigStorageSlot)));
+    function getCurrentPattern() internal returns (uint216) {
+        return uint216(bytes27(vm.load(address(spherex_engine), flowConfigStorageSlot)));
     }
 
     function getCurrentBlockBoundry() internal returns (bytes3) {
-        return bytes3(vm.load(address(spherex_engine), flowConfigStorageSlot) << 216);
+        return bytes3(vm.load(address(spherex_engine), flowConfigStorageSlot) << 224);
     }
 
-    function getCurrentGasStrikes() internal returns (uint16) {
-        return uint16(bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 200));
+    function getCurrentGasStrikes() internal returns (uint8) {
+        return uint8(bytes1(vm.load(address(spherex_engine), flowConfigStorageSlot) << 216));
     }
 
     function assertFlowStorageSlotsInInitialState() internal {
-        assertEq(getCurrentCallDepth(), uint16(1));
-        assertEq(getCurrentPattern(), uint200(1));
-        assertEq(getCurrentGasStrikes(), uint16(0));
+        assertEq(getCurrentCallDepth(), uint8(1));
+        assertEq(getCurrentPattern(), uint216(1));
+        assertEq(getCurrentGasStrikes(), uint8(0));
     }
 
     // helper function to add an allowed pattern (read the array from
     // allowed_cf_storage) to the engine.
-    function addAllowedPattern() internal returns (uint200) {
-        uint200 allowed_cf_hash = 1;
+    function addAllowedPattern() internal returns (uint216) {
+        uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            allowed_cf_hash = uint200(bytes25((keccak256(abi.encode(int256(allowed_cf_storage[i]), allowed_cf_hash)))));
+            allowed_cf_hash = uint216(bytes27((keccak256(abi.encode(int256(allowed_cf_storage[i]), allowed_cf_hash)))));
         }
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.addAllowedPatterns(allowed_patterns);
@@ -118,9 +118,9 @@ contract CFUtils is Test {
     // helper function to calc pattern hash (read the array from
     // allowed_cf_storage) into allowed_patterns.
     function calcPatternHash() internal {
-        uint200 allowed_cf_hash = 1;
+        uint216 allowed_cf_hash = 1;
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            allowed_cf_hash = uint200(bytes25((keccak256(abi.encode(int256(allowed_cf_storage[i]), allowed_cf_hash)))));
+            allowed_cf_hash = uint216(bytes27((keccak256(abi.encode(int256(allowed_cf_storage[i]), allowed_cf_hash)))));
         }
         allowed_patterns = [allowed_cf_hash];
     }

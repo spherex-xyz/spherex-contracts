@@ -12,11 +12,11 @@ import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct FlowConfiguration {
-        uint16 depth;
+        uint8 depth;
         // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
         bytes3 txBoundaryHash;
-        uint16 currentGasStrikes;
-        uint200 pattern;
+        uint8 currentGasStrikes;
+        uint216 pattern;
     }
 
     struct ThesisConfiguration {
@@ -30,7 +30,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     mapping(address => bool) internal _allowedSenders;
-    mapping(uint200 => bool) internal _allowedPatterns;
+    mapping(uint216 => bool) internal _allowedPatterns;
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
     ThesisConfiguration internal _thesisConfig;
 
@@ -42,9 +42,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     mapping(uint256 => bool) internal _includedFunctions;
     uint32[30] internal _currentGasStack;
 
-    uint16 internal constant GAS_STRIKES_START = 0;
-    uint200 internal constant PATTERN_START = 1;
-    uint16 internal constant DEPTH_START = 1;
+    uint8 internal constant GAS_STRIKES_START = 0;
+    uint216 internal constant PATTERN_START = 1;
+    uint8 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
     uint64 internal constant RULE_GAS_FUNCTION = 4;
     uint64 internal constant RULE_TXF = 2;
@@ -76,8 +76,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event AddedAllowedSenders(address[] senders);
     event AddedAllowedSenderOnchain(address sender);
     event RemovedAllowedSenders(address[] senders);
-    event AddedAllowedPatterns(uint200[] patterns);
-    event RemovedAllowedPatterns(uint200[] patterns);
+    event AddedAllowedPatterns(uint216[] patterns);
+    event RemovedAllowedPatterns(uint216[] patterns);
     event AddGasExactFunctions(GasExactFunctions[] gasFunctions);
     event RemoveGasExactFunctions(GasExactFunctions[] gasFunctions);
     event ExcludeFunctionsFromGas(uint256[] functions);
@@ -170,7 +170,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Add allowed patterns - these are representation of allowed flows of transactions, and prefixes of these flows
      * @param patterns list of flows to allow as valid and non-malicious flows
      */
-    function addAllowedPatterns(uint200[] calldata patterns) external onlyOperator {
+    function addAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = true;
         }
@@ -182,7 +182,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * that are no longer considered valid and benign
      * @param patterns list of flows that no longer considered valid and non-malicious
      */
-    function removeAllowedPatterns(uint200[] calldata patterns) external onlyOperator {
+    function removeAllowedPatterns(uint216[] calldata patterns) external onlyOperator {
         for (uint256 i = 0; i < patterns.length; ++i) {
             _allowedPatterns[patterns[i]] = false;
         }
@@ -308,7 +308,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
 
         if (_isCfActivated(rules) || _isTxfActivated(rules)) {
-            flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
+            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         }
 
 
@@ -337,7 +337,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
 
         if (_isCfActivated(thesisConfig.engineRules) || _isTxfActivated(thesisConfig.engineRules)) {
-            flowConfig.pattern = uint200(bytes25(keccak256(abi.encode(num, flowConfig.pattern))));
+            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
 
             if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
                 _checkCallFlow(flowConfig.pattern);
@@ -355,7 +355,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Check if the current call flow pattern (that is, the result of the rolling hash) is an allowed pattern.
      */
-    function _checkCallFlow(uint200 pattern) internal view {
+    function _checkCallFlow(uint216 pattern) internal view {
         require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
     }
 
