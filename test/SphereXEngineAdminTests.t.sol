@@ -121,7 +121,7 @@ contract SphereXEngineAdminFunctionsTests is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_activateRule1_not_owner() public {
+    function test_activateCallFlow_not_owner() public {
         spherex_engine.configureRules(CF);
 
         vm.expectRevert("SphereX error: operator required");
