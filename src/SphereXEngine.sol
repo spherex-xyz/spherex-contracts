@@ -38,9 +38,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
 
     // Please add new storage variables after this point so the tests wont fail!
-
-    uint32[30] internal _currentGasStack;
+    
     mapping(uint256 => bool) internal _includedFunctions;
+    uint32[30] internal _currentGasStack;
 
     uint16 internal constant GAS_STRIKES_START = 0;
     uint200 internal constant PATTERN_START = 1;
@@ -237,7 +237,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < gasFunctions.length; ++i) {
             for (uint256 j = 0; j < gasFunctions[i].gasExact.length; ++j) {
                 _allowedFunctionsExactGas[uint256(
-                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j]))
+                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j] - 1))
                 )] = false;
             }
         }
