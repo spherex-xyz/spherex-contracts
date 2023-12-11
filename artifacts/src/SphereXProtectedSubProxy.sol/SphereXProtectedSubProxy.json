@@ -59,6 +59,19 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "NewAllowedSenderOnchain",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "bytes4[]",
           "name": "patterns",
           "type": "bytes4[]"
@@ -130,6 +143,11 @@
           "internalType": "address",
           "name": "_logic",
           "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
         }
       ],
       "name": "__SphereXProtectedSubProXy_init",

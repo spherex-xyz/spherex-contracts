@@ -47,6 +47,19 @@
         {
           "indexed": false,
           "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "NewAllowedSenderOnchain",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
           "name": "oldAdmin",
           "type": "address"
         },
