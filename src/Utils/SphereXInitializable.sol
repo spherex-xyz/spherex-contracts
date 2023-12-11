@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.2;
 
-import {StorageSlot} from "@openzeppelin/contracts/utils/StorageSlot.sol";
+import {StorageSlot} from "openzeppelin/utils/StorageSlot.sol";
 
 /**
  * @title Slim version of OZ's Initializable which uses an arbitrary slot for the _initialized flag,

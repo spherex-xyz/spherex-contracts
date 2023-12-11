@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "openzeppelin/utils/Address.sol";
 
 import {SphereXProtectedProxy} from "./SphereXProtectedProxy.sol";
 import {SphereXInitializable} from "./Utils/SphereXInitializable.sol";

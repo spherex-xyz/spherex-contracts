@@ -7,7 +7,7 @@ import {
     TransparentUpgradeableProxy,
     Proxy,
     ERC1967Proxy
-} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {
     SphereXProtectedSubProxy, SphereXProtectedProxy, ISphereXProtectedSubProxy

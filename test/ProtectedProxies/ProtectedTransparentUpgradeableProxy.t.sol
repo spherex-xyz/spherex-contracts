@@ -6,8 +6,7 @@ pragma solidity >=0.6.2;
 import "forge-std/Test.sol";
 
 import {CustomerBehindProxy, CustomerBehindProxy1} from "../Utils/CostumerContract.sol";
-import {ProtectedTransparentUpgradeableProxy} from
-    "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
+import {ProtectedTransparentUpgradeableProxy} from "../../src/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
 import {ITransparentUpgradeableProxy} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 

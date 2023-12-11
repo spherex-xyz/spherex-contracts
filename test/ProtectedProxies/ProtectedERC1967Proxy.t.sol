@@ -6,7 +6,7 @@ pragma solidity >=0.6.2;
 import "forge-std/Test.sol";
 
 import {CustomerBehindProxy, UUPSCustomer, UUPSCustomer1} from "../Utils/CostumerContract.sol";
-import {ProtectedERC1967Proxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967Proxy.sol";
+import {ProtectedERC1967Proxy} from "../../src/ProtectedProxies/ProtectedERC1967Proxy.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts/proxy/utils/UUPSUpgradeable.sol";
 
