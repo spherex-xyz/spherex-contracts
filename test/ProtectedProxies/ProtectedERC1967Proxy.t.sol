@@ -8,7 +8,7 @@ import "forge-std/Test.sol";
 import {CustomerBehindProxy, UUPSCustomer, UUPSCustomer1} from "../Utils/CostumerContract.sol";
 import {ProtectedERC1967Proxy} from "../../src/ProtectedProxies/ProtectedERC1967Proxy.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
-import {UUPSUpgradeable} from "openzeppelin-contracts/proxy/utils/UUPSUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 
 contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
     function setUp() public virtual override {
