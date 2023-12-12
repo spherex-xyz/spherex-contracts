@@ -22,6 +22,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct ThesisConfiguration {
         bytes8 engineRules; // By default the contract will be deployed with no guarding rules activated
         uint16 gasStrikeOuts;
+        // if true we are adding some extra stuff that costs gas for simulation purposes
+        // there is no way to turn this on except state override in simmulation!
+        bool isSimulator;
     }
 
     struct GasExactFunctions {
@@ -38,7 +41,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
 
     // Please add new storage variables after this point so the tests wont fail!
-    
+
     mapping(uint256 => bool) internal _includedFunctions;
     uint32[30] internal _currentGasStack;
 
@@ -285,6 +288,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionEntry(int256 num) internal {
         require(num > 0, "SphereX error: expected positive num");
+        uint256 preGasUsage = gasleft();
 
         FlowConfiguration memory flowConfig = _flowConfig;
         bytes8 rules = _thesisConfig.engineRules;
@@ -298,7 +302,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             flowConfig.pattern = PATTERN_START;
             flowConfig.txBoundaryHash = currentTxBoundaryHash;
             flowConfig.currentGasStrikes = GAS_STRIKES_START;
-            _currentGasStack[0] = 1;
+            if (_isGasFuncActivated(rules)) {
+                _currentGasStack[0] = 1;
+            }
 
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
@@ -311,9 +317,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         }
 
-
         ++flowConfig.depth;
         _flowConfig = flowConfig;
+
+        if (_isGasFuncActivated(rules)) {
+            _currentGasStack[flowConfig.depth - 2] += uint32(preGasUsage - gasleft());
+        }
     }
 
     /**
@@ -326,6 +335,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
         ThesisConfiguration memory thesisConfig = _thesisConfig;
+        uint256 postGasUsage = gasleft();
 
         --flowConfig.depth;
 
@@ -333,6 +343,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
             _currentGasStack[flowConfig.depth] = 1;
             _currentGasStack[flowConfig.depth - 1] += uint32(gas);
+            if (_thesisConfig.isSimulator) {
+                SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
+            }
             _checkGas(flowConfig, gas - gas_sub, thesisConfig.gasStrikeOuts, num);
         }
 
@@ -349,7 +362,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
                 flowConfig.pattern = PATTERN_START;
             }
         }
+
         _flowConfig = flowConfig;
+
+        if (_isGasFuncActivated(thesisConfig.engineRules)) {
+            _currentGasStack[flowConfig.depth - 1] += uint32(postGasUsage - gasleft());
+        }
     }
 
     /**
@@ -443,4 +461,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     ) external override returnsIfNotActivated onlyApprovedSenders {
         _addCfElementFunctionExit(num, gas, false);
     }
+
+    // this function is for simulation purpose only, it does nothing except being...
+    function measureGas(uint256 gas, int256 num) external view {}
 }

@@ -177,4 +177,6 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
     function test_factory_callCreatedContract() public override {}
     function test_factoryEngineDisabled() public override {}
     function test_grantSenderAdderRoleOnlyOperator() public override {}
+    function test_gas_from_external_call_external() public override {}
+    function test_gas_from_external_call_external_turn_cf_on() public override {}
 }

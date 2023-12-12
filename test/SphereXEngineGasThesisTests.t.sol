@@ -160,12 +160,19 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
 
     function test_includeFunctionsInGas_function_calls_inner() public {
         // in this test we simulate as if 1 calls 2.
-        // the gas usage of 2 is 500 and 1 is 300 (net usage )
-        // in the call to the engine we will send 500 with 2 and 800 with 1
+        // the gas usage of 2 is 500 and 1 is 3059 (net usage)
+        // in the call to the engine we will send 500 with 2 and 9000 with 1
+
+        // this is for the tracing to know how much gas we need to feed the engine - stupid but works
+        vm.store(
+            address(spherex_engine),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000006),
+            bytes32(0x0000000000000000000000000000000000000000000100000000000000000004)
+        );
 
         gasNumbersExacts = [uint32(500)];
         gasExacts.push(SphereXEngine.GasExactFunctions(2, gasNumbersExacts));
-        gasNumbersExacts = [uint32(300)];
+        gasNumbersExacts = [uint32(3059)];
         gasExacts.push(SphereXEngine.GasExactFunctions(1, gasNumbersExacts));
         spherex_engine.addGasExactFunctions(gasExacts);
 
@@ -174,10 +181,10 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         spherex_engine.includeFunctionsInGas(includedFunctionsInGas);
 
         // nothing should fail
-        sendDataToEngine(1, 800);
+        sendDataToEngine(1, 9000);
         sendDataToEngine(2, 500);
         sendDataToEngine(-2, 500);
-        sendDataToEngine(-1, 800);
+        sendDataToEngine(-1, 9000);
     }
 
     function test_setGasStrikeOutsLimit() public {
