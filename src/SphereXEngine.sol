@@ -343,7 +343,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
             _currentGasStack[flowConfig.depth] = 1;
             _currentGasStack[flowConfig.depth - 1] += uint32(gas);
-            if (_thesisConfig.isSimulator) {
+            if (thesisConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }
             _checkGas(flowConfig, gas - gas_sub, thesisConfig.gasStrikeOuts, num);
