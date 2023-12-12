@@ -20,7 +20,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
             "SphereXProtectedProxyTest.setUp must be called as super from another setUp, and proxy_contract must be set before"
         );
 
-        spherex_engine = new SphereXEngine();
+        spherex_engine = new SphereXEngine(0, address(this));
         proxy_contract.changeSphereXOperator(address(this));
 
         allowed_patterns.push(calc_pattern_by_selector(CustomerBehindProxy.try_allowed_flow.selector));

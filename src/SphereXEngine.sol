@@ -3,10 +3,8 @@
 
 pragma solidity ^0.8.17;
 
-import {
-    AccessControlDefaultAdminRules
-} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
-import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
+import {AccessControlDefaultAdminRules} from "@openzeppelin/contracts/access/AccessControlDefaultAdminRules.sol";
+import {ISphereXEngine} from "@spherex-xyz/contracts/src/ISphereXEngine.sol";
 
 /**
  * @title SphereX Engine
@@ -38,8 +36,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
 
-    constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
-        grantRole(OPERATOR_ROLE, msg.sender);
+    constructor(uint48 initialDelay, address initialDefaultAdmin)
+        AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin)
+    {
+        grantRole(OPERATOR_ROLE, initialDefaultAdmin);
     }
 
     modifier onlyOperator() {
