@@ -204,7 +204,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Include allowed patterns for gas checks during transaction flow.
+     * Include functions for gas checks during transaction flow.
      * @param functions - list of functions that should be included for gas checks
      */
     function includeFunctionsInGas(uint256[] calldata functions) external onlyOperator {
@@ -215,8 +215,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Add allowed gas exact patterns - the allowd gas exact values for each pattern.
-     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedFunctionsExactGas.
+     * Add allowed gas exact functions - the allowd gas exact values for each function.
+     * each exact gas value will be hashed with the function and be saved as a key to boolean value in _allowedFunctionsExactGas.
      * @param gasFunctions list of functions with their corresponding gas exact values.
      */
     function addGasExactFunctions(GasExactFunctions[] calldata gasFunctions) external onlyOperator {
@@ -232,8 +232,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Remove allowed gas exact patterns - the allowd gas exact values for each pattern.
-     * each exact gas value will be hashed with the pattern and be saved as a key to boolean value in _allowedFunctionsExactGas.
+     * Remove allowed gas exact functions - the allowd gas exact values for each function.
+     * each exact gas value will be hashed with the function and be saved as a key to boolean value in _allowedFunctionsExactGas.
      * @param gasFunctions list of functions with their corresponding gas exact values.
      */
     function removeGasExactFunctions(GasExactFunctions[] calldata gasFunctions) external onlyOperator {
