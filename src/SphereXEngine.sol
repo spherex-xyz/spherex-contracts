@@ -381,7 +381,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         internal
         view
     {
-        if (!isGasAllowed(gas, num)) {
+        if (!_isGasAllowed(gas, num)) {
             flowConfig.currentGasStrikes += 1;
             if (flowConfig.currentGasStrikes > gasStrikeOuts) {
                 revert("SphereX error: disallowed tx gas pattern");
@@ -389,7 +389,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function isGasAllowed(uint256 gas, int256 num) internal view returns (bool) {
+    function _isGasAllowed(uint256 gas, int256 num) internal view returns (bool) {
         uint256 functionIndex = num >= 0 ? uint256(num) : uint256(-num);
         if (!_includedFunctions[functionIndex]) {
             return true;
