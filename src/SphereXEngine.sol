@@ -23,7 +23,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes8 engineRules; // By default the contract will be deployed with no guarding rules activated
         uint16 gasStrikeOuts;
         // if true we are adding some extra stuff that costs gas for simulation purposes
-        // there is no way to turn this on except state override in simmulation!
+        // there is no way to turn this on except in simmulation!
         bool isSimulator;
     }
 
@@ -377,6 +377,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         require(_allowedPatterns[pattern], "SphereX error: disallowed tx pattern");
     }
 
+    /**
+     * Check if the current function gas usage is allowed, will revert only if gasStrikeOuts is reached.
+     */
     function _checkGas(FlowConfiguration memory flowConfig, uint256 gas, uint16 gasStrikeOuts, int256 num)
         internal
         view
@@ -389,6 +392,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
+    /**
+     * Check if the current function gas usage is allowed, if the function is not included in gas checks
+     * the function will allow it regardless of the gas usage.
+     */
     function _isGasAllowed(uint256 gas, int256 num) internal view returns (bool) {
         uint256 functionIndex = num >= 0 ? uint256(num) : uint256(-num);
         if (!_includedFunctions[functionIndex]) {
