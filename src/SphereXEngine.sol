@@ -19,7 +19,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint216 pattern;
     }
 
-    struct ThesisConfiguration {
+    struct GuardienConfiguration {
         bytes8 engineRules; // By default the contract will be deployed with no guarding rules activated
         uint16 gasStrikeOuts;
         // if true we are adding some extra stuff that costs gas for simulation purposes
@@ -35,7 +35,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
-    ThesisConfiguration internal _thesisConfig;
+    GuardienConfiguration internal _guardienConfig;
 
     FlowConfiguration internal _flowConfig =
         FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
@@ -87,7 +87,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event InclueFunctionsInGas(uint256[] functions);
 
     modifier returnsIfNotActivated() {
-        if (_thesisConfig.engineRules == DEACTIVATED) {
+        if (_guardienConfig.engineRules == DEACTIVATED) {
             return;
         }
 
@@ -120,17 +120,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             (RULE_CF + RULE_TXF) & uint64(rules) != (RULE_CF + RULE_TXF), "SphereX error: illegal rules combination"
         );
 
-        bytes8 oldRules = _thesisConfig.engineRules;
-        _thesisConfig.engineRules = rules;
-        emit ConfigureRules(oldRules, _thesisConfig.engineRules);
+        bytes8 oldRules = _guardienConfig.engineRules;
+        _guardienConfig.engineRules = rules;
+        emit ConfigureRules(oldRules, _guardienConfig.engineRules);
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
     function deactivateAllRules() external onlyOperator {
-        bytes8 oldRules = _thesisConfig.engineRules;
-        _thesisConfig.engineRules = bytes8(uint64(0));
+        bytes8 oldRules = _guardienConfig.engineRules;
+        _guardienConfig.engineRules = bytes8(uint64(0));
         emit ConfigureRules(oldRules, 0);
     }
 
@@ -248,11 +248,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Set the new strike out liimit for the gas thesis.
-     * @param newLimit the new strike out limit for the gas thesis.
+     * Set the new strike out liimit for the gas guardien.
+     * @param newLimit the new strike out limit for the gas guardien.
      */
     function setGasStrikeOutsLimit(uint16 newLimit) external onlyOperator {
-        _thesisConfig.gasStrikeOuts = newLimit;
+        _guardienConfig.gasStrikeOuts = newLimit;
     }
 
     function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
@@ -291,7 +291,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 preGasUsage = gasleft();
 
         FlowConfiguration memory flowConfig = _flowConfig;
-        bytes8 rules = _thesisConfig.engineRules;
+        bytes8 rules = _guardienConfig.engineRules;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
@@ -334,22 +334,22 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
-        ThesisConfiguration memory thesisConfig = _thesisConfig;
+        GuardienConfiguration memory guardienConfig = _guardienConfig;
         uint256 postGasUsage = gasleft();
 
         --flowConfig.depth;
 
-        if (_isGasFuncActivated(thesisConfig.engineRules)) {
+        if (_isGasFuncActivated(guardienConfig.engineRules)) {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
             _currentGasStack[flowConfig.depth] = 1;
             _currentGasStack[flowConfig.depth - 1] += uint32(gas);
-            if (thesisConfig.isSimulator) {
+            if (guardienConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }
-            _checkGas(flowConfig, gas - gas_sub, thesisConfig.gasStrikeOuts, num);
+            _checkGas(flowConfig, gas - gas_sub, guardienConfig.gasStrikeOuts, num);
         }
 
-        if (_isCfActivated(thesisConfig.engineRules) || _isTxfActivated(thesisConfig.engineRules)) {
+        if (_isCfActivated(guardienConfig.engineRules) || _isTxfActivated(guardienConfig.engineRules)) {
             flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
 
             if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
@@ -358,14 +358,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
             // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
             // currentPattern
-            if (flowConfig.depth == DEPTH_START && _isCfActivated(thesisConfig.engineRules)) {
+            if (flowConfig.depth == DEPTH_START && _isCfActivated(guardienConfig.engineRules)) {
                 flowConfig.pattern = PATTERN_START;
             }
         }
 
         _flowConfig = flowConfig;
 
-        if (_isGasFuncActivated(thesisConfig.engineRules)) {
+        if (_isGasFuncActivated(guardienConfig.engineRules)) {
             _currentGasStack[flowConfig.depth - 1] += uint32(postGasUsage - gasleft());
         }
     }
