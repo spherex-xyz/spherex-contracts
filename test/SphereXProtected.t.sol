@@ -571,6 +571,48 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.externalCallsExternal();
     }
 
+    function check_gas_from_external_call_external_call_external(uint32 mostOuter, uint32 outer, uint32 inner) internal activateRuleGAS {
+        vm.store(
+            address(spherex_engine),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000006),
+            bytes32(0x0000000000000000000000000000000000000000000100000000000000000004)
+        );
+        
+        gasNumbersExacts = [uint32(mostOuter)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(outer)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(inner)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
+            )
+        );
+        
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [
+            uint256(to_int256(costumer_contract.externalCallee.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternal.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternalCallsExternal.selector))
+        ];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.externalCallsExternalCallsExternal();
+
+        // calling it the second time should work?
+        costumer_contract.externalCallsExternalCallsExternal();
+    }
+
     function check_gas_from_external_call_external_turn_cf_on(uint32 outer, uint32 inner) internal activateRuleGAS {
         vm.store(
             address(spherex_engine),
@@ -628,10 +670,14 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_gas_from_external_call_external() public virtual activateRuleGAS {
-        check_gas_from_external_call_external(9094, 439);
+        check_gas_from_external_call_external(9365, 439);
     }
 
     function test_gas_from_external_call_external_turn_cf_on() public virtual activateRuleGAS {
-        check_gas_from_external_call_external_turn_cf_on(9094, 439);
+        check_gas_from_external_call_external_turn_cf_on(9365, 439);
+    }
+
+    function test_gas_from_external_call_external_call_external() public virtual activateRuleGAS {
+        check_gas_from_external_call_external_call_external(23665, 9365, 439);
     }
 }

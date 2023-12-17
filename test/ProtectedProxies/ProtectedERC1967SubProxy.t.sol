@@ -85,10 +85,10 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
     //  ============ Gas thesis tests  ============
 
     function test_gas_from_external_call() public override {
-        check_gas_from_external_call(4181);
+        check_gas_from_external_call(4071);
     }
 
     function test_gas_from_public_call() public override {
-        check_gas_from_public_call(4145);
+        check_gas_from_public_call(4167);
     }
 }

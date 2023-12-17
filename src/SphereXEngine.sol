@@ -320,7 +320,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _flowConfig = flowConfig;
 
         if (_isGasFuncActivated(rules)) {
-            _currentGasStack[flowConfig.depth - 2] += uint32(preGasUsage - gasleft());
+            uint32 pre_gas = _currentGasStack[flowConfig.depth - 2];
+            if (pre_gas == 1) {
+                pre_gas = uint32(preGasUsage - gasleft());
+            } else {
+                pre_gas += uint32(preGasUsage - gasleft());
+            }
+            _currentGasStack[flowConfig.depth - 2] = pre_gas;
         }
     }
 
@@ -335,6 +341,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         FlowConfiguration memory flowConfig = _flowConfig;
         GuardienConfiguration memory guardienConfig = _guardienConfig;
         uint256 postGasUsage = gasleft();
+        uint32 prev_gas;
 
         --flowConfig.depth;
 
@@ -348,7 +355,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             } else {
                 prev_gas += uint32(gas);
             }
-            _currentGasStack[flowConfig.depth - 1] = prev_gas;
             if (guardienConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }
@@ -372,7 +378,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _flowConfig = flowConfig;
 
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
-            _currentGasStack[flowConfig.depth - 1] += uint32(postGasUsage - gasleft());
+            _currentGasStack[flowConfig.depth - 1] += prev_gas + uint32(postGasUsage - gasleft());
         }
     }
 

@@ -101,6 +101,10 @@ contract CustomerBehindProxy {
         return true;
     }
 
+    function externalCallsExternalCallsExternal() external returns (bool) {
+        return this.externalCallsExternal();
+    }
+
     function factory() external returns (address) {
         someContract = new SomeContractBehindProxy();
         return address(someContract);
@@ -221,6 +225,10 @@ contract CostumerContract is SphereXProtected {
     {
         (bool success, bytes memory result) = to.call(data);
         require(success, "arbitrary call reverted");
+    }
+
+    function externalCallsExternalCallsExternal() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
+        return this.externalCallsExternal();
     }
 
     function externalCallsExternal() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
