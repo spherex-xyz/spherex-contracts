@@ -222,9 +222,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function addGasExactFunctions(GasExactFunctions[] calldata gasFunctions) external onlyOperator {
         for (uint256 i = 0; i < gasFunctions.length; ++i) {
             for (uint256 j = 0; j < gasFunctions[i].gasExact.length; ++j) {
-                // the -1 is because we initialize the array in storage to 1
                 _allowedFunctionsExactGas[uint256(
-                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j] - 1))
+                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j]))
                 )] = true;
             }
         }
@@ -240,7 +239,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < gasFunctions.length; ++i) {
             for (uint256 j = 0; j < gasFunctions[i].gasExact.length; ++j) {
                 _allowedFunctionsExactGas[uint256(
-                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j] - 1))
+                    keccak256(abi.encode(gasFunctions[i].functionIndex, gasFunctions[i].gasExact[j]))
                 )] = false;
             }
         }
@@ -341,8 +340,15 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
+            gas_sub = gas_sub == 1 ? 0 : gas_sub; 
             _currentGasStack[flowConfig.depth] = 1;
-            _currentGasStack[flowConfig.depth - 1] += uint32(gas);
+            uint32 prev_gas = _currentGasStack[flowConfig.depth - 1];
+            if (prev_gas == 1) {
+                prev_gas = uint32(gas);
+            } else {
+                prev_gas += uint32(gas);
+            }
+            _currentGasStack[flowConfig.depth - 1] = prev_gas;
             if (guardienConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }

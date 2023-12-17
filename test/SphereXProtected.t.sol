@@ -628,10 +628,10 @@ contract SphereXProtectedTest is Test, CFUtils {
     }
 
     function test_gas_from_external_call_external() public virtual activateRuleGAS {
-        check_gas_from_external_call_external(9095, 439);
+        check_gas_from_external_call_external(9094, 439);
     }
 
     function test_gas_from_external_call_external_turn_cf_on() public virtual activateRuleGAS {
-        check_gas_from_external_call_external_turn_cf_on(9095, 439);
+        check_gas_from_external_call_external_turn_cf_on(9094, 439);
     }
 }
