@@ -335,10 +335,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
+        uint256 postGasUsage = gasleft();
         FlowConfiguration memory flowConfig = _flowConfig;
         GuardienConfiguration memory guardienConfig = _guardienConfig;
-        uint256 postGasUsage = gasleft();
-
+        
         --flowConfig.depth;
 
         if (_isGasFuncActivated(guardienConfig.engineRules)) {

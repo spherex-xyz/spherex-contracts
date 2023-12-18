@@ -137,7 +137,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         sendDataToEngine(2, 500);
         sendDataToEngine(-2, 500);
     }
-
+    
     function test_includeFunctionsInGas_two_functions_both_included_first_wrong() public {
         gasNumbersExacts = [uint32(500)];
         gasExacts.push(SphereXEngine.GasExactFunctions(2, gasNumbersExacts));
@@ -172,7 +172,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
 
         gasNumbersExacts = [uint32(500)];
         gasExacts.push(SphereXEngine.GasExactFunctions(2, gasNumbersExacts));
-        gasNumbersExacts = [uint32(3071)];
+        gasNumbersExacts = [uint32(2489)];
         gasExacts.push(SphereXEngine.GasExactFunctions(1, gasNumbersExacts));
         spherex_engine.addGasExactFunctions(gasExacts);
 
