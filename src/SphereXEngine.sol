@@ -322,7 +322,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_isGasFuncActivated(rules)) {
             uint32 pre_gas = _currentGasStack[flowConfig.depth - 2];
             pre_gas = pre_gas == 1 ? 0 : pre_gas; 
-            _currentGasStack[flowConfig.depth - 2] = pre_gas + uint32(preGasUsage - gasleft());
+            pre_gas += uint32(preGasUsage - gasleft());
+            _currentGasStack[flowConfig.depth - 2] = pre_gas;
         }
     }
 
@@ -369,7 +370,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
             uint32 post_gas = _currentGasStack[flowConfig.depth - 1];
             post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
-            _currentGasStack[flowConfig.depth - 1] = post_gas + uint32(postGasUsage - gasleft());
+            post_gas += uint32(postGasUsage - gasleft());
+            _currentGasStack[flowConfig.depth - 1] = post_gas;
         }
     }
 
