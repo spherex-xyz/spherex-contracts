@@ -343,8 +343,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
-            gas_sub = gas_sub == 1 ? 0 : gas_sub; 
-            _currentGasStack[flowConfig.depth] = 1;
+            if (gas_sub == 1) {
+                gas_sub = 0;
+            } else {
+                _currentGasStack[flowConfig.depth] = 1;
+            }
             if (guardienConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }
