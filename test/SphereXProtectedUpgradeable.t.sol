@@ -33,14 +33,14 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     }
 
     function test_gas_from_external_call_external() public override activateRuleGAS {
-        check_gas_from_external_call_external(9725, 439);
+        check_gas_from_external_call_external(9065, 439);
     }
 
     function test_gas_from_external_call_external_turn_cf_on() public override activateRuleGAS {
-        check_gas_from_external_call_external_turn_cf_on(9725, 439);
+        check_gas_from_external_call_external_turn_cf_on(9065, 439);
     }
 
     function test_gas_from_external_call_external_call_external() public override activateRuleGAS {
-        check_gas_from_external_call_external_call_external(24385, 9725, 439);
+        check_gas_from_external_call_external_call_external(9025, 9065, 439);
     }
 }
