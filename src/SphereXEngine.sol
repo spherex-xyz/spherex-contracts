@@ -374,7 +374,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _flowConfig = flowConfig;
 
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
-            _currentGasStack[flowConfig.depth - 1] += prev_gas + uint32(postGasUsage - gasleft());
+            _currentGasStack[flowConfig.depth - 1] = prev_gas + uint32(postGasUsage - gasleft());
         }
     }
 
