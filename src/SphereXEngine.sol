@@ -322,11 +322,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_isGasFuncActivated(rules)) {
             uint32 pre_gas = _currentGasStack[flowConfig.depth - 2];
             if (pre_gas == 1) {
-                pre_gas = uint32(preGasUsage - gasleft());
+                pre_gas = uint32(preGasUsage - 1);
             } else {
-                pre_gas += uint32(preGasUsage - gasleft());
+                pre_gas += uint32(preGasUsage);
             }
-            _currentGasStack[flowConfig.depth - 2] = pre_gas;
+            _currentGasStack[flowConfig.depth - 2] = pre_gas - gasleft();
         }
     }
 
