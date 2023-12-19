@@ -286,8 +286,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num element to add to the flow.
      */
     function _addCfElementFunctionEntry(int256 num) internal {
-        require(num > 0, "SphereX error: expected positive num");
         uint256 preGasUsage = gasleft();
+        require(num > 0, "SphereX error: expected positive num");
 
         FlowConfiguration memory flowConfig = _flowConfig;
         bytes8 rules = _guardienConfig.engineRules;
@@ -321,8 +321,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         if (_isGasFuncActivated(rules)) {
             uint32 pre_gas = _currentGasStack[flowConfig.depth - 2];
-            pre_gas = pre_gas == 1 ? 0 : pre_gas; 
-            pre_gas += uint32(preGasUsage - gasleft());
+            pre_gas = pre_gas == 1 ? 0 : pre_gas;
+            unchecked{
+                pre_gas = pre_gas + uint32(preGasUsage);
+                pre_gas = pre_gas - uint32(gasleft());
+            }
             _currentGasStack[flowConfig.depth - 2] = pre_gas;
         }
     }
@@ -334,8 +337,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
      */
     function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
-        require(num < 0, "SphereX error: expected negative num");
         uint256 postGasUsage = gasleft();
+        require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
         GuardienConfiguration memory guardienConfig = _guardienConfig;
         
@@ -373,7 +376,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         if (_isGasFuncActivated(guardienConfig.engineRules)) {
             uint32 post_gas = _currentGasStack[flowConfig.depth - 1];
             post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
-            post_gas += uint32(postGasUsage - gasleft());
+            unchecked{
+                post_gas = post_gas + uint32(postGasUsage);
+                post_gas = post_gas - uint32(gasleft());
+            }
             _currentGasStack[flowConfig.depth - 1] = post_gas;
         }
     }
