@@ -21,6 +21,7 @@ contract CFUtils is Test {
     bytes32 constant flowConfigStorageSlot = bytes32(uint256(6));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
+    bytes8 constant SELECTIVE_TXF = bytes8(uint64(8));
 
     function to_int256(bytes4 func_selector) internal pure returns (int256) {
         return int256(uint256(uint32(func_selector)));
@@ -61,8 +62,8 @@ contract CFUtils is Test {
         return uint216(bytes27(vm.load(address(spherex_engine), flowConfigStorageSlot)));
     }
 
-    function getCurrentBlockBoundry() internal returns (bytes3) {
-        return bytes3(vm.load(address(spherex_engine), flowConfigStorageSlot) << 216);
+    function getCurrentBlockBoundry() internal returns (bytes2) {
+        return bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 224);
     }
 
     function assertFlowStorageSlotsInInitialState() internal {
@@ -80,5 +81,14 @@ contract CFUtils is Test {
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.addAllowedPatterns(allowed_patterns);
         return allowed_cf_hash;
+    }
+
+    function sendInternalNumberToEngine(int256 num) internal {
+        if (num > 0) {
+            spherex_engine.sphereXValidateInternalPre(num);
+        } else {
+            bytes32[] memory emptyArray = new bytes32[](0);
+            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
+        }
     }
 }

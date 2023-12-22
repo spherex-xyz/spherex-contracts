@@ -25,15 +25,6 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.addAllowedSender(allowed_senders);
     }
 
-    function sendNumberToEngine(int256 num) private {
-        if (num > 0) {
-            spherex_engine.sphereXValidateInternalPre(num);
-        } else {
-            bytes32[] memory emptyArray = new bytes32[](0);
-            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
-        }
-    }
-
     //  ============ Test for the management functions  ============
 
     function test_passOwnership() public {
@@ -73,7 +64,7 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_senders = [random_address];
         spherex_engine.addAllowedSender(allowed_senders);
         vm.prank(random_address);
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
     }
 
     function test_removeAllowedSender(bytes8 rule) public activateRule(rule) {
@@ -81,7 +72,7 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.removeAllowedSender(allowed_senders);
 
         vm.expectRevert("SphereX error: disallowed sender");
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -103,13 +94,13 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.addAllowedPatterns(allowed_patterns);
 
         for (uint256 i = 0; i < allowed_cf.length; i++) {
-            sendNumberToEngine(allowed_cf[i]);
+            sendInternalNumberToEngine(allowed_cf[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
 
         for (uint256 i = 0; i < allowed_cf_2.length; i++) {
-            sendNumberToEngine(allowed_cf_2[i]);
+            sendInternalNumberToEngine(allowed_cf_2[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
@@ -122,9 +113,9 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
         vm.expectRevert("SphereX error: disallowed tx pattern");
-        sendNumberToEngine(-1);
+        sendInternalNumberToEngine(-1);
     }
 
     // remove two cf and check that the first one was removed
@@ -139,12 +130,12 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        sendNumberToEngine(2);
-        sendNumberToEngine(-2);
+        sendInternalNumberToEngine(2);
+        sendInternalNumberToEngine(-2);
 
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
         vm.expectRevert("SphereX error: disallowed tx pattern");
-        sendNumberToEngine(-1);
+        sendInternalNumberToEngine(-1);
     }
 
     // remove two cf and check that the second one was removed
@@ -159,12 +150,12 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_patterns = [allowed_cf_hash, allowed_cf_hash_3];
         spherex_engine.removeAllowedPatterns(allowed_patterns);
 
-        sendNumberToEngine(2);
-        sendNumberToEngine(-2);
+        sendInternalNumberToEngine(2);
+        sendInternalNumberToEngine(-2);
 
-        sendNumberToEngine(3);
+        sendInternalNumberToEngine(3);
         vm.expectRevert("SphereX error: disallowed tx pattern");
-        sendNumberToEngine(-3);
+        sendInternalNumberToEngine(-3);
     }
 
     // ============ Modifiers  ============
@@ -186,7 +177,7 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.configureRules(CF);
         vm.expectRevert("SphereX error: disallowed sender");
         vm.prank(random_address);
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
     }
 
     function test_onlyApprovedSenders_sphereXValidatePre() public {
@@ -206,8 +197,8 @@ contract SphereXEngineTest is Test, CFUtils {
 
     function test_returnsIfNotActivated_sphereXValidateInternalPre() public {
         spherex_engine.deactivateAllRules();
-        sendNumberToEngine(1);
-        sendNumberToEngine(-1);
+        sendInternalNumberToEngine(1);
+        sendInternalNumberToEngine(-1);
 
         assertFlowStorageSlotsInInitialState();
     }
@@ -258,17 +249,17 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
     }
 
     function test_sphereXValidateInternalPre_not_allowed_cf() public activateRule(CF) {
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
 
         vm.expectRevert(bytes("SphereX error: disallowed tx pattern"));
-        sendNumberToEngine(-1);
+        sendInternalNumberToEngine(-1);
     }
 
     function test_sphereXValidatePrePost_allowed_cf() public activateRule(CF) {
@@ -307,7 +298,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
         int256[10] memory allowed_long_cf = [int256(1), 2, 3, 4, 5, -5, -4, -3, -2, -1];
         for (uint256 i = 0; i < allowed_long_cf.length; i++) {
-            sendNumberToEngine(allowed_long_cf[i]);
+            sendInternalNumberToEngine(allowed_long_cf[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
@@ -320,11 +311,11 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertFlowStorageSlotsInInitialState();
@@ -334,11 +325,11 @@ contract SphereXEngineTest is Test, CFUtils {
         allowed_cf_storage = [int256(1), -1];
         addAllowedPattern();
 
-        sendNumberToEngine(1);
+        sendInternalNumberToEngine(1);
         assertEq(getCurrentPattern(), uint216(bytes27(keccak256(abi.encode(int256(1), uint256(1))))));
         assertEq(getCurrentCallDepth(), uint256(2));
 
-        sendNumberToEngine(-1);
+        sendInternalNumberToEngine(-1);
         assertFlowStorageSlotsInInitialState();
     }
 
@@ -350,7 +341,7 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         assertEq(getCurrentPattern() != uint216(1), true);
@@ -367,7 +358,7 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -378,14 +369,14 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
             if (i == allowed_cf_storage.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -395,13 +386,13 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -411,13 +402,13 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.startPrank(address(this), random_address);
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
         vm.stopPrank();
     }
@@ -428,12 +419,12 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         // If we were still in rule2 (prefix tx flow) this would have been reverted
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -450,7 +441,7 @@ contract SphereXEngineTest is Test, CFUtils {
         addAllowedPattern();
 
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
@@ -458,14 +449,14 @@ contract SphereXEngineTest is Test, CFUtils {
 
         // since the effect on the storage will be applied only at the next transaction we need to call the engine at least
         // once again
-        sendNumberToEngine(allowed_cf_storage[0]);
+        sendInternalNumberToEngine(allowed_cf_storage[0]);
 
         vm.stopPrank();
 
         // the slot layout is 0x[32 empty bits][160 bits for origin address][64 bits for block number]
         assertEq(
             getCurrentBlockBoundry(),
-            bytes3(keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty)))
+            bytes2(keccak256(abi.encode(2, random_address, block.timestamp, block.difficulty)))
         );
     }
 
@@ -480,7 +471,7 @@ contract SphereXEngineTest is Test, CFUtils {
 
         allowed_cf_storage = [int256(1), -1];
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
 
         vm.roll(2);
@@ -490,7 +481,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == allowed_cf_storage.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(allowed_cf_storage[i]);
+            sendInternalNumberToEngine(allowed_cf_storage[i]);
         }
     }
 
@@ -507,7 +498,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -522,7 +513,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -537,7 +528,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -552,7 +543,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -567,7 +558,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -585,7 +576,7 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -601,7 +592,7 @@ contract SphereXEngineTest is Test, CFUtils {
                 // we expect the -1 step will revert
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
@@ -618,13 +609,13 @@ contract SphereXEngineTest is Test, CFUtils {
             if (i == not_allowed_cf.length - 1) {
                 vm.expectRevert("SphereX error: disallowed tx pattern");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 
     function test_CFNumIsZero(bytes8 rule) public activateRule(rule) {
         vm.expectRevert(bytes("SphereX error: expected negative num"));
-        sendNumberToEngine(0);
+        sendInternalNumberToEngine(0);
     }
 
     function test_CFNumIsZero_in_the_middle_of_a_flow(bytes8 rule) public activateRule(rule) {
@@ -637,7 +628,7 @@ contract SphereXEngineTest is Test, CFUtils {
                 // we expect the 0 step will revert
                 vm.expectRevert("SphereX error: expected negative num");
             }
-            sendNumberToEngine(not_allowed_cf[i]);
+            sendInternalNumberToEngine(not_allowed_cf[i]);
         }
     }
 }

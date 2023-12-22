@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.17;
 
-import {
-    AccessControlDefaultAdminRules
-} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
+import {AccessControlDefaultAdminRules} from "openzeppelin-contracts/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 
 /**
@@ -16,7 +14,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct FlowConfiguration {
         uint16 depth;
         // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
-        bytes3 txBoundaryHash;
+        bytes2 txBoundaryHash;
+        bool enforce;
         uint216 pattern;
     }
 
@@ -24,13 +23,16 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
 
-    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, bytes3(uint24(1)), PATTERN_START);
+    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, bytes2(uint16(1)), false, PATTERN_START);
+
+    mapping(uint256 => bool) internal _enforceFunction;
 
     // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint216 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
-    uint64 internal constant RULES_1_AND_2_TOGETHER = 3;
+    uint64 internal constant CF_AND_TXF_TOGETHER = 3;
+    uint64 internal constant SELECTIVE_TXF = 8;
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -59,6 +61,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint216[] patterns);
     event RemovedAllowedPatterns(uint216[] patterns);
+    event AddedEnforceFunctions(uint256[] functions);
+    event RemovedEnforceFunctions(uint256[] functions);
 
     modifier returnsIfNotActivated() {
         if (_engineRules == DEACTIVATED) {
@@ -90,9 +94,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
-        require(
-            RULES_1_AND_2_TOGETHER & uint64(rules) != RULES_1_AND_2_TOGETHER, "SphereX error: illegal rules combination"
-        );
+        require(CF_AND_TXF_TOGETHER & uint64(rules) != CF_AND_TXF_TOGETHER, "SphereX error: illegal rules combination");
         bytes8 oldRules = _engineRules;
         _engineRules = rules;
         emit ConfigureRules(oldRules, _engineRules);
@@ -165,17 +167,46 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit RemovedAllowedPatterns(patterns);
     }
 
+    /**
+     * Add functions for enforcment (apply to selective txf)
+     * @param functions function indexes to enforce flows
+     */
+    function includeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
+        for (uint256 i = 0; i < functions.length; ++i) {
+            _enforceFunction[functions[i]] = true;
+        }
+        emit AddedEnforceFunctions(functions);
+    }
+
+    /**
+     * Remove functions for enforcment (apply to selective txf)
+     * @param functions function indexes to stop enforcing flows
+     */
+    function excludeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
+        for (uint256 i = 0; i < functions.length; ++i) {
+            _enforceFunction[functions[i]] = false;
+        }
+        emit RemovedEnforceFunctions(functions);
+    }
+
     function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
         _grantRole(SENDER_ADDER_ROLE, newSenderAdder);
     }
 
-    // ============ CF ============
+    // ============ Guardians logic ============
 
     /**
-     * Checks if rule1 is activated.
+     * Checks if CF is activated.
      */
-    function _isRule1Activated() internal view returns (bool) {
-        return (_engineRules & bytes8(uint64(1))) > 0;
+    function _isCFActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(uint64(1))) > 0;
+    }
+
+    /**
+     * Checks if selective txf is activated.
+     */
+    function _isSelectiveTxfActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(SELECTIVE_TXF)) > 0;
     }
 
     /**
@@ -185,19 +216,30 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionEntry(int256 num) internal {
         require(num > 0, "SphereX error: expected positive num");
         FlowConfiguration memory flowConfig = _flowConfig;
+        bytes8 rules = _engineRules;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
-        bytes3 currentTxBoundaryHash =
-            bytes3(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
+        bytes2 currentTxBoundaryHash =
+            bytes2(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
         if (currentTxBoundaryHash != flowConfig.txBoundaryHash) {
             flowConfig.pattern = PATTERN_START;
             flowConfig.txBoundaryHash = currentTxBoundaryHash;
+            flowConfig.enforce = false;
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
                 emit TxStartedAtIrregularDepth();
                 flowConfig.depth = DEPTH_START;
+            }
+        }
+
+        if (_isSelectiveTxfActivated(rules)) {
+            // if we are not in enformecnt mode then check if the current function switch it on
+            if (!flowConfig.enforce) {
+                if (_enforceFunction[uint256(num)]) {
+                    flowConfig.enforce = true;
+                }
             }
         }
 
@@ -216,17 +258,24 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionExit(int256 num, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
+        bytes8 rules = _engineRules;
 
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;
 
         if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-            _checkCallFlow(flowConfig.pattern);
+            if (_isSelectiveTxfActivated(rules)) {
+                if (flowConfig.enforce) {
+                    _checkCallFlow(flowConfig.pattern);
+                }
+            } else {
+                _checkCallFlow(flowConfig.pattern);
+            }
         }
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // currentPattern
-        if (flowConfig.depth == DEPTH_START && _isRule1Activated()) {
+        if (flowConfig.depth == DEPTH_START && _isCFActivated(rules)) {
             flowConfig.pattern = PATTERN_START;
         }
 
