@@ -14,7 +14,7 @@ contract SphereXEngineTest is Test, CFUtils {
         // This will make forge call the function with 1 and 2 as inputs!
         uint16 assumeVariable = uint8(uint16(uint64(rule)));
         vm.assume(assumeVariable > 0 && assumeVariable < 3);
-        spherex_engine.configureRules(bytes8(rule));
+        spherex_engine.configureRules(bytes8(uint64(assumeVariable)));
 
         _;
     }
@@ -158,12 +158,19 @@ contract SphereXEngineTest is Test, CFUtils {
         sendInternalNumberToEngine(-3);
     }
 
-    // ============ Modifiers  ============
-
     function test_badRulesConfig() public {
         vm.expectRevert("SphereX error: illegal rules combination");
         spherex_engine.configureRules(bytes8(uint64(3)));
+        vm.expectRevert("SphereX error: illegal rules combination");
+        spherex_engine.configureRules(bytes8(uint64(5)));
+        vm.expectRevert("SphereX error: illegal rules combination");
+        spherex_engine.configureRules(bytes8(uint64(6)));
+        spherex_engine.configureRules(bytes8(uint64(1)));
+        spherex_engine.configureRules(bytes8(uint64(2)));
+        spherex_engine.configureRules(bytes8(uint64(4)));
     }
+
+    // ============ Modifiers  ============
 
     function test_onlyOwner() public {
         vm.expectRevert("SphereX error: operator required");

@@ -120,7 +120,7 @@ contract SphereXEngineSelecriveTxfTest is Test, CFUtils {
         for (uint256 i = 0; i < allowed_cf_storage.length; i++) {
             sendExternalNumberToEngine(allowed_cf_storage[i]);
         }
-        
+
         sendExternalNumberToEngine(3);
         vm.expectRevert("SphereX error: disallowed tx pattern");
         sendExternalNumberToEngine(-3);
