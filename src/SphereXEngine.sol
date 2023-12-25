@@ -71,8 +71,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint216[] patterns);
     event RemovedAllowedPatterns(uint216[] patterns);
-    event AddedEnforceFunctions(uint256[] functions);
-    event RemovedEnforceFunctions(uint256[] functions);
+    event AddedEnforcedFunctions(uint256[] functions);
+    event RemovedEnforcedFunctions(uint256[] functions);
 
     modifier returnsIfNotActivated() {
         if (_engineConfig.rules == DEACTIVATED) {
@@ -194,7 +194,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < functions.length; ++i) {
             _enforceFunction[functions[i]] = true;
         }
-        emit AddedEnforceFunctions(functions);
+        emit AddedEnforcedFunctions(functions);
     }
 
     /**
@@ -205,7 +205,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         for (uint256 i = 0; i < functions.length; ++i) {
             _enforceFunction[functions[i]] = false;
         }
-        emit RemovedEnforceFunctions(functions);
+        emit RemovedEnforcedFunctions(functions);
     }
 
     function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
@@ -251,6 +251,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
                 emit TxStartedAtIrregularDepth();
                 flowConfig.depth = DEPTH_START;
             }
+            _engineConfig = engineConfig;
         }
 
         if (_isSelectiveTxfActivated(engineConfig.rules)) {
@@ -266,7 +267,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         ++flowConfig.depth;
 
         _flowConfig = flowConfig;
-        _engineConfig = engineConfig;
     }
 
     /**

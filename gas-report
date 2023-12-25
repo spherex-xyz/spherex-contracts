@@ -1,7 +1,7 @@
 | src/SphereXEngine.sol:SphereXEngine contract |                 |       |        |       |         |
 |----------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                              | Deployment Size |       |        |       |         |
-| 2168494                                      | 11883           |       |        |       |         |
+| 2167294                                      | 11877           |       |        |       |         |
 | Function Name                                | min             | avg   | median | max   | # calls |
 | OPERATOR_ROLE                                | 360             | 360   | 360    | 360   | 21      |
 | SENDER_ADDER_ROLE                            | 307             | 307   | 307    | 307   | 8       |
@@ -19,7 +19,7 @@
 | removeAllowedSender                          | 2961            | 5363  | 6564   | 6564  | 3       |
 | revokeRole                                   | 2965            | 8981  | 10005  | 10005 | 10      |
 | sphereXValidateInternalPost                  | 950             | 2695  | 2425   | 4311  | 79      |
-| sphereXValidateInternalPre                   | 653             | 5194  | 2987   | 9887  | 91      |
+| sphereXValidateInternalPre                   | 653             | 4952  | 2572   | 9860  | 91      |
 | sphereXValidatePost                          | 1014            | 3214  | 2771   | 4382  | 342     |
-| sphereXValidatePre                           | 926             | 8616  | 6058   | 17174 | 372     |
+| sphereXValidatePre                           | 926             | 8437  | 5643   | 17147 | 372     |
 | supportsInterface                            | 435             | 435   | 435    | 435   | 306     |
