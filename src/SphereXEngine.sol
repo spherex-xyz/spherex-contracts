@@ -13,28 +13,37 @@ import {ISphereXEngine} from "spherex-protect-contracts/ISphereXEngine.sol";
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     struct FlowConfiguration {
         uint16 depth;
-        // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
-        bytes2 txBoundaryHash;
+        uint16 reserved;
         bool enforce;
         uint216 pattern;
     }
 
-    bytes8 internal _engineRules; // By default the contract will be deployed with no guarding rules activated
+    struct EngineConfig {
+        bytes8 rules;
+        // The next variable is not a config but we place it here to save gas
+        // Represent bytes16(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
+        bytes16 txBoundaryHash;
+        bytes8 reserved;
+    }
+
+    EngineConfig internal _engineConfig = EngineConfig(bytes8(0), bytes16(uint128(1)), bytes8(0)); 
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
 
-    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, bytes2(uint16(1)), false, PATTERN_START);
+    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, uint16(0), false, PATTERN_START);
 
     mapping(uint256 => bool) internal _enforceFunction;
 
-    // We initialize the next variables to 1 and not 0 to save gas costs on future transactions
     uint216 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes32 internal constant DEACTIVATED = bytes32(0);
-    uint64 internal constant CF_AND_TXF_TOGETHER = 3;
-    uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = 5;
-    uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = 6;
+    uint64 internal constant CF = 1;
+    uint64 internal constant TXF = 2;
     uint64 internal constant SELECTIVE_TXF = 4;
+    uint64 internal constant CF_AND_TXF_TOGETHER = CF + TXF;
+    uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF + SELECTIVE_TXF;
+    uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF + SELECTIVE_TXF;
+    
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -67,7 +76,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedEnforceFunctions(uint256[] functions);
 
     modifier returnsIfNotActivated() {
-        if (_engineRules == DEACTIVATED) {
+        if (_engineConfig.rules == DEACTIVATED) {
             return;
         }
 
@@ -106,17 +115,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             "SphereX error: illegal rules combination"
         );
         require(uint64(rules) <= SELECTIVE_TXF, "SphereX error: illegal rules combination");
-        bytes8 oldRules = _engineRules;
-        _engineRules = rules;
-        emit ConfigureRules(oldRules, _engineRules);
+        bytes8 oldRules = _engineConfig.rules;
+        _engineConfig.rules = rules;
+        emit ConfigureRules(oldRules, rules);
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
     function deactivateAllRules() external onlyOperator {
-        bytes8 oldRules = _engineRules;
-        _engineRules = bytes8(uint64(0));
+        bytes8 oldRules = _engineConfig.rules;
+        _engineConfig.rules = bytes8(uint64(0));
         emit ConfigureRules(oldRules, 0);
     }
 
@@ -227,16 +236,16 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionEntry(int256 num) internal {
         require(num > 0, "SphereX error: expected positive num");
         FlowConfiguration memory flowConfig = _flowConfig;
-        bytes8 rules = _engineRules;
+        EngineConfig memory engineConfig = _engineConfig;
 
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one. in case of a new one we need to reinit the currentPattern, and save
         // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
-        bytes2 currentTxBoundaryHash =
-            bytes2(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundaryHash != flowConfig.txBoundaryHash) {
+        bytes16 currentTxBoundaryHash =
+            bytes16(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
+        if (currentTxBoundaryHash != engineConfig.txBoundaryHash) {
             flowConfig.pattern = PATTERN_START;
-            flowConfig.txBoundaryHash = currentTxBoundaryHash;
+            engineConfig.txBoundaryHash = currentTxBoundaryHash;
             flowConfig.enforce = false;
             if (flowConfig.depth != DEPTH_START) {
                 // This is an edge case we (and the client) should be able to monitor easily.
@@ -245,7 +254,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
         }
 
-        if (_isSelectiveTxfActivated(rules)) {
+        if (_isSelectiveTxfActivated(engineConfig.rules)) {
             // if we are not in enformecnt mode then check if the current function switch it on
             if (!flowConfig.enforce) {
                 if (_enforceFunction[uint256(num)]) {
@@ -258,6 +267,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         ++flowConfig.depth;
 
         _flowConfig = flowConfig;
+        _engineConfig = engineConfig;
     }
 
     /**
@@ -269,7 +279,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionExit(int256 num, bool forceCheck) internal {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
-        bytes8 rules = _engineRules;
+        bytes8 rules = _engineConfig.rules;
 
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;

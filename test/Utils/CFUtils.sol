@@ -19,6 +19,7 @@ contract CFUtils is Test {
      * @dev obtained using `forge inspect --pretty SphereXEngine storage`
      */
     bytes32 constant flowConfigStorageSlot = bytes32(uint256(6));
+    bytes32 constant engineConfigStorageSlot = bytes32(uint256(3));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
     bytes8 constant SELECTIVE_TXF = bytes8(uint64(4));
@@ -63,7 +64,7 @@ contract CFUtils is Test {
     }
 
     function getCurrentBlockBoundry() internal returns (bytes2) {
-        return bytes2(vm.load(address(spherex_engine), flowConfigStorageSlot) << 224);
+        return bytes2(vm.load(address(spherex_engine), engineConfigStorageSlot) << 64);
     }
 
     function assertFlowStorageSlotsInInitialState() internal {
