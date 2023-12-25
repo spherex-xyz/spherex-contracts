@@ -26,11 +26,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes8 reserved;
     }
 
-    EngineConfig internal _engineConfig = EngineConfig(bytes8(0), bytes16(uint128(1)), bytes8(0)); 
+    EngineConfig internal _engineConfig = EngineConfig(0, bytes16(uint128(1)), 0);
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
 
-    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, uint16(0), false, PATTERN_START);
+    FlowConfiguration internal _flowConfig = FlowConfiguration(DEPTH_START, 0, false, PATTERN_START);
 
     mapping(uint256 => bool) internal _enforceFunction;
 
@@ -43,7 +43,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint64 internal constant CF_AND_TXF_TOGETHER = CF + TXF;
     uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF + SELECTIVE_TXF;
     uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF + SELECTIVE_TXF;
-    
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -125,7 +124,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function deactivateAllRules() external onlyOperator {
         bytes8 oldRules = _engineConfig.rules;
-        _engineConfig.rules = bytes8(uint64(0));
+        _engineConfig.rules = bytes8(DEACTIVATED);
         emit ConfigureRules(oldRules, 0);
     }
 
@@ -219,7 +218,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * Checks if CF is activated.
      */
     function _isCFActivated(bytes8 rules) internal view returns (bool) {
-        return (rules & bytes8(uint64(1))) > 0;
+        return (rules & bytes8(CF)) > 0;
     }
 
     /**
