@@ -251,7 +251,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
                 emit TxStartedAtIrregularDepth();
                 flowConfig.depth = DEPTH_START;
             }
-            _engineConfig = engineConfig;
+
+            _engineConfig.txBoundaryHash = engineConfig.txBoundaryHash;
         }
 
         if (_isSelectiveTxfActivated(engineConfig.rules)) {
