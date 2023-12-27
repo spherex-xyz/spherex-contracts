@@ -1,7 +1,7 @@
 | src/SphereXEngine.sol:SphereXEngine contract |                 |       |        |       |         |
 |----------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                              | Deployment Size |       |        |       |         |
-| 2167294                                      | 11877           |       |        |       |         |
+| 2135858                                      | 11720           |       |        |       |         |
 | Function Name                                | min             | avg   | median | max   | # calls |
 | OPERATOR_ROLE                                | 360             | 360   | 360    | 360   | 21      |
 | SENDER_ADDER_ROLE                            | 307             | 307   | 307    | 307   | 8       |
@@ -10,7 +10,7 @@
 | addAllowedSender                             | 1007            | 25211 | 25351  | 25351 | 335     |
 | addAllowedSenderOnChain                      | 2837            | 20461 | 23986  | 23986 | 12      |
 | beginDefaultAdminTransfer                    | 12117           | 12117 | 12117  | 12117 | 1       |
-| configureRules                               | 2787            | 4269  | 3039   | 9839  | 365     |
+| configureRules                               | 2487            | 3721  | 2487   | 9287  | 365     |
 | deactivateAllRules                           | 2727            | 6562  | 6210   | 9010  | 6       |
 | grantRole                                    | 25623           | 28065 | 29623  | 34467 | 20      |
 | grantSenderAdderRole                         | 841             | 6288  | 841    | 25355 | 9       |
@@ -19,7 +19,7 @@
 | removeAllowedSender                          | 2961            | 5363  | 6564   | 6564  | 3       |
 | revokeRole                                   | 2965            | 8981  | 10005  | 10005 | 10      |
 | sphereXValidateInternalPost                  | 950             | 2695  | 2425   | 4311  | 79      |
-| sphereXValidateInternalPre                   | 653             | 4952  | 2572   | 9860  | 91      |
+| sphereXValidateInternalPre                   | 653             | 4890  | 2572   | 9750  | 91      |
 | sphereXValidatePost                          | 1014            | 3214  | 2771   | 4382  | 342     |
-| sphereXValidatePre                           | 926             | 8437  | 5643   | 17147 | 372     |
+| sphereXValidatePre                           | 926             | 8347  | 5643   | 17037 | 372     |
 | supportsInterface                            | 435             | 435   | 435    | 435   | 306     |
