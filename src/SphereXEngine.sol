@@ -40,9 +40,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     uint64 internal constant CF = 1;
     uint64 internal constant TXF = 2;
     uint64 internal constant SELECTIVE_TXF = 4;
-    uint64 internal constant CF_AND_TXF_TOGETHER = CF + TXF;
-    uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF + SELECTIVE_TXF;
-    uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF + SELECTIVE_TXF;
+    uint64 internal constant CF_AND_TXF_TOGETHER = CF | TXF;
+    uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF | SELECTIVE_TXF;
+    uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF | SELECTIVE_TXF;
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
