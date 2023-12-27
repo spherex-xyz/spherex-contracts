@@ -106,8 +106,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function configureRules(bytes8 rules) external onlyOperator {
         require(CF_AND_TXF_TOGETHER & rules != CF_AND_TXF_TOGETHER, "SphereX error: illegal rules combination");
         require(
-            CF_AND_SELECTIVE_TXF_TOGETHER & 
-            rules != CF_AND_SELECTIVE_TXF_TOGETHER,
+            CF_AND_SELECTIVE_TXF_TOGETHER & rules != CF_AND_SELECTIVE_TXF_TOGETHER,
             "SphereX error: illegal rules combination"
         );
         require(
