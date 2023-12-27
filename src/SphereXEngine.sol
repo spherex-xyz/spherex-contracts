@@ -36,13 +36,13 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     uint216 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
-    bytes32 internal constant DEACTIVATED = bytes32(0);
-    uint64 internal constant CF = 1;
-    uint64 internal constant TXF = 2;
-    uint64 internal constant SELECTIVE_TXF = 4;
-    uint64 internal constant CF_AND_TXF_TOGETHER = CF | TXF;
-    uint64 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF | SELECTIVE_TXF;
-    uint64 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF | SELECTIVE_TXF;
+    bytes8 internal constant DEACTIVATED = bytes8(0);
+    bytes8 internal constant CF = bytes8(uint64(1));
+    bytes8 internal constant TXF = bytes8(uint64(2));
+    bytes8 internal constant SELECTIVE_TXF = bytes8(uint64(4));
+    bytes8 internal constant CF_AND_TXF_TOGETHER = CF | TXF;
+    bytes8 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF | SELECTIVE_TXF;
+    bytes8 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF | SELECTIVE_TXF;
 
     // the index of the addAllowedSenderOnChain in the call flow
     int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
@@ -104,16 +104,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
-        require(CF_AND_TXF_TOGETHER & uint64(rules) != CF_AND_TXF_TOGETHER, "SphereX error: illegal rules combination");
+        require(CF_AND_TXF_TOGETHER & rules != CF_AND_TXF_TOGETHER, "SphereX error: illegal rules combination");
         require(
-            CF_AND_SELECTIVE_TXF_TOGETHER & uint64(rules) != CF_AND_SELECTIVE_TXF_TOGETHER,
+            CF_AND_SELECTIVE_TXF_TOGETHER & 
+            rules != CF_AND_SELECTIVE_TXF_TOGETHER,
             "SphereX error: illegal rules combination"
         );
         require(
-            TXF_AND_SELECTIVE_TXF_TOGETHER & uint64(rules) != TXF_AND_SELECTIVE_TXF_TOGETHER,
+            TXF_AND_SELECTIVE_TXF_TOGETHER & rules != TXF_AND_SELECTIVE_TXF_TOGETHER,
             "SphereX error: illegal rules combination"
         );
-        require(uint64(rules) <= SELECTIVE_TXF, "SphereX error: illegal rules combination");
+        require(uint64(rules) <= uint64(SELECTIVE_TXF), "SphereX error: illegal rules combination");
         bytes8 oldRules = _engineConfig.rules;
         _engineConfig.rules = rules;
         emit ConfigureRules(oldRules, rules);
@@ -124,7 +125,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function deactivateAllRules() external onlyOperator {
         bytes8 oldRules = _engineConfig.rules;
-        _engineConfig.rules = bytes8(DEACTIVATED);
+        _engineConfig.rules = DEACTIVATED;
         emit ConfigureRules(oldRules, 0);
     }
 
