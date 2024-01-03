@@ -4,7 +4,7 @@
 pragma solidity >=0.6.2;
 
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
-import {SphereXProtectedSubProxy} from "spherex-protect-contracts/SphereXProtectedSubProxy.sol";
+import {SphereXProtectedSubProxy} from "../../src/SphereXProtectedSubProxy.sol";
 import {CustomerBehindProxy} from "../Utils/CostumerContract.sol";
 
 abstract contract SphereXProtectedSubProxyTest is SphereXProtectedProxyTest {

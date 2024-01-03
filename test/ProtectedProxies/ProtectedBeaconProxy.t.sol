@@ -8,9 +8,9 @@ import "forge-std/Test.sol";
 import {CustomerBehindProxy, CustomerBehindProxy1, CostumerContract} from "../Utils/CostumerContract.sol";
 import {MockEngine} from "../Utils/MockEngine.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
-import {ProtectedBeaconProxy} from "spherex-protect-contracts/ProtectedProxies/ProtectedBeaconProxy.sol";
-import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
-import {SphereXUpgradeableBeacon} from "spherex-protect-contracts/ProtectedProxies/SphereXUpgradeableBeacon.sol";
+import {ProtectedBeaconProxy} from "../../src/ProtectedProxies/ProtectedBeaconProxy.sol";
+import {SphereXProtectedProxy} from "../../src/SphereXProtectedProxy.sol";
+import {SphereXUpgradeableBeacon} from "../../src/ProtectedProxies/SphereXUpgradeableBeacon.sol";
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
 contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
