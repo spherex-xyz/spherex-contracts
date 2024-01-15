@@ -9,8 +9,8 @@ import {CustomerBehindProxy, CustomerBehindProxy1} from "../Utils/CostumerContra
 import {
     ProtectedTransparentUpgradeableSubProxy,
     ISphereXProtectedSubProxy
-} from "spherex-protect-contracts/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
-import {SphereXProtectedSubProxy} from "spherex-protect-contracts/SphereXProtectedSubProxy.sol";
+} from "../../src/ProtectedProxies/ProtectedTransparentUpgradeableSubProxy.sol";
+import {SphereXProtectedSubProxy} from "../../src/SphereXProtectedSubProxy.sol";
 
 import {
     TransparentUpgradeableProxy,
