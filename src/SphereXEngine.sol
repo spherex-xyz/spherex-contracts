@@ -11,6 +11,7 @@ import {ISphereXEngine} from "./ISphereXEngine.sol";
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
+    // these are packed together for slot optimization for gas saving
     struct FlowConfiguration {
         uint16 depth;
         uint16 reserved;
@@ -18,6 +19,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint216 pattern;
     }
 
+    // these are packed together for slot optimization for gas saving
     struct EngineConfig {
         bytes8 rules;
         // The next variable is not a config but we place it here to save gas
@@ -257,10 +259,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         if (_isSelectiveTxfActivated(engineConfig.rules)) {
             // if we are not in enformecnt mode then check if the current function switch it on
-            if (!flowConfig.enforce) {
-                if (_enforceFunction[uint256(num)]) {
-                    flowConfig.enforce = true;
-                }
+            if (!flowConfig.enforce && _enforceFunction[uint256(num)]) {
+                flowConfig.enforce = true;
             }
         }
 
