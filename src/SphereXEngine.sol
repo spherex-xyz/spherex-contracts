@@ -11,7 +11,7 @@ import {ISphereXEngine} from "./ISphereXEngine.sol";
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
-    // these are packed together for slot optimization for gas saving
+    // the following are packed together for slot optimization and gas saving
     struct FlowConfiguration {
         uint16 depth;
         uint16 reserved;
@@ -19,7 +19,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint216 pattern;
     }
 
-    // these are packed together for slot optimization for gas saving
+    // the following are packed together for slot optimization and gas saving
     struct EngineConfig {
         bytes8 rules;
         // The next variable is not a config but we place it here to save gas
