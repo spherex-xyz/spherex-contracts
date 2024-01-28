@@ -7,10 +7,10 @@ import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {Proxy} from "openzeppelin/proxy/Proxy.sol";
 import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 
-import "spherex-protect-contracts/SphereXProtected.sol";
-import "spherex-protect-contracts/SphereXProtectedBase.sol";
+import "../../src/SphereXProtected.sol";
+import "../../src/SphereXProtectedBase.sol";
 
-import {ProtectedUUPSUpgradeable} from "spherex-protect-contracts/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
+import {ProtectedUUPSUpgradeable} from "../../src/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
 
 contract CustomerContractProxy is Proxy {
     bytes32 space; // only so the x variable wont be overriden by the _imp variable

@@ -12,3 +12,14 @@ docs/
 
 # Dotenv file
 .env
+
+cache_hardhat/
+node_modules/
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Hardhat files
+artifacts/*
+!artifacts/src

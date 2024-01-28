@@ -4,7 +4,7 @@
 pragma solidity >=0.6.2;
 
 import {SphereXEngine} from "../../src/SphereXEngine.sol";
-import {SphereXProtectedProxy} from "spherex-protect-contracts/SphereXProtectedProxy.sol";
+import {SphereXProtectedProxy} from "../../src/SphereXProtectedProxy.sol";
 import {CustomerBehindProxy, CostumerContract, SomeContract} from "../Utils/CostumerContract.sol";
 import {SphereXProtectedTest} from "../SphereXProtected.t.sol";
 

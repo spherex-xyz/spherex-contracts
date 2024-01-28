@@ -8,7 +8,7 @@ import "./Utils/CFUtils.sol";
 import "./Utils/MockEngine.sol";
 import "./Utils/CostumerContract.sol";
 import "../src/SphereXEngine.sol";
-import "spherex-protect-contracts/SphereXProtected.sol";
+import "../src/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;

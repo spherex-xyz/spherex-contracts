@@ -12,10 +12,9 @@ import {
     UUPSCustomer1
 } from "../Utils/CostumerContract.sol";
 import {
-    ProtectedERC1967SubProxy,
-    SphereXProtectedSubProxy
-} from "spherex-protect-contracts/ProtectedProxies/ProtectedERC1967SubProxy.sol";
-import {ProtectedUUPSUpgradeable} from "spherex-protect-contracts/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
+    ProtectedERC1967SubProxy, SphereXProtectedSubProxy
+} from "../../src/ProtectedProxies/ProtectedERC1967SubProxy.sol";
+import {ProtectedUUPSUpgradeable} from "../../src/ProtectedProxies/ProtectedUUPSUpgradeable.sol";
 
 import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
