@@ -96,7 +96,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     modifier onlyApprovedSenders() {
-        require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
+        if (!_guardienConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
+        }
         _;
     }
 
