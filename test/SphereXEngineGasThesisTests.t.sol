@@ -172,7 +172,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
 
         gasNumbersExacts = [uint32(500)];
         gasExacts.push(SphereXEngine.GasExactFunctions(2, gasNumbersExacts));
-        gasNumbersExacts = [uint32(2746)];
+        gasNumbersExacts = [uint32(2460)];
         gasExacts.push(SphereXEngine.GasExactFunctions(1, gasNumbersExacts));
         spherex_engine.addGasExactFunctions(gasExacts);
 

@@ -95,13 +95,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _;
     }
 
-    modifier onlyApprovedSenders() {
-        if (!_guardienConfig.isSimulator) {
-            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
-        }
-        _;
-    }
-
     // ============ Management ============
 
     function supportsInterface(bytes4 interfaceId)
@@ -290,6 +283,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionEntry(int256 num) internal {
         uint256 preGasUsage = gasleft();
+        if (!_guardienConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
+        }
         require(num > 0, "SphereX error: expected positive num");
 
         FlowConfiguration memory flowConfig = _flowConfig;
@@ -342,6 +338,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
         uint256 postGasUsage = gasleft();
+        if (!_guardienConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
+        }
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
         GuardienConfiguration memory guardienConfig = _guardienConfig;
@@ -436,7 +435,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         external
         override
         returnsIfNotActivated // may return empty bytes32[]
-        onlyApprovedSenders
         returns (bytes32[] memory result)
     {
         _addCfElementFunctionEntry(num);
@@ -455,7 +453,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
-    ) external override returnsIfNotActivated onlyApprovedSenders {
+    ) external override returnsIfNotActivated {
         _addCfElementFunctionExit(num, gas, true);
     }
 
@@ -468,7 +466,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         external
         override
         returnsIfNotActivated
-        onlyApprovedSenders
         returns (bytes32[] memory result)
     {
         _addCfElementFunctionEntry(num);
@@ -484,7 +481,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
-    ) external override returnsIfNotActivated onlyApprovedSenders {
+    ) external override returnsIfNotActivated {
         _addCfElementFunctionExit(num, gas, false);
     }
 
