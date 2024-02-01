@@ -240,11 +240,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         EngineConfig memory engineConfig = _engineConfig;
 
         // Upon entry to a new function we should check if we are at the same transaction
-        // or a new one. in case of a new one we need to reinit the currentPattern, and save
-        // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
+        // or a new one. 
         bytes16 currentTxBoundaryHash =
             bytes16(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
         if (currentTxBoundaryHash != engineConfig.txBoundaryHash) {
+            // in case of a new one we need to reinit the currentPattern, and save
+            // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
             flowConfig.pattern = PATTERN_START;
             engineConfig.txBoundaryHash = currentTxBoundaryHash;
             flowConfig.enforce = false;
