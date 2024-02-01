@@ -258,7 +258,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
 
         if (_isSelectiveTxfActivated(engineConfig.rules)) {
-            // if we are not in enformecnt mode then check if the current function switch it on
+            // if we are not in enforment mode then check if the current function turn it on
             if (!flowConfig.enforce && _enforceFunction[uint256(num)]) {
                 flowConfig.enforce = true;
             }
