@@ -7,7 +7,7 @@ import "forge-std/Test.sol";
 import "./Utils/CFUtils.sol";
 import "../src/SphereXEngine.sol";
 
-contract SphereXEngineSelecriveTxfTest is Test, CFUtils {
+contract SphereXEngineSelectiveTxfTest is Test, CFUtils {
     address random_address = 0x6A08098568eE90b71dD757F070D79364197f944B;
     uint256[] enforcedFunctions;
 
