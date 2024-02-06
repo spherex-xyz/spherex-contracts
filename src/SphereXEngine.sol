@@ -39,6 +39,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint32[] gasExact;
     }
 
+    struct FunctionConfig {
+        bool selectiveEnforced;
+        bool gasEnforced;
+    }
+
     EngineConfig internal _engineConfig = EngineConfig(0, bytes16(uint128(1)), 0, false, 0);
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
@@ -48,9 +53,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     // Please add new storage variables after this point so the tests wont fail!
 
-    mapping(uint256 => bool) internal _enforceFunction;
+    mapping(uint256 => FunctionConfig) internal _functionsConfig;
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
-    mapping(uint256 => bool) internal _includedFunctions;
     uint32[30] internal _currentGasStack;
 
     uint8 internal constant GAS_STRIKES_START = 0;
@@ -214,7 +218,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function includeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
         for (uint256 i = 0; i < functions.length; ++i) {
-            _enforceFunction[functions[i]] = true;
+            _functionsConfig[functions[i]].selectiveEnforced = true;
         }
         emit AddedEnforcedFunctions(functions);
     }
@@ -225,7 +229,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function excludeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
         for (uint256 i = 0; i < functions.length; ++i) {
-            _enforceFunction[functions[i]] = false;
+            _functionsConfig[functions[i]].selectiveEnforced = false;
         }
         emit RemovedEnforcedFunctions(functions);
     }
@@ -236,7 +240,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function excludeFunctionsFromGas(uint256[] calldata functions) external onlyOperator {
         for (uint256 i = 0; i < functions.length; ++i) {
-            _includedFunctions[functions[i]] = false;
+            _functionsConfig[functions[i]].gasEnforced = false;
         }
         emit ExcludeFunctionsFromGas(functions);
     }
@@ -247,7 +251,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function includeFunctionsInGas(uint256[] calldata functions) external onlyOperator {
         for (uint256 i = 0; i < functions.length; ++i) {
-            _includedFunctions[functions[i]] = true;
+            _functionsConfig[functions[i]].gasEnforced = true;
         }
         emit InclueFunctionsInGas(functions);
     }
@@ -354,18 +358,26 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function _flowProtectionEntryLogic(bytes8 rules, FlowConfiguration memory flowConfig, int num) private {
+    function _flowProtectionEntryLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num) private {
+        if (!_isFlowProtectionActivated(rules)) {
+            return;
+        }
         if (_isSelectiveTXFActivated(rules)) {
             // if we are not in enforcment mode then check if the current function turns it on
-            if (!flowConfig.enforce && _enforceFunction[uint256(num)]) {
+            if (!flowConfig.enforce && _functionsConfig[uint256(num)].selectiveEnforced) {
                 flowConfig.enforce = true;
             }
         }
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
     }
 
+    function _flowProtectionExitLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num, bool forceCheck)
+        private
+    {
+        if (!_isFlowProtectionActivated(rules)) {
+            return;
+        }
 
-    function _flowProtectionExitLogic(bytes8 rules, FlowConfiguration memory flowConfig, int num, bool forceCheck) private {
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
 
         if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
@@ -385,96 +397,29 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    /**
-     * update the current CF pattern with a new positive number (signifying function entry),
-     * @param num element to add to the flow.
-     */
-    function _addCfElementFunctionEntry(int256 num) internal {
-        uint256 preGasUsage = gasleft();
-
-        bytes8 rules = _engineConfig.rules;
-        if (rules == DEACTIVATED) {
+    function _gasProtectionExitLogic(
+        bytes8 rules,
+        FlowConfiguration memory flowConfig,
+        int256 num,
+        uint256 gas,
+        bool isSimulator,
+        uint16 gasStrikeOuts
+    ) private {
+        if (!_isGasFuncActivated(rules)) {
             return;
         }
-        if (!_engineConfig.isSimulator) {
-            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
+
+        uint32 gas_sub = _currentGasStack[flowConfig.depth];
+        if (gas_sub == 1) {
+            gas_sub = 0;
+        } else {
+            // if the _currentGasStack[flowConfig.depth] wasn't equal to 1 we need to reset it.
+            _currentGasStack[flowConfig.depth] = 1;
         }
-        require(num > 0, "SphereX error: expected positive num");
-
-        FlowConfiguration memory flowConfig = _flowConfig;
-
-        _resetStateOnNewTx(rules, flowConfig);
-
-        if (_isFlowProtectionActivated(rules)) {
-            _flowProtectionEntryLogic(rules, flowConfig, num);
+        if (isSimulator) {
+            SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
         }
-
-        ++flowConfig.depth;
-        _flowConfig = flowConfig;
-
-        if (_isGasFuncActivated(rules)) {
-            uint256 gas_pos = flowConfig.depth - 2;
-            uint32 pre_gas = _currentGasStack[gas_pos];
-            pre_gas = pre_gas == 1 ? 0 : pre_gas;
-            unchecked {
-                pre_gas = pre_gas + uint32(preGasUsage);
-                pre_gas = pre_gas - uint32(gasleft());
-            }
-            _currentGasStack[gas_pos] = pre_gas;
-        }
-    }
-
-    /**
-     * update the current CF pattern with a new negative number (signfying function exit),
-     * under some conditions, this will also check the validity of the pattern.
-     * @param num element to add to the flow. should be negative.
-     * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
-     */
-    function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
-        uint256 postGasUsage = gasleft();
-
-        EngineConfig memory engineConfig = _engineConfig;
-
-        if (engineConfig.rules == DEACTIVATED) {
-            return;
-        }
-        if (!engineConfig.isSimulator) {
-            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
-        }
-        require(num < 0, "SphereX error: expected negative num");
-
-        FlowConfiguration memory flowConfig = _flowConfig;
-        --flowConfig.depth;
-
-        if (_isGasFuncActivated(engineConfig.rules)) {
-            uint32 gas_sub = _currentGasStack[flowConfig.depth];
-            if (gas_sub == 1) {
-                gas_sub = 0;
-            } else {
-                _currentGasStack[flowConfig.depth] = 1;
-            }
-            if (engineConfig.isSimulator) {
-                SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
-            }
-            _checkGas(flowConfig, gas - gas_sub, engineConfig.gasStrikeOuts, num);
-        }
-
-        if (_isFlowProtectionActivated(engineConfig.rules)) {
-            _flowProtectionExitLogic(engineConfig.rules, flowConfig, num, forceCheck);
-        }
-
-        _flowConfig = flowConfig;
-
-        if (_isGasFuncActivated(engineConfig.rules)) {
-            uint256 gas_pos = flowConfig.depth - 1;
-            uint32 post_gas = _currentGasStack[gas_pos];
-            post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
-            unchecked {
-                post_gas = post_gas + uint32(postGasUsage);
-                post_gas = post_gas - uint32(gasleft());
-            }
-            _currentGasStack[gas_pos] = post_gas;
-        }
+        _checkGas(flowConfig, gas - gas_sub, gasStrikeOuts, num);
     }
 
     /**
@@ -505,11 +450,97 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _isGasAllowed(uint256 gas, int256 num) internal view returns (bool) {
         uint256 functionIndex = num >= 0 ? uint256(num) : uint256(-num);
-        if (!_includedFunctions[functionIndex]) {
+        if (!_functionsConfig[functionIndex].gasEnforced) {
             return true;
         }
         uint256 functionGas = uint256(keccak256(abi.encode(functionIndex, gas)));
         return _allowedFunctionsExactGas[functionGas];
+    }
+
+    /**
+     * update the current CF pattern with a new positive number (signifying function entry),
+     * @param num element to add to the flow.
+     */
+    function _addCfElementFunctionEntry(int256 num) internal {
+        // first thing save the gas left - for gas guardian logic
+        uint256 preGasUsage = gasleft();
+
+        bytes8 rules = _engineConfig.rules;
+
+        // safty checks
+        if (rules == DEACTIVATED) {
+            return;
+        }
+        if (!_engineConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
+        }
+        require(num > 0, "SphereX error: expected positive num");
+
+        FlowConfiguration memory flowConfig = _flowConfig;
+
+        _resetStateOnNewTx(rules, flowConfig);
+
+        _flowProtectionEntryLogic(rules, flowConfig, num);
+
+        ++flowConfig.depth;
+        _flowConfig = flowConfig;
+
+        // sace engine entry logic gas consumption - for gas guardian logic 
+        if (_isGasFuncActivated(rules)) {
+            uint256 gas_pos = flowConfig.depth - 2;
+            uint32 pre_gas = _currentGasStack[gas_pos];
+            pre_gas = pre_gas == 1 ? 0 : pre_gas;
+            unchecked {
+                pre_gas = pre_gas + uint32(preGasUsage);
+                pre_gas = pre_gas - uint32(gasleft());
+            }
+            _currentGasStack[gas_pos] = pre_gas;
+        }
+    }
+
+    /**
+     * update the current CF pattern with a new negative number (signfying function exit),
+     * under some conditions, this will also check the validity of the pattern.
+     * @param num element to add to the flow. should be negative.
+     * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
+     */
+    function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
+        // first thing save the gas left - for gsa guardian purposes
+        uint256 postGasUsage = gasleft();
+
+        EngineConfig memory engineConfig = _engineConfig;
+
+        // safty checks
+        if (engineConfig.rules == DEACTIVATED) {
+            return;
+        }
+        if (!engineConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
+        }
+        require(num < 0, "SphereX error: expected negative num");
+
+        FlowConfiguration memory flowConfig = _flowConfig;
+        --flowConfig.depth;
+
+        _gasProtectionExitLogic(
+            engineConfig.rules, flowConfig, num, gas, engineConfig.isSimulator, engineConfig.gasStrikeOuts
+        );
+
+        _flowProtectionExitLogic(engineConfig.rules, flowConfig, num, forceCheck);
+
+        _flowConfig = flowConfig;
+
+        // sace engine exit logic gas consumption - for gas guardian logic 
+        if (_isGasFuncActivated(engineConfig.rules)) {
+            uint256 gas_pos = flowConfig.depth - 1;
+            uint32 post_gas = _currentGasStack[gas_pos];
+            post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
+            unchecked {
+                post_gas = post_gas + uint32(postGasUsage);
+                post_gas = post_gas - uint32(gasleft());
+            }
+            _currentGasStack[gas_pos] = post_gas;
+        }
     }
 
     /**
