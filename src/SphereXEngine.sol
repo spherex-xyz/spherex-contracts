@@ -329,12 +329,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         return (rules & bytes8(GAS)) > 0;
     }
 
-    function _resetStateOnNewTx(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig) private {
+    function _resetStateOnNewTx(bytes8 rules, FlowConfiguration memory flowConfig) private {
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one.
         bytes16 currentTxBoundaryHash =
             bytes16(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundaryHash != engineConfig.txBoundaryHash) {
+        if (currentTxBoundaryHash != _engineConfig.txBoundaryHash) {
             // in case of a new one we need to reinit the currentPattern, and save
             // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
             flowConfig.pattern = PATTERN_START;
@@ -346,7 +346,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
 
             flowConfig.currentGasStrikes = GAS_STRIKES_START;
-            if (_isGasFuncActivated(engineConfig.rules)) {
+            if (_isGasFuncActivated(rules)) {
                 _currentGasStack[0] = 1;
             }
 
@@ -354,8 +354,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
-    function _flowProtectionEntryLogic(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig, int num) private {
-        if (_isSelectiveTXFActivated(engineConfig.rules)) {
+    function _flowProtectionEntryLogic(bytes8 rules, FlowConfiguration memory flowConfig, int num) private {
+        if (_isSelectiveTXFActivated(rules)) {
             // if we are not in enforcment mode then check if the current function turns it on
             if (!flowConfig.enforce && _enforceFunction[uint256(num)]) {
                 flowConfig.enforce = true;
@@ -365,11 +365,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
 
-    function _flowProtectionExitLogic(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig, int num, bool forceCheck) private {
+    function _flowProtectionExitLogic(bytes8 rules, FlowConfiguration memory flowConfig, int num, bool forceCheck) private {
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
 
         if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-            if (_isSelectiveTXFActivated(engineConfig.rules)) {
+            if (_isSelectiveTXFActivated(rules)) {
                 if (flowConfig.enforce) {
                     _checkCallFlow(flowConfig.pattern);
                 }
@@ -380,7 +380,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // currentPattern
-        if (flowConfig.depth == DEPTH_START && _isCFActivated(engineConfig.rules)) {
+        if (flowConfig.depth == DEPTH_START && _isCFActivated(rules)) {
             flowConfig.pattern = PATTERN_START;
         }
     }
@@ -392,27 +392,27 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function _addCfElementFunctionEntry(int256 num) internal {
         uint256 preGasUsage = gasleft();
 
-        EngineConfig memory engineConfig = _engineConfig;
-        if (engineConfig.rules == DEACTIVATED) {
+        bytes8 rules = _engineConfig.rules;
+        if (rules == DEACTIVATED) {
             return;
         }
-        if (!engineConfig.isSimulator) {
+        if (!_engineConfig.isSimulator) {
             require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
         }
         require(num > 0, "SphereX error: expected positive num");
 
         FlowConfiguration memory flowConfig = _flowConfig;
 
-        _resetStateOnNewTx(engineConfig, flowConfig);
+        _resetStateOnNewTx(rules, flowConfig);
 
-        if (_isFlowProtectionActivated(engineConfig.rules)) {
-            _flowProtectionEntryLogic(engineConfig, flowConfig, num);
+        if (_isFlowProtectionActivated(rules)) {
+            _flowProtectionEntryLogic(rules, flowConfig, num);
         }
 
         ++flowConfig.depth;
         _flowConfig = flowConfig;
 
-        if (_isGasFuncActivated(engineConfig.rules)) {
+        if (_isGasFuncActivated(rules)) {
             uint256 gas_pos = flowConfig.depth - 2;
             uint32 pre_gas = _currentGasStack[gas_pos];
             pre_gas = pre_gas == 1 ? 0 : pre_gas;
@@ -434,6 +434,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 postGasUsage = gasleft();
 
         EngineConfig memory engineConfig = _engineConfig;
+
         if (engineConfig.rules == DEACTIVATED) {
             return;
         }
@@ -459,7 +460,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
 
         if (_isFlowProtectionActivated(engineConfig.rules)) {
-            _flowProtectionExitLogic(engineConfig, flowConfig, num, forceCheck);
+            _flowProtectionExitLogic(engineConfig.rules, flowConfig, num, forceCheck);
         }
 
         _flowConfig = flowConfig;
