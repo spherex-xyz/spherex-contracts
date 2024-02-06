@@ -5,27 +5,33 @@ pragma solidity ^0.8.17;
 
 import {AccessControlDefaultAdminRules} from "openzeppelin/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "./ISphereXEngine.sol";
-
+import "forge-std/console.sol";
 /**
  * @title SphereX Engine
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
  */
 
 contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
+    // the following are packed together for slot optimization and gas saving
     struct FlowConfiguration {
-        uint8 depth;
-        // Represent bytes3(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
-        bytes3 txBoundaryHash;
+        uint16 depth;
+        uint8 reserved;
         uint8 currentGasStrikes;
+        bool enforce;
         uint216 pattern;
     }
 
-    struct GuardienConfiguration {
-        bytes8 engineRules; // By default the contract will be deployed with no guarding rules activated
+    // the following are packed together for slot optimization and gas saving
+    struct EngineConfig {
+        bytes8 rules;
+        // The next variable is not a config but we place it here to save gas
+        // Represent bytes16(keccak256(abi.encode(block.number, tx.origin, block.difficulty, block.timestamp)))
+        bytes16 txBoundaryHash;
         uint16 gasStrikeOuts;
         // if true we are adding some extra stuff that costs gas for simulation purposes
         // there is no way to turn this on except in simmulation!
         bool isSimulator;
+        bytes5 reserved;
     }
 
     struct GasExactFunctions {
@@ -33,26 +39,36 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint32[] gasExact;
     }
 
+    EngineConfig internal _engineConfig = EngineConfig(0, bytes16(uint128(1)), 0, false, 0);
     mapping(address => bool) internal _allowedSenders;
     mapping(uint216 => bool) internal _allowedPatterns;
-    mapping(uint256 => bool) internal _allowedFunctionsExactGas;
-    GuardienConfiguration internal _guardienConfig;
 
     FlowConfiguration internal _flowConfig =
-        FlowConfiguration(DEPTH_START, bytes3(uint24(1)), GAS_STRIKES_START, PATTERN_START);
+        FlowConfiguration(DEPTH_START, uint8(0), GAS_STRIKES_START, false, PATTERN_START);
 
     // Please add new storage variables after this point so the tests wont fail!
 
+    mapping(uint256 => bool) internal _enforceFunction;
+    mapping(uint256 => bool) internal _allowedFunctionsExactGas;
     mapping(uint256 => bool) internal _includedFunctions;
     uint32[30] internal _currentGasStack;
 
     uint8 internal constant GAS_STRIKES_START = 0;
     uint216 internal constant PATTERN_START = 1;
-    uint8 internal constant DEPTH_START = 1;
-    bytes32 internal constant DEACTIVATED = bytes32(0);
-    uint64 internal constant RULE_GAS_FUNCTION = 4;
-    uint64 internal constant RULE_TXF = 2;
-    uint64 internal constant RULE_CF = 1;
+    uint16 internal constant DEPTH_START = 1;
+    bytes8 internal constant DEACTIVATED = bytes8(0);
+    bytes8 internal constant CF = bytes8(uint64(1));
+    bytes8 internal constant TXF = bytes8(uint64(2));
+    bytes8 internal constant SELECTIVE_TXF = bytes8(uint64(4));
+    bytes8 internal constant GAS = bytes8(uint64(8));
+    bytes8 internal constant GAS_AND_SELECTIVE_TXF = GAS | SELECTIVE_TXF;
+    bytes8 internal constant CF_AND_TXF_TOGETHER = CF | TXF;
+    bytes8 internal constant CF_AND_SELECTIVE_TXF_TOGETHER = CF | SELECTIVE_TXF;
+    bytes8 internal constant TXF_AND_SELECTIVE_TXF_TOGETHER = TXF | SELECTIVE_TXF;
+    bytes8 internal constant FLOW_PROTECTION_MASK = TXF | SELECTIVE_TXF | CF;
+
+    // the index of the addAllowedSenderOnChain in the call flow
+    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
 
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant SENDER_ADDER_ROLE = keccak256("SENDER_ADDER_ROLE");
@@ -82,18 +98,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     event RemovedAllowedSenders(address[] senders);
     event AddedAllowedPatterns(uint216[] patterns);
     event RemovedAllowedPatterns(uint216[] patterns);
+    event AddedEnforcedFunctions(uint256[] functions);
+    event RemovedEnforcedFunctions(uint256[] functions);
     event AddGasExactFunctions(GasExactFunctions[] gasFunctions);
     event RemoveGasExactFunctions(GasExactFunctions[] gasFunctions);
     event ExcludeFunctionsFromGas(uint256[] functions);
     event InclueFunctionsInGas(uint256[] functions);
-
-    modifier returnsIfNotActivated() {
-        if (_guardienConfig.engineRules == DEACTIVATED) {
-            return;
-        }
-
-        _;
-    }
 
     // ============ Management ============
 
@@ -112,21 +122,27 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param rules bytes8 representing the new rules to activate.
      */
     function configureRules(bytes8 rules) external onlyOperator {
+        require(CF_AND_TXF_TOGETHER & rules != CF_AND_TXF_TOGETHER, "SphereX error: illegal rules combination");
         require(
-            (RULE_CF + RULE_TXF) & uint64(rules) != (RULE_CF + RULE_TXF), "SphereX error: illegal rules combination"
+            CF_AND_SELECTIVE_TXF_TOGETHER & rules != CF_AND_SELECTIVE_TXF_TOGETHER,
+            "SphereX error: illegal rules combination"
         );
-
-        bytes8 oldRules = _guardienConfig.engineRules;
-        _guardienConfig.engineRules = rules;
-        emit ConfigureRules(oldRules, _guardienConfig.engineRules);
+        require(
+            TXF_AND_SELECTIVE_TXF_TOGETHER & rules != TXF_AND_SELECTIVE_TXF_TOGETHER,
+            "SphereX error: illegal rules combination"
+        );
+        require(uint64(rules) <= uint64(GAS_AND_SELECTIVE_TXF), "SphereX error: illegal rules combination");
+        bytes8 oldRules = _engineConfig.rules;
+        _engineConfig.rules = rules;
+        emit ConfigureRules(oldRules, rules);
     }
 
     /**
      * Deactivates the engine, the calls will return without being checked
      */
     function deactivateAllRules() external onlyOperator {
-        bytes8 oldRules = _guardienConfig.engineRules;
-        _guardienConfig.engineRules = bytes8(uint64(0));
+        bytes8 oldRules = _engineConfig.rules;
+        _engineConfig.rules = DEACTIVATED;
         emit ConfigureRules(oldRules, 0);
     }
 
@@ -142,6 +158,17 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
+     * Removes address so that they will not get served when calling the engine. Transaction from these addresses will get reverted.
+     * @param senders list of address to stop service.
+     */
+    function removeAllowedSender(address[] calldata senders) external onlyOperator {
+        for (uint256 i = 0; i < senders.length; ++i) {
+            _allowedSenders[senders[i]] = false;
+        }
+        emit RemovedAllowedSenders(senders);
+    }
+
+    /**
      * Adds address that will be served by this engine. An address that was never added will get a revert if it tries to call the engine.
      * @param sender address to add to the set of allowed addresses
      * @notice This function adds elements to the current pattern in order to guard itself from unwanted calls.
@@ -154,15 +181,8 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         emit AddedAllowedSenderOnchain(sender);
     }
 
-    /**
-     * Removes address so that they will not get served when calling the engine. Transaction from these addresses will get reverted.
-     * @param senders list of address to stop service.
-     */
-    function removeAllowedSender(address[] calldata senders) external onlyOperator {
-        for (uint256 i = 0; i < senders.length; ++i) {
-            _allowedSenders[senders[i]] = false;
-        }
-        emit RemovedAllowedSenders(senders);
+    function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
+        _grantRole(SENDER_ADDER_ROLE, newSenderAdder);
     }
 
     /**
@@ -186,6 +206,28 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             _allowedPatterns[patterns[i]] = false;
         }
         emit RemovedAllowedPatterns(patterns);
+    }
+
+    /**
+     * Add functions for enforcment (apply to selective txf)
+     * @param functions function indexes to enforce flows
+     */
+    function includeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
+        for (uint256 i = 0; i < functions.length; ++i) {
+            _enforceFunction[functions[i]] = true;
+        }
+        emit AddedEnforcedFunctions(functions);
+    }
+
+    /**
+     * Remove functions for enforcment (apply to selective txf)
+     * @param functions function indexes to stop enforcing flows
+     */
+    function excludeEnforcedFunctions(uint256[] calldata functions) external onlyOperator {
+        for (uint256 i = 0; i < functions.length; ++i) {
+            _enforceFunction[functions[i]] = false;
+        }
+        emit RemovedEnforcedFunctions(functions);
     }
 
     /**
@@ -247,34 +289,100 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param newLimit the new strike out limit for the gas guardien.
      */
     function setGasStrikeOutsLimit(uint16 newLimit) external onlyOperator {
-        _guardienConfig.gasStrikeOuts = newLimit;
+        _engineConfig.gasStrikeOuts = newLimit;
     }
 
-    function grantSenderAdderRole(address newSenderAdder) external onlyOperator {
-        _grantRole(SENDER_ADDER_ROLE, newSenderAdder);
+    // ============ Guardians logic ============
+
+    /**
+     * Checks if CF is activated.
+     */
+    function _isCFActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(CF)) > 0;
     }
 
-    // ============ Protect logic ============
+    /**
+     * Checks if selective txf is activated.
+     */
+    function _isSelectiveTXFActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(SELECTIVE_TXF)) > 0;
+    }
 
     /**
      * Checks if call flow is activated.
      */
-    function _isCfActivated(bytes8 rules) internal view returns (bool) {
-        return (rules & bytes8(RULE_CF)) > 0;
+    function _isTXFActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & bytes8(TXF)) > 0;
     }
 
     /**
      * Checks if call flow is activated.
      */
-    function _isTxfActivated(bytes8 rules) internal view returns (bool) {
-        return (rules & bytes8(RULE_TXF)) > 0;
+    function _isFlowProtectionActivated(bytes8 rules) internal view returns (bool) {
+        return (rules & FLOW_PROTECTION_MASK) > 0;
     }
 
     /**
      * Checks if gas function is activated.
      */
     function _isGasFuncActivated(bytes8 rules) internal view returns (bool) {
-        return (rules & bytes8(RULE_GAS_FUNCTION)) > 0;
+        return (rules & bytes8(GAS)) > 0;
+    }
+
+    function _resetStateOnNewTx(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig) private {
+        // Upon entry to a new function we should check if we are at the same transaction
+        // or a new one.
+        bytes16 currentTxBoundaryHash =
+            bytes16(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
+        if (currentTxBoundaryHash != engineConfig.txBoundaryHash) {
+            // in case of a new one we need to reinit the currentPattern, and save
+            // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
+            flowConfig.pattern = PATTERN_START;
+            flowConfig.enforce = false;
+            if (flowConfig.depth != DEPTH_START) {
+                // This is an edge case we (and the client) should be able to monitor easily.
+                emit TxStartedAtIrregularDepth();
+                flowConfig.depth = DEPTH_START;
+            }
+
+            flowConfig.currentGasStrikes = GAS_STRIKES_START;
+            if (_isGasFuncActivated(engineConfig.rules)) {
+                _currentGasStack[0] = 1;
+            }
+
+            _engineConfig.txBoundaryHash = currentTxBoundaryHash;
+        }
+    }
+
+    function _flowProtectionEntryLogic(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig, int num) private {
+        if (_isSelectiveTXFActivated(engineConfig.rules)) {
+            // if we are not in enforcment mode then check if the current function turns it on
+            if (!flowConfig.enforce && _enforceFunction[uint256(num)]) {
+                flowConfig.enforce = true;
+            }
+        }
+        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+    }
+
+
+    function _flowProtectionExitLogic(EngineConfig memory engineConfig, FlowConfiguration memory flowConfig, int num, bool forceCheck) private {
+        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+
+        if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
+            if (_isSelectiveTXFActivated(engineConfig.rules)) {
+                if (flowConfig.enforce) {
+                    _checkCallFlow(flowConfig.pattern);
+                }
+            } else {
+                _checkCallFlow(flowConfig.pattern);
+            }
+        }
+
+        // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
+        // currentPattern
+        if (flowConfig.depth == DEPTH_START && _isCFActivated(engineConfig.rules)) {
+            flowConfig.pattern = PATTERN_START;
+        }
     }
 
     /**
@@ -283,46 +391,32 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionEntry(int256 num) internal {
         uint256 preGasUsage = gasleft();
-        if (!_guardienConfig.isSimulator) {
-            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
+
+        EngineConfig memory engineConfig = _engineConfig;
+        if (engineConfig.rules == DEACTIVATED) {
+            return;
+        }
+        if (!engineConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
         }
         require(num > 0, "SphereX error: expected positive num");
 
         FlowConfiguration memory flowConfig = _flowConfig;
-        bytes8 rules = _guardienConfig.engineRules;
 
-        // Upon entry to a new function we should check if we are at the same transaction
-        // or a new one. in case of a new one we need to reinit the currentPattern, and save
-        // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
-        bytes3 currentTxBoundaryHash =
-            bytes3(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundaryHash != flowConfig.txBoundaryHash) {
-            flowConfig.pattern = PATTERN_START;
-            flowConfig.txBoundaryHash = currentTxBoundaryHash;
-            flowConfig.currentGasStrikes = GAS_STRIKES_START;
-            if (_isGasFuncActivated(rules)) {
-                _currentGasStack[0] = 1;
-            }
+        _resetStateOnNewTx(engineConfig, flowConfig);
 
-            if (flowConfig.depth != DEPTH_START) {
-                // This is an edge case we (and the client) should be able to monitor easily.
-                emit TxStartedAtIrregularDepth();
-                flowConfig.depth = DEPTH_START;
-            }
-        }
-
-        if (_isCfActivated(rules) || _isTxfActivated(rules)) {
-            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        if (_isFlowProtectionActivated(engineConfig.rules)) {
+            _flowProtectionEntryLogic(engineConfig, flowConfig, num);
         }
 
         ++flowConfig.depth;
         _flowConfig = flowConfig;
 
-        if (_isGasFuncActivated(rules)) {
-            uint gas_pos = flowConfig.depth - 2;
+        if (_isGasFuncActivated(engineConfig.rules)) {
+            uint256 gas_pos = flowConfig.depth - 2;
             uint32 pre_gas = _currentGasStack[gas_pos];
             pre_gas = pre_gas == 1 ? 0 : pre_gas;
-            unchecked{
+            unchecked {
                 pre_gas = pre_gas + uint32(preGasUsage);
                 pre_gas = pre_gas - uint32(gasleft());
             }
@@ -338,49 +432,43 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      */
     function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
         uint256 postGasUsage = gasleft();
-        if (!_guardienConfig.isSimulator) {
-            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");    
+
+        EngineConfig memory engineConfig = _engineConfig;
+        if (engineConfig.rules == DEACTIVATED) {
+            return;
+        }
+        if (!engineConfig.isSimulator) {
+            require(_allowedSenders[msg.sender], "SphereX error: disallowed sender");
         }
         require(num < 0, "SphereX error: expected negative num");
+
         FlowConfiguration memory flowConfig = _flowConfig;
-        GuardienConfiguration memory guardienConfig = _guardienConfig;
-        
         --flowConfig.depth;
 
-        if (_isGasFuncActivated(guardienConfig.engineRules)) {
+        if (_isGasFuncActivated(engineConfig.rules)) {
             uint32 gas_sub = _currentGasStack[flowConfig.depth];
             if (gas_sub == 1) {
                 gas_sub = 0;
             } else {
                 _currentGasStack[flowConfig.depth] = 1;
             }
-            if (guardienConfig.isSimulator) {
+            if (engineConfig.isSimulator) {
                 SphereXEngine(address(this)).measureGas(gas - gas_sub, -num);
             }
-            _checkGas(flowConfig, gas - gas_sub, guardienConfig.gasStrikeOuts, num);
+            _checkGas(flowConfig, gas - gas_sub, engineConfig.gasStrikeOuts, num);
         }
 
-        if (_isCfActivated(guardienConfig.engineRules) || _isTxfActivated(guardienConfig.engineRules)) {
-            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
-
-            if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-                _checkCallFlow(flowConfig.pattern);
-            }
-
-            // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
-            // currentPattern
-            if (flowConfig.depth == DEPTH_START && _isCfActivated(guardienConfig.engineRules)) {
-                flowConfig.pattern = PATTERN_START;
-            }
+        if (_isFlowProtectionActivated(engineConfig.rules)) {
+            _flowProtectionExitLogic(engineConfig, flowConfig, num, forceCheck);
         }
 
         _flowConfig = flowConfig;
 
-        if (_isGasFuncActivated(guardienConfig.engineRules)) {
-            uint gas_pos = flowConfig.depth - 1;
+        if (_isGasFuncActivated(engineConfig.rules)) {
+            uint256 gas_pos = flowConfig.depth - 1;
             uint32 post_gas = _currentGasStack[gas_pos];
             post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
-            unchecked{
+            unchecked {
                 post_gas = post_gas + uint32(postGasUsage);
                 post_gas = post_gas - uint32(gasleft());
             }
@@ -434,11 +522,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     function sphereXValidatePre(int256 num, address sender, bytes calldata data)
         external
         override
-        returnsIfNotActivated // may return empty bytes32[]
         returns (bytes32[] memory result)
     {
         _addCfElementFunctionEntry(num);
-        return result;
     }
 
     /**
@@ -453,7 +539,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
-    ) external override returnsIfNotActivated {
+    ) external override {
         _addCfElementFunctionExit(num, gas, true);
     }
 
@@ -462,12 +548,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * This is used only for internal function calls (internal and private functions).
      * @param num id of function to add.
      */
-    function sphereXValidateInternalPre(int256 num)
-        external
-        override
-        returnsIfNotActivated
-        returns (bytes32[] memory result)
-    {
+    function sphereXValidateInternalPre(int256 num) external override returns (bytes32[] memory result) {
         _addCfElementFunctionEntry(num);
     }
 
@@ -481,7 +562,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         uint256 gas,
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
-    ) external override returnsIfNotActivated {
+    ) external override {
         _addCfElementFunctionExit(num, gas, false);
     }
 

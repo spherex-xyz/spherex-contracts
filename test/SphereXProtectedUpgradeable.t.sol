@@ -37,7 +37,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     }
 
     function test_gas_from_external_call_external_turn_cf_on() public override activateRuleGAS {
-        check_gas_from_external_call_external_turn_cf_on(7527, 439);
+        check_gas_from_external_call_external_turn_cf_on(7505, 439);
     }
 
     function test_gas_from_external_call_external_call_external() public override activateRuleGAS {

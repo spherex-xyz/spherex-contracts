@@ -227,7 +227,11 @@ contract CostumerContract is SphereXProtected {
         require(success, "arbitrary call reverted");
     }
 
-    function externalCallsExternalCallsExternal() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
+    function externalCallsExternalCallsExternal()
+        external
+        sphereXGuardExternal(int256(uint256(uint32(msg.sig))))
+        returns (bool)
+    {
         return this.externalCallsExternal();
     }
 

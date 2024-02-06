@@ -19,12 +19,14 @@ contract CFUtils is Test {
     /**
      * @dev obtained using `forge inspect --pretty SphereXEngine storage`
      */
-    bytes32 constant flowConfigStorageSlot = bytes32(uint256(7));
+    bytes32 constant flowConfigStorageSlot = bytes32(uint256(6));
+    bytes32 constant engineConfigStorageSlot = bytes32(uint256(3));
     bytes8 constant CF = bytes8(uint64(1));
     bytes8 constant PREFIX_TX_FLOW = bytes8(uint64(2));
-    bytes8 constant GAS_FUNCTION = bytes8(uint64(4));
-    bytes8 constant GAS_FUNCTION_AND_CF = bytes8(uint64(5));
-    bytes8 constant GAS_FUNCTION_AND_TXF = bytes8(uint64(6));
+    bytes8 constant SELECTIVE_TXF = bytes8(uint64(4));
+    bytes8 constant GAS_FUNCTION = bytes8(uint64(8));
+    bytes8 constant GAS_FUNCTION_AND_CF = bytes8(uint64(9));
+    bytes8 constant GAS_FUNCTION_AND_TXF = bytes8(uint64(10));
 
     function setUp() public virtual {
         spherex_engine = new SphereXEngine();
@@ -89,8 +91,8 @@ contract CFUtils is Test {
         return uint216(bytes27(vm.load(address(spherex_engine), flowConfigStorageSlot)));
     }
 
-    function getCurrentBlockBoundry() internal returns (bytes3) {
-        return bytes3(vm.load(address(spherex_engine), flowConfigStorageSlot) << 224);
+    function getCurrentBlockBoundry() internal returns (bytes2) {
+        return bytes2(vm.load(address(spherex_engine), engineConfigStorageSlot) << 64);
     }
 
     function getCurrentGasStrikes() internal returns (uint8) {
@@ -113,6 +115,15 @@ contract CFUtils is Test {
         allowed_patterns = [allowed_cf_hash];
         spherex_engine.addAllowedPatterns(allowed_patterns);
         return allowed_cf_hash;
+    }
+
+    function sendInternalNumberToEngine(int256 num) internal {
+        if (num > 0) {
+            spherex_engine.sphereXValidateInternalPre(num);
+        } else {
+            bytes32[] memory emptyArray = new bytes32[](0);
+            spherex_engine.sphereXValidateInternalPost(num, 0, emptyArray, emptyArray);
+        }
     }
 
     // helper function to calc pattern hash (read the array from

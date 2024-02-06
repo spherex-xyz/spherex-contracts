@@ -137,7 +137,7 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         sendDataToEngine(2, 500);
         sendDataToEngine(-2, 500);
     }
-    
+
     function test_includeFunctionsInGas_two_functions_both_included_first_wrong() public {
         gasNumbersExacts = [uint32(500)];
         gasExacts.push(SphereXEngine.GasExactFunctions(2, gasNumbersExacts));
@@ -166,8 +166,8 @@ contract SphereXEngineGasThesisTests is Test, CFUtils {
         // this is for the tracing to know how much gas we need to feed the engine - stupid but works
         vm.store(
             address(spherex_engine),
-            bytes32(0x0000000000000000000000000000000000000000000000000000000000000006),
-            bytes32(0x0000000000000000000000000000000000000000000100000000000000000004)
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000003),
+            bytes32(0x0000000000010000000000000000000000000000000000010000000000000008)
         );
 
         gasNumbersExacts = [uint32(500)];
