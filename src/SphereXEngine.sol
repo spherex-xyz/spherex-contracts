@@ -485,7 +485,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         ++flowConfig.depth;
         _flowConfig = flowConfig;
 
-        // sace engine entry logic gas consumption - for gas guardian logic 
+        // sace engine entry logic gas consumption - for gas guardian logic
         if (_isGasFuncActivated(rules)) {
             uint256 gas_pos = flowConfig.depth - 2;
             uint32 pre_gas = _currentGasStack[gas_pos];
@@ -530,7 +530,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
         _flowConfig = flowConfig;
 
-        // sace engine exit logic gas consumption - for gas guardian logic 
+        // sace engine exit logic gas consumption - for gas guardian logic
         if (_isGasFuncActivated(engineConfig.rules)) {
             uint256 gas_pos = flowConfig.depth - 1;
             uint32 post_gas = _currentGasStack[gas_pos];
