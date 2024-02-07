@@ -333,6 +333,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         return (rules & bytes8(GAS)) > 0;
     }
 
+    /**
+     * Reset the dynamic state of the engine upon new transaction
+     * @param rules
+     * @param flowConfig
+     */
     function _resetStateOnNewTx(bytes8 rules, FlowConfiguration memory flowConfig) private {
         // Upon entry to a new function we should check if we are at the same transaction
         // or a new one.
@@ -358,6 +363,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
+    /**
+     * The logic of the flow protection when entering a new protected function.
+     * Update the current CF pattern with a new positive number (signifying function entry),
+     * If the protection is selective txf, checks if the enforcment needs to be turned on.
+     * @param rules
+     * @param flowConfig
+     * @param num - the index of the protected function
+     */
     function _flowProtectionEntryLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num) private {
         if (!_isFlowProtectionActivated(rules)) {
             return;
@@ -371,6 +384,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
     }
 
+    /**
+     * update the current CF pattern with a new negative number (signfying function exit),
+     * under some conditions, this will also check the validity of the pattern.
+     * checks of the enforcment need to be turned on.
+     * @param rules
+     * @param flowConfig
+     * @param num - the index of the protected function
+     */
     function _flowProtectionExitLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num, bool forceCheck)
         private
     {
@@ -397,6 +418,12 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         }
     }
 
+    /**
+     * checks the protected function gas usage.
+     * @param rules
+     * @param flowConfig
+     * @param num - the index of the protected function
+     */
     function _gasProtectionExitLogic(
         bytes8 rules,
         FlowConfiguration memory flowConfig,
@@ -458,10 +485,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * update the current CF pattern with a new positive number (signifying function entry),
-     * @param num element to add to the flow.
+     * @param num - repreasent the protected function. should be positive.
      */
-    function _addCfElementFunctionEntry(int256 num) internal {
+    function _functionEntry(int256 num) internal {
         // first thing save the gas left - for gas guardian logic
         uint256 preGasUsage = gasleft();
 
@@ -499,12 +525,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * update the current CF pattern with a new negative number (signfying function exit),
-     * under some conditions, this will also check the validity of the pattern.
-     * @param num element to add to the flow. should be negative.
-     * @param forceCheck force the check of the current pattern, even if normal test conditions don't exist.
+     * @param num - repreasent the protected function. should be negative.
+     * @param forceCheck force the check of the current pattern (when flow protection is on),
+     * even if normal test conditions don't exist.
      */
-    function _addCfElementFunctionExit(int256 num, uint256 gas, bool forceCheck) internal {
+    function _functionExit(int256 num, uint256 gas, bool forceCheck) internal {
         // first thing save the gas left - for gsa guardian purposes
         uint256 postGasUsage = gasleft();
 
@@ -556,7 +581,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         override
         returns (bytes32[] memory result)
     {
-        _addCfElementFunctionEntry(num);
+        _functionEntry(num);
     }
 
     /**
@@ -572,7 +597,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override {
-        _addCfElementFunctionExit(num, gas, true);
+        _functionExit(num, gas, true);
     }
 
     /**
@@ -581,7 +606,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * @param num id of function to add.
      */
     function sphereXValidateInternalPre(int256 num) external override returns (bytes32[] memory result) {
-        _addCfElementFunctionEntry(num);
+        _functionEntry(num);
     }
 
     /**
@@ -595,7 +620,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bytes32[] calldata valuesBefore,
         bytes32[] calldata valuesAfter
     ) external override {
-        _addCfElementFunctionExit(num, gas, false);
+        _functionExit(num, gas, false);
     }
 
     // this function is for simulation purpose only, it does nothing except being...
