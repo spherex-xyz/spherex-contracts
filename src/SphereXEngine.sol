@@ -327,9 +327,9 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Checks if gas function is activated.
+     * Checks if gas protection is activated.
      */
-    function _isGasFuncActivated(bytes8 rules) internal view returns (bool) {
+    function _isGasProtectionActivated(bytes8 rules) internal view returns (bool) {
         return (rules & bytes8(GAS)) > 0;
     }
 
@@ -350,7 +350,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             }
 
             flowConfig.currentGasStrikes = GAS_STRIKES_START;
-            if (_isGasFuncActivated(rules)) {
+            if (_isGasProtectionActivated(rules)) {
                 _currentGasStack[0] = 1;
             }
 
@@ -405,7 +405,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         bool isSimulator,
         uint16 gasStrikeOuts
     ) private {
-        if (!_isGasFuncActivated(rules)) {
+        if (!_isGasProtectionActivated(rules)) {
             return;
         }
 
@@ -486,7 +486,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _flowConfig = flowConfig;
 
         // sace engine entry logic gas consumption - for gas guardian logic
-        if (_isGasFuncActivated(rules)) {
+        if (_isGasProtectionActivated(rules)) {
             uint256 gas_pos = flowConfig.depth - 2;
             uint32 pre_gas = _currentGasStack[gas_pos];
             pre_gas = pre_gas == 1 ? 0 : pre_gas;
@@ -531,7 +531,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         _flowConfig = flowConfig;
 
         // sace engine exit logic gas consumption - for gas guardian logic
-        if (_isGasFuncActivated(engineConfig.rules)) {
+        if (_isGasProtectionActivated(engineConfig.rules)) {
             uint256 gas_pos = flowConfig.depth - 1;
             uint32 post_gas = _currentGasStack[gas_pos];
             post_gas = post_gas == 1 ? uint32(gas) : post_gas + uint32(gas);
