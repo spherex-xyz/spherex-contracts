@@ -335,8 +335,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     /**
      * Reset the dynamic state of the engine upon new transaction
-     * @param rules
-     * @param flowConfig
      */
     function _resetStateOnNewTx(bytes8 rules, FlowConfiguration memory flowConfig) private {
         // Upon entry to a new function we should check if we are at the same transaction
@@ -367,9 +365,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * The logic of the flow protection when entering a new protected function.
      * Update the current CF pattern with a new positive number (signifying function entry),
      * If the protection is selective txf, checks if the enforcment needs to be turned on.
-     * @param rules
-     * @param flowConfig
-     * @param num - the index of the protected function
      */
     function _flowProtectionEntryLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num) private {
         if (!_isFlowProtectionActivated(rules)) {
@@ -388,9 +383,6 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
      * update the current CF pattern with a new negative number (signfying function exit),
      * under some conditions, this will also check the validity of the pattern.
      * checks of the enforcment need to be turned on.
-     * @param rules
-     * @param flowConfig
-     * @param num - the index of the protected function
      */
     function _flowProtectionExitLogic(bytes8 rules, FlowConfiguration memory flowConfig, int256 num, bool forceCheck)
         private
@@ -419,10 +411,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * checks the protected function gas usage.
-     * @param rules
-     * @param flowConfig
-     * @param num - the index of the protected function
+     * gas protection exit logic
      */
     function _gasProtectionExitLogic(
         bytes8 rules,
