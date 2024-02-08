@@ -39,6 +39,7 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         protected_sigs.push(CustomerBehindProxy.externalCallsExternal.selector);
         protected_sigs.push(CustomerBehindProxy.externalCallee.selector);
         protected_sigs.push(CustomerBehindProxy.factory.selector);
+        protected_sigs.push(CustomerBehindProxy.three_gas_usages.selector);
         beacon.addProtectedFuncSigs(protected_sigs);
 
         allowed_senders.push(address(proxy_contract));
@@ -227,5 +228,15 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
         beacon.removeProtectedFuncSigs(remove_protected_sigs);
 
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
+    }
+
+    //  ============ Gas thesis tests  ============
+
+    function test_gas_from_external_call() public override {
+        check_gas_from_external_call(3750);
+    }
+
+    function test_gas_from_public_call() public override {
+        check_gas_from_public_call(3731);
     }
 }

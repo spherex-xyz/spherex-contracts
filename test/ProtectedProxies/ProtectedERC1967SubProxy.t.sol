@@ -18,6 +18,7 @@ import {ProtectedUUPSUpgradeable} from "../../src/ProtectedProxies/ProtectedUUPS
 
 import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
+import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
 contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
     ERC1967Proxy public main_proxy;
@@ -78,5 +79,15 @@ contract ProtectedERC1967SubProxyTest is SphereXProtectedSubProxyTest {
 
         vm.expectCall(address(new_costumer), new_func_data);
         UUPSUpgradeable(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
+    }
+
+    //  ============ Gas thesis tests  ============
+
+    function test_gas_from_external_call() public override {
+        check_gas_from_external_call(4071);
+    }
+
+    function test_gas_from_public_call() public override {
+        check_gas_from_public_call(4167);
     }
 }

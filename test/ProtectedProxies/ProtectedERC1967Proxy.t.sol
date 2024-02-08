@@ -33,4 +33,14 @@ contract ProtectedERC1967ProxyTest is SphereXProtectedProxyTest {
         vm.expectCall(address(new_costumer), new_func_data);
         UUPSCustomer1(address(proxy_contract)).upgradeToAndCall(address(new_costumer), new_func_data);
     }
+
+    //  ============ Gas thesis tests  ============
+
+    function test_gas_from_external_call() public override {
+        check_gas_from_external_call(4145);
+    }
+
+    function test_gas_from_public_call() public override {
+        check_gas_from_public_call(4109);
+    }
 }

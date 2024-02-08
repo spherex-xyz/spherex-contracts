@@ -12,10 +12,26 @@ import "../src/SphereXProtected.sol";
 
 contract SphereXProtectedTest is Test, CFUtils {
     CostumerContract public costumer_contract;
-    int256 internal constant ADD_ALLOWED_SENDER_ONCHAIN_INDEX = int256(uint256(keccak256("factory.allowed.sender")));
+    SphereXEngine.GasExactFunctions[] gasExacts;
+    uint32[] gasNumbersExacts;
+    uint256[] functionsForGas;
 
-    modifier activateRule2() {
+    modifier activateRuleTXF() {
         spherex_engine.configureRules(PREFIX_TX_FLOW);
+        _;
+    }
+
+    modifier activateRuleCF() {
+        spherex_engine.configureRules(CF);
+        _;
+    }
+
+    modifier activateRuleGAS() {
+        spherex_engine.configureRules(GAS_FUNCTION);
+        _;
+    }
+
+    modifier allowPattern_1__1_11_12__12__11() {
         allowed_cf_storage = [
             to_int256(costumer_contract.try_allowed_flow.selector),
             -to_int256(costumer_contract.try_allowed_flow.selector),
@@ -30,7 +46,6 @@ contract SphereXProtectedTest is Test, CFUtils {
             -to_int256(costumer_contract.try_allowed_flow.selector)
         ];
         addAllowedPattern();
-        allowed_cf_storage = [int256(1), -1, 11, 12, -12];
         allowed_cf_storage = [
             to_int256(costumer_contract.try_allowed_flow.selector),
             -to_int256(costumer_contract.try_allowed_flow.selector),
@@ -42,10 +57,10 @@ contract SphereXProtectedTest is Test, CFUtils {
         _;
     }
 
-    function setUp() public virtual {
-        spherex_engine = new SphereXEngine();
-        costumer_contract = new CostumerContract();
+    function setUp() public virtual override {
+        super.setUp();
 
+        costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
 
         allowed_patterns.push(calc_pattern_by_selector(CostumerContract.try_allowed_flow.selector));
@@ -60,7 +75,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Managment functions  ============
 
-    function test_changeSphereXEngine_disable_engine() external virtual {
+    function test_changeSphereXEngine_disable_engine() external virtual activateRuleCF {
         // this test covers enable->disable (by default the engine is enabled in the set up)
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
@@ -68,7 +83,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_enable() external virtual {
+    function test_changeSphereXEngine_disable_enable() external virtual activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -80,7 +95,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_disable_disable() external virtual {
+    function test_changeSphereXEngine_disable_disable() external virtual activateRuleCF {
         costumer_contract.changeSphereXEngine(address(0));
         costumer_contract.try_blocked_flow();
 
@@ -90,7 +105,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXEngine_enable_enable() external virtual {
+    function test_changeSphereXEngine_enable_enable() external virtual activateRuleCF {
         // the setup function is enabling the engine by default so we only need to
         // enable once
         costumer_contract.try_allowed_flow();
@@ -105,7 +120,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function test_changeSphereXAdmin() external virtual {
+    function test_changeSphereXAdmin() external virtual activateRuleCF {
         address otherAddress = address(1);
 
         costumer_contract.transferSphereXAdminRole(otherAddress);
@@ -126,27 +141,27 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     // //  ============ Call flow thesis tests  ============
 
-    function testAllowed() external {
+    function testAllowed() external activateRuleCF {
         costumer_contract.try_allowed_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testTwoAllowedCall() external {
+    function testTwoAllowedCall() external activateRuleCF {
         costumer_contract.try_allowed_flow();
         costumer_contract.try_allowed_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testBlocked() external {
+    function testBlocked() external activateRuleCF {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.try_blocked_flow();
 
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertAllowedFlow() external virtual {
+    function testPartialRevertAllowedFlow() external virtual activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.call_inner.selector),
             to_int256(bytes4(keccak256(bytes("inner()")))),
@@ -159,12 +174,13 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPartialRevertNotAllowedFlow() external virtual {
+    function testPartialRevertNotAllowedFlow() external virtual activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.call_inner.selector),
             to_int256(bytes4(keccak256(bytes("inner()")))),
             to_int256(costumer_contract.reverts.selector),
-            -to_int256(costumer_contract.reverts.selector) - to_int256(bytes4(keccak256(bytes("inner()")))),
+            -to_int256(costumer_contract.reverts.selector),
+            -to_int256(bytes4(keccak256(bytes("inner()")))),
             -to_int256(costumer_contract.call_inner.selector)
         ];
         addAllowedPattern();
@@ -181,7 +197,7 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      to the engine at the post call except for the num parameter.
      */
 
-    function testPublicFunction() external {
+    function testPublicFunction() external activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.publicFunction.selector),
             -to_int256(costumer_contract.publicFunction.selector)
@@ -204,7 +220,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalFunction() external {
+    function testExternalFunction() external activateRuleCF {
         bytes memory externalFunctionMsgData = abi.encodeWithSelector(costumer_contract.try_allowed_flow.selector);
         bytes memory engineCallMsgData = abi.encodeWithSelector(
             spherex_engine.sphereXValidatePre.selector,
@@ -219,7 +235,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalCallsInternalFunction() external virtual {
+    function testExternalCallsInternalFunction() external virtual activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.call_inner.selector),
             to_int256(bytes4(keccak256(bytes("inner()")))),
@@ -247,7 +263,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testPublicCallsPublic() external virtual {
+    function testPublicCallsPublic() external virtual activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.publicCallsPublic.selector),
             to_int256(costumer_contract.publicFunction.selector),
@@ -282,7 +298,7 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      being called externally, will trigger sending msg.data
      *      twice to the engine.
      */
-    function testPublicCallsSamePublic() external virtual {
+    function testPublicCallsSamePublic() external virtual activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.publicCallsSamePublic.selector),
             to_int256(costumer_contract.publicCallsSamePublic.selector),
@@ -315,7 +331,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testArbitraryCall() external {
+    function testArbitraryCall() external activateRuleCF {
         allowed_cf_storage =
             [to_int256(costumer_contract.arbitraryCall.selector), -to_int256(costumer_contract.arbitraryCall.selector)];
         addAllowedPattern();
@@ -330,8 +346,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         assertFlowStorageSlotsInInitialState();
     }
 
-    function testExternalCallsExternalTwice() external {
-        allowed_cf_storage = [int256(11), 12, -12, -11];
+    function testExternalCallsExternalTwice() external activateRuleCF {
         allowed_cf_storage = [
             to_int256(costumer_contract.externalCallsExternal.selector),
             to_int256(costumer_contract.externalCallee.selector),
@@ -340,7 +355,6 @@ contract SphereXProtectedTest is Test, CFUtils {
         ];
         addAllowedPattern();
 
-        allowed_cf_storage = [int256(11), 12, -12];
         allowed_cf_storage = [
             to_int256(costumer_contract.externalCallsExternal.selector),
             to_int256(costumer_contract.externalCallee.selector),
@@ -369,22 +383,22 @@ contract SphereXProtectedTest is Test, CFUtils {
 
     //  ============ Prefix tx flow  ============
     // We initialize the engine (in the activateRule2 modifier) such that
-    // the allowed patterns are calling allowed, and calling allowed,externalCallsExternal
+    // the allowed patterns are allowed, and allowed,externalCallsExternal.
     // calling only externalCallsExternal is prohibited
 
-    function test_PrefixTxFlow_sanity() public activateRule2 {
+    function test_PrefixTxFlow_sanity() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_sanity_revert() public activateRule2 {
+    function test_PrefixTxFlow_sanity_revert() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         vm.roll(2);
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_known_issue_good_scenario() public activateRule2 {
+    function test_PrefixTxFlow_known_issue_good_scenario() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
@@ -397,7 +411,7 @@ contract SphereXProtectedTest is Test, CFUtils {
         costumer_contract.externalCallsExternal();
     }
 
-    function test_PrefixTxFlow_known_issue_bad_scenario() public activateRule2 {
+    function test_PrefixTxFlow_known_issue_bad_scenario() public activateRuleTXF allowPattern_1__1_11_12__12__11 {
         costumer_contract.try_allowed_flow();
         costumer_contract.externalCallsExternal();
 
@@ -489,5 +503,185 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         vm.expectRevert("SphereX error: operator required");
         spherex_engine.grantSenderAdderRole(address(costumer_contract));
+    }
+
+    //  ============ Gas thesis tests  ============
+
+    function check_gas_from_external_call(uint32 gasUsageOfExternalFunction) internal activateRuleGAS {
+        gasNumbersExacts = [uint32(gasUsageOfExternalFunction)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.try_allowed_flow.selector)), gasNumbersExacts
+            )
+        );
+
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [uint256(to_int256(costumer_contract.try_allowed_flow.selector))];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.try_allowed_flow();
+    }
+
+    function check_gas_from_public_call(uint32 gasUsageFunction) internal activateRuleGAS {
+        gasNumbersExacts = [uint32(gasUsageFunction)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.publicFunction.selector)), gasNumbersExacts
+            )
+        );
+
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [uint256(to_int256(costumer_contract.publicFunction.selector))];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.publicFunction();
+    }
+
+    function check_gas_from_external_call_external(uint32 outer, uint32 inner) internal activateRuleGAS {
+        vm.store(
+            address(spherex_engine),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000003),
+            bytes32(0x0000000000010000000000000000000000000000000000010000000000000008)
+        );
+
+        gasNumbersExacts = [uint32(outer)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(inner)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
+            )
+        );
+
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [
+            uint256(to_int256(costumer_contract.externalCallee.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternal.selector))
+        ];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.externalCallsExternal();
+
+        // calling it the second time should work?
+        costumer_contract.externalCallsExternal();
+    }
+
+    function check_gas_from_external_call_external_call_external(uint32 mostOuter, uint32 outer, uint32 inner)
+        internal
+        activateRuleGAS
+    {
+        vm.store(
+            address(spherex_engine),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000003),
+            bytes32(0x0000000000010000000000000000000000000000000000010000000000000008)
+        );
+
+        gasNumbersExacts = [uint32(mostOuter)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(outer)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(inner)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
+            )
+        );
+
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [
+            uint256(to_int256(costumer_contract.externalCallee.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternal.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternalCallsExternal.selector))
+        ];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.externalCallsExternalCallsExternal();
+
+        // calling it the second time should work?
+        costumer_contract.externalCallsExternalCallsExternal();
+    }
+
+    function check_gas_from_external_call_external_turn_cf_on(uint32 outer, uint32 inner) internal activateRuleGAS {
+        vm.store(
+            address(spherex_engine),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000003),
+            bytes32(0x0000000000010000000000000000000000000000000000010000000000000008)
+        );
+
+        gasNumbersExacts = [uint32(outer)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallsExternal.selector)), gasNumbersExacts
+            )
+        );
+
+        gasNumbersExacts = [uint32(inner)];
+        gasExacts.push(
+            SphereXEngine.GasExactFunctions(
+                uint256(to_int256(costumer_contract.externalCallee.selector)), gasNumbersExacts
+            )
+        );
+
+        spherex_engine.addGasExactFunctions(gasExacts);
+        functionsForGas = [
+            uint256(to_int256(costumer_contract.externalCallee.selector)),
+            uint256(to_int256(costumer_contract.externalCallsExternal.selector))
+        ];
+        spherex_engine.includeFunctionsInGas(functionsForGas);
+
+        costumer_contract.externalCallsExternal();
+        vm.roll(23);
+        spherex_engine.configureRules(GAS_FUNCTION_AND_CF);
+        allowed_cf_storage = [
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallsExternal.selector)
+        ];
+        addAllowedPattern();
+
+        allowed_cf_storage = [
+            to_int256(costumer_contract.externalCallsExternal.selector),
+            to_int256(costumer_contract.externalCallee.selector),
+            -to_int256(costumer_contract.externalCallee.selector)
+        ];
+        addAllowedPattern();
+        // calling it the second time should work?
+        costumer_contract.externalCallsExternal();
+    }
+
+    function test_gas_from_external_call() public virtual activateRuleGAS {
+        check_gas_from_external_call(431);
+    }
+
+    function test_gas_from_public_call() public virtual activateRuleGAS {
+        check_gas_from_public_call(481);
+    }
+
+    function test_gas_from_external_call_external() public virtual activateRuleGAS {
+        check_gas_from_external_call_external(6848, 439);
+    }
+
+    function test_gas_from_external_call_external_turn_cf_on() public virtual activateRuleGAS {
+        check_gas_from_external_call_external_turn_cf_on(6848, 439);
+    }
+
+    function test_gas_from_external_call_external_call_external() public virtual activateRuleGAS {
+        check_gas_from_external_call_external_call_external(6808, 6848, 439);
     }
 }

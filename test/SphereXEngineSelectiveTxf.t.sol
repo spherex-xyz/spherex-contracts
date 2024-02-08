@@ -8,13 +8,10 @@ import "./Utils/CFUtils.sol";
 import "../src/SphereXEngine.sol";
 
 contract SphereXEngineSelectiveTxfTest is Test, CFUtils {
-    address random_address = 0x6A08098568eE90b71dD757F070D79364197f944B;
     uint256[] enforcedFunctions;
 
-    function setUp() public {
-        spherex_engine = new SphereXEngine();
-        allowed_senders.push(address(this));
-        spherex_engine.addAllowedSender(allowed_senders);
+    function setUp() public virtual override {
+        super.setUp();
         spherex_engine.configureRules(bytes8(SELECTIVE_TXF));
     }
 

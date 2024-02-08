@@ -12,7 +12,7 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
     CustomerContractProxy public costumer_proxy_contract;
     CostumerContract public p_costumerContract;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         spherex_engine = new SphereXEngine();
         costumer_contract = new CostumerContract();
         costumer_contract.changeSphereXOperator(address(this));
@@ -26,9 +26,21 @@ contract SphereXProtectedProxyTest is Test, SphereXProtectedTest {
         spherex_engine.addAllowedPatterns(allowed_patterns);
         spherex_engine.configureRules(CF);
         p_costumerContract = CostumerContract(address(costumer_proxy_contract));
-        p_costumerContract.initialize(address(this));
+        p_costumerContract.initialize(address(this), address(0));
         p_costumerContract.changeSphereXEngine(address(spherex_engine));
 
         costumer_contract = p_costumerContract;
+    }
+
+    function test_gas_from_external_call_external() public override activateRuleGAS {
+        check_gas_from_external_call_external(7208, 439);
+    }
+
+    function test_gas_from_external_call_external_turn_cf_on() public override activateRuleGAS {
+        check_gas_from_external_call_external_turn_cf_on(7208, 439);
+    }
+
+    function test_gas_from_external_call_external_call_external() public override activateRuleGAS {
+        check_gas_from_external_call_external_call_external(7168, 7208, 439);
     }
 }
