@@ -341,7 +341,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         // or a new one. 
         bytes16 currentTxBoundaryHash =
             bytes16(keccak256(abi.encode(block.number, tx.origin, block.timestamp, block.difficulty)));
-        if (currentTxBoundaryHash != engineConfig.txBoundaryHash) {
+        if (currentTxBoundaryHash != _engineConfig.txBoundaryHash) {
             // in case of a new one we need to reinit the currentPattern, and save
             // the new transaction "boundry" (block.number+tx.origin+block.timestamp+block.difficulty)
             flowConfig.pattern = PATTERN_START;
