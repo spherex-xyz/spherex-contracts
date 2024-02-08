@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {AccessControlDefaultAdminRules} from "openzeppelin/access/AccessControlDefaultAdminRules.sol";
 import {ISphereXEngine} from "./ISphereXEngine.sol";
-import "forge-std/console.sol";
+
 /**
  * @title SphereX Engine
  * @notice Gathers information about an ongoing transaction and reverts if it seems malicious
