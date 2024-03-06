@@ -61,29 +61,25 @@ pipenv install --dev
 
 SphereX Protect consists of two contracts
 
-* `SphereXEngine` - The main logic module. Holds the protection rules. Controlled by "SphereXEngineOwner"
+* `SphereXEngine` - The main logic module. Holds the protection rules. Controlled by a default admin, and an "OPERATOR_ROLE".
 * `SphereXProtected` - An abstract contract the customer inherits from in his contracts. Contains the bindings (i.e. `modifier`s) to pass data from current execution to `SphereXEngine`.
 
-In classic cyber terms this is the analogy:
+* `SphereXProtectedProxy` - The main contract for a protected proxy functionallity, structures like oz's Proxy.sol contract, it passes data to the engine for every delegate call to the implementation.
 
-* The client's contracts are the network we want to protect.
-* The `SphereXProtected` contract is our "plugin", installed at each of the client's end points (= contracts)
-* The `SphereXEngine` contract is the "core", gathering all the information and monitoring the entire network in real time (gathering data about the event in each endpoint, but also of the transactions between the different endpoints).
+* `ProtectedProxies` - A directory containing several oz proxy patterns such as Transparent, ERC1967, Beacon, etc already integrated with SphereXProtectedProxy for easy out of the box use.
 
-### Flow
-
-Now back to Web3 and blockchain terms. The behavior is checked at the transaction level, meaning that during the transaction the various contracts in the protocol send data to the `SphereXEngine`. If at any point in the transaction the `SphereXEngine` classifies the behavior as "suspicious", it **reverts the transaction**.
+**reverts the transaction**.
 
 We will talk about the way the _suspicious behavior_ is defined.
 
-Data collection is done using modifiers that are implemented in `SphereXProtected` and are inherited by the various client contracts. This means that if a function is not decorated with our modifier, information from that function will not be collected and checked for suspicious behavior.
+Data collection is done using modifiers that are implemented in `SphereXProtected` and are inherited by the various client contracts. This means that if a function is not decorated with our modifier or observed by our proxy, information from that function will not be collected and checked for suspicious behavior.
 
 #### Disabling the protection:
 
 The protection of the engine can be disabled in 2 ways:
 
 1. From the client's contract (the protected client) it can be disabled by calling the function `changeSphereXEngine` with `address(0)` param. This will disable calls to the engine from the modifier.
-2. In the engine, the protection can be disabled by calling the function `changeIsActivated` with `false` param.
+2. In the engine, the protection can be disabled by calling the function `deactivateAllRules`.
 
 If any of these conditions is met, the protection is disabled (although, disabling from the _protected_ contract will save more gas, as nothing will be sent to the `Engine`).
 
