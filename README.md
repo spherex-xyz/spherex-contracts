@@ -222,6 +222,13 @@ That's it. The protocol is now protected by SphereX.
 
 > Note that we have an internal system used to do most of these stages, but it can be a good practice to try and do this manually :)
 
+## Publish package
+In order to publish the contracts for the npm package @spherex-xyz/contracts, do the following:
+1. hardhat compile (compiled artifacts are included in the package) - `npx hardhat compile`
+2. update package.json for the package version, desc, etc
+3. npm login
+4. npm publish
+
 ## Known Issues
 
 * When re-initializing `SphereXProtected` contract the new protected owner will only be set iif the current owner is `address(0)`. It **will not revert** otherwise.
