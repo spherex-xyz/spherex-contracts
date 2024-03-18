@@ -2,6 +2,22 @@ The Process of Spherex Protection into the smart contracts is usually done (at l
 
 That being said, and because the developer of the smart contracts will always know it better than we do, it is important for you as the developer of the protected contract to undestand the process of integration and the various aspects of that process.
 
+- [Protection  - the big picture](#protection----the-big-picture)
+- [Some terms and defenitions](#some-terms-and-defenitions)
+    - [Contracts in the system](#contracts-in-the-system)
+    - [Entities and addresses](#entities-and-addresses)
+- [Integration](#integration)
+  - [Inline vs Proxy](#inline-vs-proxy)
+  - [Configuration](#configuration)
+  - [Deployment](#deployment)
+    - [Special cases](#special-cases)
+- [What Should you do?](#what-should-you-do)
+  - [Roles and Permissions](#roles-and-permissions)
+  - [For each of you'r contracts:](#for-each-of-your-contracts)
+    - [For immutable contracts (inline protection):](#for-immutable-contracts-inline-protection)
+    - [For mutable contracts (proxy protection):](#for-mutable-contracts-proxy-protection)
+    - [In the deployment Scripts](#in-the-deployment-scripts)
+
 
 ## Protection  - the big picture
 - Spherex protection works by identifiying suspicious and malicious behavior patterns of a transaction as it is being executed by the protocol (between any number of contracts)
@@ -25,6 +41,12 @@ That being said, and because the developer of the smart contracts will always kn
   - This becomes important if you deploy contracts dynamically (for example, using the factory pattern).
 
 This is a good place to emphesize and reiterate: the **Operator** and the **Admin** can be a wallet address (EOA) but cal also be a smart contract (like a DAO contract or a multisig)
+
+This also means that if indeed we use a smart contract as the operator or the admin, we will need to set the various roles accordingly, and also implement in that *managine contract* the various managment functions needed:
+- An Admin should be able to set the operator
+- An Operator has many many funcionalities (like setting the engine, adding and removing allowed senders and patterns, and even configuring the active rules) - Please talk to the SphereX team to help you understand the various roles and permissions.
+
+If the protocol has some kind of a registry or management contract, it might be a good candidate for the operator/admin roles.
 
 ## Integration
 
