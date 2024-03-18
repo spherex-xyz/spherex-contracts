@@ -1,4 +1,4 @@
-The Process of integration if Spherex Protection into the smart contracts is usually done (at least at this point) by the tech team at Spherex.
+The Process of Spherex Protection into the smart contracts is usually done (at least at this point) by the tech team at Spherex.
 
 That being said, and because the developer of the smart contracts will always know it better than we do, it is important for you as the developer of the protected contract to undestand the process of integration and the various aspects of that process.
 
@@ -19,18 +19,18 @@ That being said, and because the developer of the smart contracts will always kn
 
 #### Entities and addresses
 
-- **Operator**: The wallet that actaully configures and updates the protection of the contract. This can be either the protocol developer/manager, the SphereX tech team, or any other wallet that has the permission to do so.
-- **Admin**: The wallet that controls the operator. This should be the protocol owner, and it's meant as a protection against a rogue operator.
-- **Allowed Senders** - one of our protection mechanisms is to only allow pre approved addresses to send data to the engine. So this is just a list of all the contracts that are allowed to send data to the engine.
+- **Operator**: The address (whether EOA or a contract) that actaully configures and updates the protection of the contract. This can be either the protocol developer/manager, the SphereX tech team, or any other wallet that has the permission to do so.
+- **Admin**: The address (whether EOA or a contract) that controls the operator. This should be the protocol owner , and it's meant as a protection against a rogue operator.
+- **Allowed Senders** - One of our protection mechanisms is to only allow pre approved addresses to send data to the engine. So this is just a list of all the contracts that are allowed to send data to the engine.
   - This becomes important if you deploy contracts dynamically (for example, using the factory pattern).
 
-Please note that if you decide to manage and configure the protocol (or just its protection) with some kind of a contract (like a mutisig, or a DAO wallet), you will need to set the various roles accordingly.
+This is a good place to emphesize and reiterate: the **Operator** and the **Admin** can be a wallet address (EOA) but cal also be a smart contract (like a DAO contract or a multisig)
 
 ## Integration
 
 ### Inline vs Proxy
 
-ThephereX protection has 2 ways to integrate with a given smart contract:
+The SphereX protection has 2 ways to integrate with a given smart contract:
 1. **Inline**: The protection logic is integrated directly into the smart contract as function *decorators*, by inhereting from the contract `SphereXProtected`. This is used for immutable contracts.
 1. **Proxy**: The protection logic is integrated into a proxy contract that wraps the protected contract. It is the proxy that communicates with the engine before and after passing the calls to the implementation contract. The integration is done by replacing the existing proxy with one of the SphereX proxies (there are many variation of the *protected proxy*) or inhereting directly from `SphereXProtectedProxy`. This is used for mutalbe\upgradable contracts.
    - Proxy protection also allows to **configure what function are protected after deployments**. So you can decide for a given function that it does not require protection, and configure the engine and proxy to ignore it.
@@ -88,6 +88,6 @@ Make sure the roles and permissions are set correctly:
   * Are the functions you wish to protect configured in the `setProtectedSigs` function?
 
 #### In the deployment Scripts
-  * Did we caought all the deployments? Is there a contract that is deployed without protection (inline or proxy)?
+  * Did we caught all the deployments? Is there a contract that is deployed without protection (inline or proxy)?
     * Are we using the correct integration for each contract?
   * Are the constructor arguments correct for all the deployments?
