@@ -53,6 +53,8 @@ If the protocol already has a registry or management contract, it might be a goo
 
 ### Inline vs Proxy
 
+צא כןדגשגשדג
+
 The SphereX protection has 2 ways to integrate with a given smart contract:
 1. **Inline**: The protection logic is integrated directly into the code as function *decorators*, and inheriting from the contract `SphereXProtected`. This is used for either immutable or upgradable contracts. 
 2. **Proxy**: The protection logic is integrated into the proxy contract that wraps the protected contract. It is the proxy that communicates with the engine before and after passing the calls to the implementation contract. The integration is done by using SphereX's provided proxies (there are many variation of the *protected proxy*) or inheriting directly from `SphereXProtectedProxy`. This is naturally relevant only for upgradable protocols.
@@ -86,7 +88,7 @@ The constructor of our contracts expects three arguments: the **admin**, the **o
 - If you are using a **contract to deploy your contract** you probably should change the admin to be `tx.origin` rather then msg.sender
 - If u have a **factory pattern** in your project this required some more consideration:
     1. the factory should hold the admin, operator and the engine in his storage (or he should be able to retrieve them somehow) since when it deploys a new contract it should be able to pass them to the deployed contract.
-    2. when the factory deploys a new contract it should call the function `_addAllowedSenderOnChain` in the engine to add the address of the new deployed contract.
+    2. when the factory deploys a new contract it should call the function `_addAllowedSenderOnChain` in גשדגשדגthe engine to add the address of the new deployed contract.
        One of our protection mechanisms is to only allow pre approved addresses to send data to the engine, so the factory should add the new address to the engine allowed list of addresses. (don't worry the factory will get a special role in the engine to only allow him to add allowed addresses not everyone can do it).
 
 ## What Should you do?
