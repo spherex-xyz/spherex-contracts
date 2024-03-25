@@ -33,7 +33,7 @@ That being said, it is important for the developer of the protected contracts to
 - **SphereXProtected**: SphereX protection platform. An abstract contract that is inherited and imported into the target contracts 
 - **Protected Contracts**: The protocol's contracts integrated with SphereX Platform.
 - **Spherex Engine**: A smart contract **Provided by spherex** and deployed as part of the protocol. This is the heart of the system.
-  - The protected contracts in the protocol communicates with the Spherex Engine to track the behavior of a transaction as it's being executed and revert it if it's malicious.
+  - The protected contracts in the protocol communicate with the SphereX Engine. The engine tracks the behavior of the transaction as it's being executed and reverts it if it's malicious.
 
 
 #### Entities and addresses
