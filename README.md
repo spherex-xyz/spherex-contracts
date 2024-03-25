@@ -19,6 +19,7 @@ Table of contents:
   - [Notes regarding SphereXEngine contract](#notes-regarding-spherexengine-contract)
 - [Data gathered, Contexts and Theses](#data-gathered-contexts-and-theses)
 - [Deployment and usage](#deployment-and-usage)
+- [Publish package](#publish-package)
 - [Known Issues](#known-issues)
 
 
@@ -123,7 +124,6 @@ graph TD
 
 > Note that in this graph we separate the SphereX space from the clients, but actually, the SphereXEngine can be viewed as the security module in the client's protocol.
 
-\
 
 
 ### Notes regarding SphereXProtected contract
@@ -188,7 +188,6 @@ In addition, the engine has some internal variables that are used to calculate a
 1. Activating and deactivating the contract
 2. Adding and removing `allowedSenders` and `allowedPatterns`.
 
-\
 
 
 ## Data gathered, Contexts and Theses
