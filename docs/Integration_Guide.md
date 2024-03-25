@@ -115,3 +115,6 @@ Make sure the roles and permissions are set correctly:
   * Did we caught all the deployments? Is there a contract that is deployed without protection (inline or proxy)?
     * Are we using the correct integration for each contract?
   * Are the constructor arguments correct for all the deployments?
+
+שגגaa
+dasdasdasd
