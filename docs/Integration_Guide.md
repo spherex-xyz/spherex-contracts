@@ -71,13 +71,13 @@ In addition, a protected proxy also has this configuration function:
 - `setProtectedSigs` - A list of function selectors to protect.
   - This is the mechanism with which we configure what functions to protect or ignore in the protection process.
   - **DO NOT** set the protection on for view or pure function it will cause the engine to revert.
-[OREN] WHY NOT INSERT A LIST OF VIEW FUNC SUCH THAT NO MISTAKES HAPPEN (LETS TALK)
 
 ### Deployment
 
 The constructor of our contracts expects three arguments: the **admin**, the **operator** and the **engine**. By default, those are set as follows:
 
-- Admin = `msg.sender` (if we see the integrated contract receives owner as an argument we will use it as the admin) [OREN] NEEDS REPHRASING
+- Admin = `msg.sender`
+    - This can change if the manager or creator if the contracts is aother smart contract. For instance for a factory pattern, the factory might be the admin of the deployed pool contracts
 - Operator = `address(0)`
 - Engine = `address(0)`
 
