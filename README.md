@@ -1,22 +1,27 @@
-# README
+
 
 **SphereX Protect** is the main on-chain logic module, enforcing certain protections on the contracts.
 
-Table of contents:
+Table of contents: 
 
-* [Setting up for development](./#setting-up-for-development)
-  * [Getting Started](./#getting-started)
-  * [Testing](./#testing)
-* [Understanding SphereX-Protect](./#understanding-spherex-protect)
-  * [Structure](./#structure)
-  * [Flow](./#flow)
-    * [Disabling the protection:](./#disabling-the-protection)
-    * [Flow graph](./#flow-graph)
-  * [Notes regarding SphereXProtected contract](./#notes-regarding-spherexprotected-contract)
-  * [Notes regarding SphereXEngine contract](./#notes-regarding-spherexengine-contract)
-* [Data gathered, Contexts and Theses](./#data-gathered-contexts-and-theses)
-* [Deployment and usage](./#deployment-and-usage)
-* [Known Issues](./#known-issues)
+- [Setting up for development](#setting-up-for-development)
+  - [Getting Started](#getting-started)
+  - [Testing](#testing)
+- [Understanding SphereX-Protect](#understanding-spherex-protect)
+  - [Structure](#structure)
+  - [Flow](#flow)
+    - [How _suspicious behavior_ is tested for.](#how-suspicious-behavior-is-tested-for)
+    - [Disabling the protection:](#disabling-the-protection)
+    - [Flow graph](#flow-graph)
+  - [Notes regarding SphereXProtected contract](#notes-regarding-spherexprotected-contract)
+    - [SphereXProtectedBase](#spherexprotectedbase)
+    - [Factory integration note](#factory-integration-note)
+  - [Notes regarding SphereXEngine contract](#notes-regarding-spherexengine-contract)
+- [Data gathered, Contexts and Theses](#data-gathered-contexts-and-theses)
+- [Deployment and usage](#deployment-and-usage)
+- [Publish package](#publish-package)
+- [Known Issues](#known-issues)
+
 
 ## Setting up for development
 
@@ -61,29 +66,27 @@ pipenv install --dev
 
 SphereX Protect consists of two contracts
 
-* `SphereXEngine` - The main logic module. Holds the protection rules. Controlled by "SphereXEngineOwner"
+* `SphereXEngine` - The main logic module. Holds the protection rules. Controlled by a default admin, and an "OPERATOR_ROLE".
 * `SphereXProtected` - An abstract contract the customer inherits from in his contracts. Contains the bindings (i.e. `modifier`s) to pass data from current execution to `SphereXEngine`.
 
-In classic cyber terms this is the analogy:
+* `SphereXProtectedProxy` - The main contract for a protected proxy functionality, structures like oz's Proxy.sol contract, it passes data to the engine for every delegate call to the implementation.
 
-* The client's contracts are the network we want to protect.
-* The `SphereXProtected` contract is our "plugin", installed at each of the client's end points (= contracts)
-* The `SphereXEngine` contract is the "core", gathering all the information and monitoring the entire network in real time (gathering data about the event in each endpoint, but also of the transactions between the different endpoints).
+* `ProtectedProxies` - A directory containing several oz proxy patterns such as Transparent, ERC1967, Beacon, etc already integrated with SphereXProtectedProxy for easy out of the box use.
 
 ### Flow
 
-Now back to Web3 and blockchain terms. The behavior is checked at the transaction level, meaning that during the transaction the various contracts in the protocol send data to the `SphereXEngine`. If at any point in the transaction the `SphereXEngine` classifies the behavior as "suspicious", it **reverts the transaction**.
+During the transaction the various contracts in the protocol send data to the `SphereXEngine`. If at any point in the transaction the `SphereXEngine` classifies the behavior as "suspicious", it **reverts the transaction**.
 
-We will talk about the way the _suspicious behavior_ is defined.
+#### How _suspicious behavior_ is tested for.
 
-Data collection is done using modifiers that are implemented in `SphereXProtected` and are inherited by the various client contracts. This means that if a function is not decorated with our modifier, information from that function will not be collected and checked for suspicious behavior.
+Data collection is done using modifiers that are implemented in `SphereXProtected` and are inherited by the various client contracts. This means that if a function is not decorated with our modifier or observed by our proxy, information from that function will not be collected and checked for suspicious behavior.
 
 #### Disabling the protection:
 
 The protection of the engine can be disabled in 2 ways:
 
 1. From the client's contract (the protected client) it can be disabled by calling the function `changeSphereXEngine` with `address(0)` param. This will disable calls to the engine from the modifier.
-2. In the engine, the protection can be disabled by calling the function `changeIsActivated` with `false` param.
+2. In the engine, the protection can be disabled by calling the function `deactivateAllRules`.
 
 If any of these conditions is met, the protection is disabled (although, disabling from the _protected_ contract will save more gas, as nothing will be sent to the `Engine`).
 
@@ -121,7 +124,6 @@ graph TD
 
 > Note that in this graph we separate the SphereX space from the clients, but actually, the SphereXEngine can be viewed as the security module in the client's protocol.
 
-\
 
 
 ### Notes regarding SphereXProtected contract
@@ -129,9 +131,9 @@ graph TD
 This is an abstract contract with 4 state variable, but to make sure they do not interrupt the layout of the inherited contract's variables, they are actually saved in distinct storage slots. This is why these are not normal state variables with names. These 4 special addresses contain:
 
 1. The address of the SphereXAdmin
-   * This account is the only one who can change the address of the OPERTOR state variable, and pass it's role to another address.
+   * This account is the only one who can change the address of the OPERATOR state variable, and pass it's role to another address.
 2. the address of the pendingSphereXAdmin
-   * This stte variable is used to implement a two step admin role transfer.
+   * This state variable is used to implement a two step admin role transfer.
 3. the address of the sphereXOperator
    * This account is the only onw responsible for managing the protected contract, including changing the address of the ENGINE.
 4. The address of the SphereXEngine - this is the address to which data is sent, and which classifies the transaction (at various points of execution).
@@ -170,7 +172,7 @@ The engine has 3 key roles:
 1. The owner
    * Controls the operator role address.
 2. The operator
-   * Controls the engine managment functions.
+   * Controls the engine management functions.
 3. The sender adder
    * A unique role granted to mainly on-chain factory contracts, its sole purpose is to allow adding an address to the `allowedSenders`. It has 3 important state variables:
 4. `_engineRules` - a bytes8 variable indicating what rules (theses) are applied, 1 for CF, 2 for PrefixTxFlow, if all are off then the engine is deactivated.
@@ -186,7 +188,6 @@ In addition, the engine has some internal variables that are used to calculate a
 1. Activating and deactivating the contract
 2. Adding and removing `allowedSenders` and `allowedPatterns`.
 
-\
 
 
 ## Data gathered, Contexts and Theses
@@ -221,6 +222,13 @@ That's it. The protocol is now protected by SphereX.
 > See [SphereXProtected.t.sol](test/SphereXProtected.t.sol) as an example
 
 > Note that we have an internal system used to do most of these stages, but it can be a good practice to try and do this manually :)
+
+## Publish package
+In order to publish the contracts for the npm package @spherex-xyz/contracts, do the following:
+1. hardhat compile (compiled artifacts are included in the package) - `npx hardhat compile`
+2. update package.json for the package version, desc, etc
+3. npm login
+4. npm publish
 
 ## Known Issues
 

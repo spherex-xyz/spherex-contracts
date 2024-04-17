@@ -1,7 +1,7 @@
 {
     "name": "@spherex-xyz/contracts",
-    "version": "1.0.7",
-    "description": "",
+    "version": "2.0.0",
+    "description": "Spherex protection contracts and engine.",
     "files": [
         "src/**/*.sol",
         "artifacts/src/**/*.json"
@@ -11,14 +11,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/spherex-xyz/spherex-protect-contracts.git"
+        "url": "git+https://github.com/spherex-xyz/spherex-contracts.git"
     },
     "author": "SphereX Technologies LTD",
     "license": "UNLICENSED",
     "bugs": {
-        "url": "https://github.com/spherex-xyz/spherex-protect-contracts/issues"
+        "url": "https://github.com/spherex-xyz/spherex-contracts/issues"
     },
-    "homepage": "https://github.com/spherex-xyz/spherex-protect-contracts#readme",
+    "homepage": "https://github.com/spherex-xyz/spherex-contracts#readme",
     "devDependencies": {
         "@nomicfoundation/hardhat-foundry": "^1.1.1",
         "hardhat": "^2.18.0"
