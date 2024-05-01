@@ -55,9 +55,10 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     mapping(uint256 => FunctionConfig) internal _functionsConfig;
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
-    uint32[30] internal _currentGasStack;
+    uint32[MAX_CALL_DEPTH] internal _currentGasStack;
 
     uint8 internal constant GAS_STRIKES_START = 0;
+    uint8 internal constant MAX_CALL_DEPTH = 30;
     uint216 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes8 internal constant DEACTIVATED = bytes8(0);
@@ -80,7 +81,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     constructor() AccessControlDefaultAdminRules(1 days, msg.sender) {
         grantRole(OPERATOR_ROLE, msg.sender);
 
-        for (uint32 i; i < 30; i++) {
+        for (uint32 i; i < MAX_CALL_DEPTH; i++) {
             _currentGasStack[i] = 1;
         }
     }
@@ -257,7 +258,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Add allowed gas exact functions - the allowd gas exact values for each function.
+     * Add allowed gas exact functions - the allowed gas exact values for each function.
      * each exact gas value will be hashed with the function and be saved as a key to boolean value in _allowedFunctionsExactGas.
      * @param gasFunctions list of functions with their corresponding gas exact values.
      */
@@ -273,7 +274,7 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     }
 
     /**
-     * Remove allowed gas exact functions - the allowd gas exact values for each function.
+     * Remove allowed gas exact functions - the allowed gas exact values for each function.
      * each exact gas value will be hashed with the function and be saved as a key to boolean value in _allowedFunctionsExactGas.
      * @param gasFunctions list of functions with their corresponding gas exact values.
      */
