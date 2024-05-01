@@ -55,10 +55,11 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
 
     mapping(uint256 => FunctionConfig) internal _functionsConfig;
     mapping(uint256 => bool) internal _allowedFunctionsExactGas;
+
+    uint8 internal constant MAX_CALL_DEPTH = 30;
     uint32[MAX_CALL_DEPTH] internal _currentGasStack;
 
     uint8 internal constant GAS_STRIKES_START = 0;
-    uint8 internal constant MAX_CALL_DEPTH = 30;
     uint216 internal constant PATTERN_START = 1;
     uint16 internal constant DEPTH_START = 1;
     bytes8 internal constant DEACTIVATED = bytes8(0);
