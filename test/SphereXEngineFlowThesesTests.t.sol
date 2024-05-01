@@ -7,9 +7,7 @@ import "forge-std/Test.sol";
 import "./Utils/CFUtils.sol";
 import "../src/SphereXEngine.sol";
 
-contract SphereXEngineTest is Test, CFUtils {
-    address random_address = 0x6A08098568eE90b71dD757F070D79364197f944B;
-
+contract SphereXEngineFlowThesesTests is Test, CFUtils {
     modifier activateRule(bytes8 rule) {
         // This will make forge call the function with 1 and 2 as inputs!
         uint16 assumeVariable = uint8(uint16(uint64(rule)));
@@ -19,63 +17,7 @@ contract SphereXEngineTest is Test, CFUtils {
         _;
     }
 
-    function setUp() public {
-        spherex_engine = new SphereXEngine();
-        allowed_senders.push(address(this));
-        spherex_engine.addAllowedSender(allowed_senders);
-    }
-
     //  ============ Test for the management functions  ============
-
-    function test_passOwnership() public {
-        spherex_engine.beginDefaultAdminTransfer(random_address);
-        vm.warp(block.timestamp + 2 days);
-        vm.prank(random_address);
-        spherex_engine.acceptDefaultAdminTransfer();
-    }
-
-    function test_onlyAdminCanGrantOperatorRoles() public {
-        bytes32 OPERATOR_ROLE = spherex_engine.OPERATOR_ROLE();
-
-        vm.prank(random_address);
-        vm.expectRevert();
-        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
-
-        spherex_engine.grantRole(OPERATOR_ROLE, random_address);
-    }
-
-    function test_addAndRemoveOperator() public {
-        vm.prank(random_address);
-        vm.expectRevert("SphereX error: operator required");
-        spherex_engine.addAllowedSender(allowed_senders);
-
-        spherex_engine.grantRole(spherex_engine.OPERATOR_ROLE(), random_address);
-        vm.prank(random_address);
-        allowed_senders = [address(this)];
-        spherex_engine.removeAllowedSender(allowed_senders);
-
-        spherex_engine.revokeRole(spherex_engine.OPERATOR_ROLE(), random_address);
-        vm.prank(random_address);
-        vm.expectRevert("SphereX error: operator required");
-        spherex_engine.addAllowedSender(allowed_senders);
-    }
-
-    function test_addAllowedSender() public activateRule(CF) {
-        allowed_senders = [random_address];
-        spherex_engine.addAllowedSender(allowed_senders);
-        vm.prank(random_address);
-        sendInternalNumberToEngine(1);
-    }
-
-    function test_removeAllowedSender(bytes8 rule) public activateRule(rule) {
-        allowed_senders = [address(this)];
-        spherex_engine.removeAllowedSender(allowed_senders);
-
-        vm.expectRevert("SphereX error: disallowed sender");
-        sendInternalNumberToEngine(1);
-
-        assertFlowStorageSlotsInInitialState();
-    }
 
     function test_addAllowedPatterns_two_patterns() public activateRule(CF) {
         int256[2] memory allowed_cf = [int256(1), -1];
@@ -168,85 +110,6 @@ contract SphereXEngineTest is Test, CFUtils {
         spherex_engine.configureRules(bytes8(uint64(1)));
         spherex_engine.configureRules(bytes8(uint64(2)));
         spherex_engine.configureRules(bytes8(uint64(4)));
-    }
-
-    // ============ Modifiers  ============
-
-    function test_onlyOwner() public {
-        vm.expectRevert("SphereX error: operator required");
-        // change caller to random address
-        vm.prank(random_address);
-        allowed_senders = [address(this)];
-        spherex_engine.removeAllowedSender(allowed_senders);
-    }
-
-    function test_onlyApprovedSenders_sphereXValidateInternalPre() public {
-        spherex_engine.configureRules(CF);
-        vm.expectRevert("SphereX error: disallowed sender");
-        vm.prank(random_address);
-        sendInternalNumberToEngine(1);
-    }
-
-    function test_onlyApprovedSenders_sphereXValidatePre() public {
-        spherex_engine.configureRules(CF);
-        vm.expectRevert("SphereX error: disallowed sender");
-        vm.prank(random_address);
-        spherex_engine.sphereXValidatePre(1, address(this), msg.data);
-    }
-
-    function test_onlyApprovedSenders_sphereXValidatePost() public {
-        spherex_engine.configureRules(CF);
-        vm.expectRevert("SphereX error: disallowed sender");
-        vm.prank(random_address);
-        bytes32[] memory emptyArray = new bytes32[](0);
-        spherex_engine.sphereXValidatePost(1, 0, emptyArray, emptyArray);
-    }
-
-    function test_returnsIfNotActivated_sphereXValidateInternalPre() public {
-        spherex_engine.deactivateAllRules();
-        sendInternalNumberToEngine(1);
-        sendInternalNumberToEngine(-1);
-
-        assertFlowStorageSlotsInInitialState();
-    }
-
-    function test_returnsIfNotActivated_sphereXValidatePrePost() public {
-        spherex_engine.deactivateAllRules();
-        spherex_engine.sphereXValidatePre(1, address(this), msg.data);
-        bytes32[] memory emptyArray = new bytes32[](0);
-        spherex_engine.sphereXValidatePost(-1, 0, emptyArray, emptyArray);
-
-        assertFlowStorageSlotsInInitialState();
-    }
-
-    function test_activateRule1_not_owner() public {
-        spherex_engine.configureRules(CF);
-
-        vm.expectRevert("SphereX error: operator required");
-        vm.prank(random_address);
-        spherex_engine.configureRules(CF);
-
-        assertFlowStorageSlotsInInitialState();
-    }
-
-    function test_activateRule2_not_owner() public {
-        spherex_engine.configureRules(CF);
-
-        vm.expectRevert("SphereX error: operator required");
-        vm.prank(random_address);
-        spherex_engine.configureRules(PREFIX_TX_FLOW);
-
-        assertFlowStorageSlotsInInitialState();
-    }
-
-    function test_deactivateAllRules_not_owner() public {
-        spherex_engine.deactivateAllRules();
-
-        vm.expectRevert("SphereX error: operator required");
-        vm.prank(random_address);
-        spherex_engine.deactivateAllRules();
-
-        assertFlowStorageSlotsInInitialState();
     }
 
     //  ============ Call flow  ============

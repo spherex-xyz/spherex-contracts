@@ -17,6 +17,8 @@ import {
     ITransparentUpgradeableProxy
 } from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 
+import {SphereXEngine} from "../../src/SphereXEngine.sol";
+
 contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxyTest {
     TransparentUpgradeableProxy public main_proxy;
     address proxy_admin = vm.addr(1);
@@ -180,5 +182,15 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         vm.prank(spherex_admin);
         vm.expectCall(address(new_costumer), new_func_data);
         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeToAndCall(address(new_costumer), new_func_data);
+    }
+
+    //  ============ Gas thesis tests  ============
+
+    function test_gas_from_external_call() public override {
+        check_gas_from_external_call(4117);
+    }
+
+    function test_gas_from_public_call() public override {
+        check_gas_from_public_call(4101);
     }
 }

@@ -101,6 +101,10 @@ contract CustomerBehindProxy {
         return true;
     }
 
+    function externalCallsExternalCallsExternal() external returns (bool) {
+        return this.externalCallsExternal();
+    }
+
     function factory() external returns (address) {
         someContract = new SomeContractBehindProxy();
         return address(someContract);
@@ -112,6 +116,21 @@ contract CustomerBehindProxy {
 
     function to_block_2() external {}
     function to_block_3() external {}
+
+    function three_gas_usages(uint256 x) external {
+        if (x == 1) {
+            x = x * 2;
+        }
+        if (x == 2) {
+            x = x * 2;
+            x = x + 3;
+        }
+        if (x == 3) {
+            x = x * 2;
+            x = x + 3;
+            x = x + 4;
+        }
+    }
 }
 
 contract CustomerBehindProxy1 {
@@ -141,9 +160,9 @@ contract CostumerContract is SphereXProtected {
 
     constructor() SphereXProtected() {}
 
-    function initialize(address owner) public {
+    function initialize(address owner, address engine) public sphereXGuardExternal(1000) {
         slot0 = 5;
-        __SphereXProtectedBase_init(owner, msg.sender, address(0));
+        __SphereXProtectedBase_init(owner, msg.sender, engine);
     }
 
     function try_allowed_flow() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {}
@@ -208,6 +227,14 @@ contract CostumerContract is SphereXProtected {
         require(success, "arbitrary call reverted");
     }
 
+    function externalCallsExternalCallsExternal()
+        external
+        sphereXGuardExternal(int256(uint256(uint32(msg.sig))))
+        returns (bool)
+    {
+        return this.externalCallsExternal();
+    }
+
     function externalCallsExternal() external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) returns (bool) {
         return this.externalCallee();
     }
@@ -220,5 +247,20 @@ contract CostumerContract is SphereXProtected {
         someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);
+    }
+
+    function three_gas_usages(uint256 x) external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {
+        if (x == 1) {
+            x = x * 2;
+        }
+        if (x == 2) {
+            x = x * 2;
+            x = x + 3;
+        }
+        if (x == 3) {
+            x = x * 2;
+            x = x + 3;
+            x = x + 4;
+        }
     }
 }

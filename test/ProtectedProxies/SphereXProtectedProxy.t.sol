@@ -39,6 +39,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         protected_sigs.push(CustomerBehindProxy.externalCallsExternal.selector);
         protected_sigs.push(CustomerBehindProxy.externalCallee.selector);
         protected_sigs.push(CustomerBehindProxy.factory.selector);
+        protected_sigs.push(CustomerBehindProxy.three_gas_usages.selector);
         proxy_contract.addProtectedFuncSigs(protected_sigs);
 
         allowed_senders.push(address(proxy_contract));
@@ -176,4 +177,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
     function test_factory_callCreatedContract() public override {}
     function test_factoryEngineDisabled() public override {}
     function test_grantSenderAdderRoleOnlyOperator() public override {}
+    function test_gas_from_external_call_external() public override {}
+    function test_gas_from_external_call_external_call_external() public override {}
+    function test_gas_from_external_call_external_turn_cf_on() public override {}
 }

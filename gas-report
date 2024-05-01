@@ -1,25 +1,31 @@
 | src/SphereXEngine.sol:SphereXEngine contract |                 |       |        |       |         |
 |----------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                              | Deployment Size |       |        |       |         |
-| 2135858                                      | 11720           |       |        |       |         |
+| 2896208                                      | 15171           |       |        |       |         |
 | Function Name                                | min             | avg   | median | max   | # calls |
 | OPERATOR_ROLE                                | 360             | 360   | 360    | 360   | 21      |
-| SENDER_ADDER_ROLE                            | 307             | 307   | 307    | 307   | 8       |
+| SENDER_ADDER_ROLE                            | 285             | 285   | 285    | 285   | 8       |
 | acceptDefaultAdminTransfer                   | 27910           | 27910 | 27910  | 27910 | 1       |
-| addAllowedPatterns                           | 5473            | 24463 | 25373  | 48371 | 465     |
-| addAllowedSender                             | 1007            | 25211 | 25351  | 25351 | 335     |
-| addAllowedSenderOnChain                      | 2837            | 20461 | 23986  | 23986 | 12      |
+| addAllowedPatterns                           | 5473            | 24476 | 25373  | 48371 | 519     |
+| addAllowedSender                             | 1007            | 25333 | 25351  | 27351 | 428     |
+| addAllowedSenderOnChain                      | 2815            | 20439 | 23964  | 23964 | 12      |
+| addGasExactFunctions                         | 28228           | 38252 | 28228  | 79997 | 30      |
 | beginDefaultAdminTransfer                    | 12117           | 12117 | 12117  | 12117 | 1       |
-| configureRules                               | 2487            | 3721  | 2487   | 9287  | 365     |
+| configureRules                               | 2487            | 4195  | 2487   | 9287  | 543     |
 | deactivateAllRules                           | 2727            | 6562  | 6210   | 9010  | 6       |
-| grantRole                                    | 25623           | 28065 | 29623  | 34467 | 20      |
+| excludeFunctionsFromGas                      | 2594            | 5986  | 6434   | 8034  | 10      |
+| grantRole                                    | 25689           | 28131 | 29689  | 34533 | 20      |
 | grantSenderAdderRole                         | 841             | 6288  | 841    | 25355 | 9       |
-| includeEnforcedFunctions                     | 24998           | 25664 | 24998  | 26998 | 6       |
+| includeEnforcedFunctions                     | 25074           | 25740 | 25074  | 27074 | 6       |
+| includeFunctionsInGas                        | 2524            | 26442 | 25054  | 70494 | 55      |
+| measureGas                                   | 346             | 346   | 346    | 346   | 30      |
 | removeAllowedPatterns                        | 2795            | 3380  | 3673   | 3673  | 3       |
-| removeAllowedSender                          | 2961            | 5363  | 6564   | 6564  | 3       |
-| revokeRole                                   | 2965            | 8981  | 10005  | 10005 | 10      |
-| sphereXValidateInternalPost                  | 950             | 2695  | 2425   | 4311  | 79      |
-| sphereXValidateInternalPre                   | 653             | 4890  | 2572   | 9750  | 91      |
-| sphereXValidatePost                          | 1014            | 3214  | 2771   | 4382  | 342     |
-| sphereXValidatePre                           | 926             | 8347  | 5643   | 17037 | 372     |
-| supportsInterface                            | 435             | 435   | 435    | 435   | 306     |
+| removeAllowedSender                          | 3028            | 5954  | 6618   | 8218  | 3       |
+| removeGasExactFunctions                      | 5133            | 5133  | 5133   | 5133  | 1       |
+| revokeRole                                   | 2948            | 8964  | 9988   | 9988  | 10      |
+| setGasStrikeOutsLimit                        | 915             | 915   | 915    | 915   | 3       |
+| sphereXValidateInternalPost                  | 1363            | 4020  | 3362   | 9547  | 116     |
+| sphereXValidateInternalPre                   | 677             | 7965  | 5541   | 20444 | 124     |
+| sphereXValidatePost                          | 1316            | 3792  | 3295   | 6055  | 384     |
+| sphereXValidatePre                           | 968             | 8271  | 5832   | 17224 | 414     |
+| supportsInterface                            | 435             | 435   | 435    | 435   | 341     |

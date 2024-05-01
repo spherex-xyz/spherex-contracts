@@ -9,6 +9,7 @@ import {CustomerBehindProxy, CustomerBehindProxy1} from "../Utils/CostumerContra
 import {ProtectedTransparentUpgradeableProxy} from "../../src/ProtectedProxies/ProtectedTransparentUpgradeableProxy.sol";
 import {ITransparentUpgradeableProxy} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {SphereXProtectedProxyTest} from "./SphereXProtectedProxy.t.sol";
+import {SphereXEngine} from "../../src/SphereXEngine.sol";
 
 contract ProtectedTransparentUpgradeableProxyTest is SphereXProtectedProxyTest {
     address proxy_admin = vm.addr(12345);
@@ -116,5 +117,15 @@ contract ProtectedTransparentUpgradeableProxyTest is SphereXProtectedProxyTest {
         // Transparent fallback as admin functions does not works
         vm.expectRevert("TransparentUpgradeableProxy: admin cannot fallback to proxy target");
         CustomerBehindProxy(address(proxy_contract)).try_allowed_flow();
+    }
+
+    //  ============ Gas thesis tests  ============
+
+    function test_gas_from_external_call() public override {
+        check_gas_from_external_call(4084);
+    }
+
+    function test_gas_from_public_call() public override {
+        check_gas_from_public_call(4068);
     }
 }
