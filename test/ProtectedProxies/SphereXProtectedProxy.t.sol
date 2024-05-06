@@ -176,4 +176,28 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
     function test_factory_callCreatedContract() public override {}
     function test_factoryEngineDisabled() public override {}
     function test_grantSenderAdderRoleOnlyOperator() public override {}
+
+    function test_changeSphereXEngine_from_protected_function_engine_on() public virtual override {
+        spherex_engine.configureRules(CF);
+        allowed_cf_storage =
+            [to_int256(costumer_contract.setEngine.selector), -to_int256(costumer_contract.setEngine.selector)];
+        addAllowedPattern();
+        allowed_cf_storage =
+            [to_int256(costumer_contract.publicFunction.selector), -to_int256(costumer_contract.publicFunction.selector)];
+        addAllowedPattern();
+        // call the publicFunction and see it doesnt revert
+        costumer_contract.publicFunction();
+
+        SphereXEngine spherex_engine_2 = new SphereXEngine();
+        spherex_engine_2.configureRules(CF);
+        allowed_senders.push(address(costumer_contract));
+        spherex_engine_2.addAllowedSender(allowed_senders);
+
+        costumer_contract.changeSphereXOperator(address(proxy_contract));
+        costumer_contract.setEngine(address(spherex_engine_2));
+        
+        // after successfully cahging the engine call the publicFunction function and expect revert
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        costumer_contract.publicFunction();
+    }
 }
