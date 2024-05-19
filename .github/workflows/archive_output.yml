@@ -1,0 +1,29 @@
+name: Create Engine Artifact
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build with Forge
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Create artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-artifact
+          path: out/SphereXEngine.sol
