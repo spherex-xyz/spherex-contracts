@@ -30,7 +30,7 @@ jobs:
         id: build
 
       - name: Create input json
-        run: forge v --show-standard-json-input 0x0000000000000000000000000000000000000000 src/SphereXEngine.sol:SphereXEngine > out/engine_standart_input.json
+        run: forge v --show-standard-json-input 0x0000000000000000000000000000000000000000 src/SphereXEngine.sol:SphereXEngine > out/engine_standard_input.json
 
       - name: Create artifact
         uses: actions/upload-artifact@v4
@@ -38,4 +38,4 @@ jobs:
           name: output-artifact
           path: |
             out/SphereXEngine.sol
-            out/engine_standart_input.json
+            out/engine_standard_input.json
