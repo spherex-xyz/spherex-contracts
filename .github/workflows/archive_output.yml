@@ -29,8 +29,13 @@ jobs:
           forge build --sizes
         id: build
 
+      - name: Create input json
+        run: forge v --show-standard-json-input 0x0000000000000000000000000000000000000000 src/SphereXEngine.sol:SphereXEngine > out/engine_standart_input.json
+
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
           name: output-artifact
-          path: out/SphereXEngine.sol
+          path: |
+            out/SphereXEngine.sol
+            out/engine_standart_input.json
