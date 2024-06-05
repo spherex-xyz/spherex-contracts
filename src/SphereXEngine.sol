@@ -296,22 +296,23 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
             return;
         }
 
-        FunctionConfig memory functionsConfig = _functionsConfig[uint256(num)];
-        if (functionsConfig.ignore) {
-            flowConfig.ignore = true;
-            flowConfig.depth = DEPTH_START;
-            return;
-        }
-
-        if (_isSelectiveTxfActivated(engineConfig.rules)) {
-            // if we are not in enforment mode then check if the current function turn it on
-            if (!flowConfig.enforce && functionsConfig.enforce) {
-                flowConfig.enforce = true;
-            }
-        }
-
-        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         ++flowConfig.depth;
+
+        FunctionConfig memory functionsConfig = _functionsConfig[uint256(num)];
+        
+        if (functionsConfig.ignore) {
+            // we need to update the flow config to ignore the rest of the flow
+            flowConfig.ignore = true;
+        } else {
+            if (_isSelectiveTxfActivated(engineConfig.rules)) {
+                // if we are not in enforment mode then check if the current function turn it on
+                if (!flowConfig.enforce && functionsConfig.enforce) {
+                    flowConfig.enforce = true;
+                }
+            }
+
+            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+        }
 
         _flowConfig = flowConfig;
     }
@@ -326,25 +327,22 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
         require(num < 0, "SphereX error: expected negative num");
         FlowConfiguration memory flowConfig = _flowConfig;
         bytes8 rules = _engineConfig.rules;
-        
-        bool ignoredFlow = _functionsConfig[uint256(-num)].ignore;
-        if (ignoredFlow) {
-            return;
-        }
 
-        flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
         --flowConfig.depth;
 
-        if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
-            if (_isSelectiveTxfActivated(rules)) {
-                if (flowConfig.enforce) {
+        if (!flowConfig.ignore){
+            flowConfig.pattern = uint216(bytes27(keccak256(abi.encode(num, flowConfig.pattern))));
+
+            if ((forceCheck) || (flowConfig.depth == DEPTH_START)) {
+                if (_isSelectiveTxfActivated(rules)) {
+                    if (flowConfig.enforce) {
+                        _checkCallFlow(flowConfig.pattern);
+                    }
+                } else {
                     _checkCallFlow(flowConfig.pattern);
                 }
-            } else {
-                _checkCallFlow(flowConfig.pattern);
             }
         }
-
         // If we are configured to CF then if we reach depth == DEPTH_START we should reinit the
         // currentPattern
         if (flowConfig.depth == DEPTH_START && _isCFActivated(rules)) {

@@ -63,4 +63,60 @@ contract SphereXEngineIgnoreFunc is Test, CFUtils {
         vm.expectRevert("SphereX error: disallowed tx pattern");
         sendExternalNumberToEngine(allowed_cf_storage[1]);
     }
+
+    function test_ignore_cf_and_re_include() public {
+        allowed_cf_storage = [int256(1), -1];
+        ignoredFunctions = [uint256(1)];
+
+        spherex_engine.ignoreFunctionsFromFlow(ignoredFunctions);
+
+        sendExternalNumberToEngine(allowed_cf_storage[0]);
+        sendExternalNumberToEngine(allowed_cf_storage[1]);
+
+        spherex_engine.reIncludeFunctionsToFlow(ignoredFunctions);
+
+        sendExternalNumberToEngine(allowed_cf_storage[0]);
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        sendExternalNumberToEngine(allowed_cf_storage[1]);
+    }
+
+    function test_two_cf_one_ignored() public {
+        spherex_engine.configureRules(bytes8(PREFIX_TX_FLOW));
+
+        allowed_cf_storage = [int256(2), -2];
+        addAllowedPattern();
+
+        allowed_cf_storage = [int256(1), -1, int256(2), -2];
+        
+        ignoredFunctions = [uint256(1)];
+
+        spherex_engine.ignoreFunctionsFromFlow(ignoredFunctions);
+
+        sendExternalNumberToEngine(allowed_cf_storage[0]);
+        sendExternalNumberToEngine(allowed_cf_storage[1]); // dont expect revert cause it is ignored
+        sendExternalNumberToEngine(allowed_cf_storage[2]);
+        sendExternalNumberToEngine(allowed_cf_storage[3]);
+
+    }
+
+    function test_ignore_txf_and_re_include() public {
+        spherex_engine.configureRules(bytes8(PREFIX_TX_FLOW));
+
+        allowed_cf_storage = [int256(1), -1, int256(2), -2];
+        ignoredFunctions = [uint256(1)];
+
+        spherex_engine.ignoreFunctionsFromFlow(ignoredFunctions);
+
+        sendExternalNumberToEngine(allowed_cf_storage[0]);
+        sendExternalNumberToEngine(allowed_cf_storage[1]);
+        sendExternalNumberToEngine(allowed_cf_storage[2]);
+        sendExternalNumberToEngine(allowed_cf_storage[3]);
+        
+        vm.roll(400); 
+
+        //after moving to the next tx we expect a revert
+        sendExternalNumberToEngine(allowed_cf_storage[2]);
+        vm.expectRevert("SphereX error: disallowed tx pattern");
+        sendExternalNumberToEngine(allowed_cf_storage[3]);
+    }
 }
