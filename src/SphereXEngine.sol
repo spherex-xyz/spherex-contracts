@@ -219,14 +219,14 @@ contract SphereXEngine is ISphereXEngine, AccessControlDefaultAdminRules {
     /**
      * Checks if CF is activated.
      */
-    function _isCFActivated(bytes8 rules) internal view returns (bool) {
+    function _isCFActivated(bytes8 rules) internal pure returns (bool) {
         return (rules & bytes8(CF)) > 0;
     }
 
     /**
      * Checks if selective txf is activated.
      */
-    function _isSelectiveTxfActivated(bytes8 rules) internal view returns (bool) {
+    function _isSelectiveTxfActivated(bytes8 rules) internal pure returns (bool) {
         return (rules & bytes8(SELECTIVE_TXF)) > 0;
     }
 

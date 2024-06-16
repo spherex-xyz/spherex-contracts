@@ -210,14 +210,15 @@ abstract contract SphereXProtectedBase {
         returnsIfNotActivated
         returns (ModifierLocals memory locals)
     {
-        ISphereXEngine sphereXEngine = _sphereXEngine();
+        ISphereXEngine engine = _sphereXEngine();
         if (isExternalCall) {
-            locals.storageSlots = sphereXEngine.sphereXValidatePre(num, msg.sender, msg.data);
+            locals.storageSlots = engine.sphereXValidatePre(num, msg.sender, msg.data);
         } else {
-            locals.storageSlots = sphereXEngine.sphereXValidateInternalPre(num);
+            locals.storageSlots = engine.sphereXValidateInternalPre(num);
         }
         locals.valuesBefore = _readStorage(locals.storageSlots);
         locals.gas = gasleft();
+        locals.engine = address(engine);
         return locals;
     }
 
@@ -230,58 +231,32 @@ abstract contract SphereXProtectedBase {
      */
     function _sphereXValidatePost(int256 num, bool isExternalCall, ModifierLocals memory locals)
         private
-        returnsIfNotActivated
     {
-        uint256 gas = locals.gas - gasleft();
+        ISphereXEngine engine = ISphereXEngine(locals.engine);
 
-        ISphereXEngine sphereXEngine = _sphereXEngine();
+        if (address(engine) == address(0)) {
+            return;
+        }
+
+        uint256 gas = locals.gas - gasleft();
 
         bytes32[] memory valuesAfter;
         valuesAfter = _readStorage(locals.storageSlots);
 
         if (isExternalCall) {
-            sphereXEngine.sphereXValidatePost(num, gas, locals.valuesBefore, valuesAfter);
+            engine.sphereXValidatePost(num, gas, locals.valuesBefore, valuesAfter);
         } else {
-            sphereXEngine.sphereXValidateInternalPost(num, gas, locals.valuesBefore, valuesAfter);
+            engine.sphereXValidateInternalPost(num, gas, locals.valuesBefore, valuesAfter);
         }
-    }
-
-    /**
-     * @dev internal function for engine communication. We use it to reduce contract size.
-     *  Should be called before the code of a function.
-     * @param num function identifier
-     * @return locals ModifierLocals
-     */
-    function _sphereXValidateInternalPre(int256 num)
-        internal
-        returnsIfNotActivated
-        returns (ModifierLocals memory locals)
-    {
-        locals.storageSlots = _sphereXEngine().sphereXValidateInternalPre(num);
-        locals.valuesBefore = _readStorage(locals.storageSlots);
-        locals.gas = gasleft();
-        return locals;
-    }
-
-    /**
-     * @dev internal function for engine communication. We use it to reduce contract size.
-     *  Should be called after the code of a function.
-     * @param num function identifier
-     * @param locals ModifierLocals
-     */
-    function _sphereXValidateInternalPost(int256 num, ModifierLocals memory locals) internal returnsIfNotActivated {
-        bytes32[] memory valuesAfter;
-        valuesAfter = _readStorage(locals.storageSlots);
-        _sphereXEngine().sphereXValidateInternalPost(num, locals.gas - gasleft(), locals.valuesBefore, valuesAfter);
     }
 
     /**
      *  @dev Modifier to be incorporated in all internal protected non-view functions
      */
     modifier sphereXGuardInternal(int256 num) {
-        ModifierLocals memory locals = _sphereXValidateInternalPre(num);
+        ModifierLocals memory locals = _sphereXValidatePre(num, false);
         _;
-        _sphereXValidateInternalPost(-num, locals);
+        _sphereXValidatePost(-num, false, locals);
     }
 
     /**

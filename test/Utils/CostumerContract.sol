@@ -109,7 +109,11 @@ contract CustomerBehindProxy {
     function static_method() external pure returns (uint256) {
         return 5;
     }
-
+    
+    function setEngine(address newEngine) external {
+        SphereXProtected(address(this)).changeSphereXEngine(newEngine);
+    }
+    
     function to_block_2() external {}
     function to_block_3() external {}
 }
@@ -220,5 +224,9 @@ contract CostumerContract is SphereXProtected {
         someContract = new SomeContract(sphereXAdmin(), sphereXOperator(), sphereXEngine());
         _addAllowedSenderOnChain(address(someContract));
         return address(someContract);
+    }
+
+    function setEngine(address newEngine) external sphereXGuardExternal(int256(uint256(uint32(msg.sig)))) {
+        SphereXProtected(address(this)).changeSphereXEngine(newEngine);
     }
 }

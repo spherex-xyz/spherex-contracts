@@ -49,4 +49,5 @@ struct ModifierLocals {
     bytes32[] storageSlots;
     bytes32[] valuesBefore;
     uint256 gas;
+    address engine;
 }

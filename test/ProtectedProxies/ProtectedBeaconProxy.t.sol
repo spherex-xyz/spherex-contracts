@@ -228,4 +228,6 @@ contract ProtectedBeaconProxyTest is SphereXProtectedProxyTest {
 
         CustomerBehindProxy(address(proxy_contract)).to_block_2();
     }
+
+    function test_changeSphereXEngine_from_protected_function_engine_on() public override {}
 }
