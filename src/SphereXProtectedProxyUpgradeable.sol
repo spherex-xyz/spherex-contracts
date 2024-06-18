@@ -9,7 +9,7 @@ import {Address} from "openzeppelin/utils/Address.sol";
 import {SphereXProxyBaseUpgradeable} from "./SphereXProxyBaseUpgradeable.sol";
 
 /**
- * @title SphereX abstract proxt contract which implements OZ's Proxy intereface.
+ * @title SphereX abstract proxy contract which implements OZ's Proxy interface.
  */
 abstract contract SphereXProtectedProxyUpgradeable is SphereXProxyBaseUpgradeable, Proxy {
     /**
