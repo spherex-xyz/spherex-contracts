@@ -192,10 +192,7 @@ abstract contract SphereXConfiguration {
         ISphereXEngine engine = _sphereXEngine();
         if (address(engine) != address(0)) {
             engine.addAllowedSenderOnChain(newSender);
+            emit NewAllowedSenderOnchain(newSender);
         }
-        emit NewAllowedSenderOnchain(newSender);
     }
-
-
-    
 }

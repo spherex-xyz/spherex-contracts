@@ -23,7 +23,7 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
         PROTECTED_SIGS = protectedSigs;
     }
 
-    event DeployedMinimalPRotectedProxy(address proxy_address, address implementation);
+    event DeployedMinimalProtectedProxy(address proxy_address, address implementation);
 
 
     modifier onlyAllowedDeployer() {
@@ -42,7 +42,7 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
         address engineAddress = sphereXEngine();
         SpherexProtetedMinimalProxy minimalProxy = new SpherexProtetedMinimalProxy(
             sphereXAdmin(), 
-            sphereXOperator(), 
+            address(this), // for configuring the allowed sigs 
             engineAddress, 
             IMPLEMENTATION
         );
@@ -50,10 +50,10 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
 
         _addAllowedSenderOnChain(address(proxyAddress));
         minimalProxy.addProtectedFuncSigs(PROTECTED_SIGS);
+        // Now that the sigs are set, we can set the real operator
+        minimalProxy.changeSphereXOperator(this.sphereXOperator());
 
-        emit DeployedMinimalPRotectedProxy(proxyAddress, IMPLEMENTATION);
-        
+        emit DeployedMinimalProtectedProxy(proxyAddress, IMPLEMENTATION);
     }
-
 }
 
