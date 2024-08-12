@@ -6,8 +6,6 @@ pragma solidity ^0.8.0;
 import {SphereXConfiguration} from "../SphereXConfiguration.sol";
 import {SpherexProtetedMinimalProxy} from "./ProtectedMinimalProxy.sol";
 
-// TODO: add event for deploying
-
 /**
  * @title A factory contract that deploys the SpherexProtetedMinimalProxy contracts.
  */
@@ -44,7 +42,7 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
      *  If the current engine is not the null address, also updates the engine about a valid new sender
      * @dev notice the deploy function itself is NOT PROTECTED
      */
-    function deploy() virtual public onlyAllowedDeployer returnsIfNotActivated returns (address proxyAddress) {
+    function deploy() virtual public onlyAllowedDeployer returns (address proxyAddress) {
         address engineAddress = sphereXEngine();
         SpherexProtetedMinimalProxy minimalProxy = new SpherexProtetedMinimalProxy(
             sphereXAdmin(), 
