@@ -32,7 +32,7 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
         _;
     }
 
-    function initializeAllowedDeployer(address allowedDeployer) external {
+    function initializeAllowedDeployer(address allowedDeployer) onlySphereXAdmin external {
         require(_allowedDeployer == address(0), "Allowed deployer already exists");
         _allowedDeployer = allowedDeployer;
     }
