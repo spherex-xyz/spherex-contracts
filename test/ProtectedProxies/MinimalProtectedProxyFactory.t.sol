@@ -32,7 +32,7 @@ contract SphereXProtectedTest is Test {
 
     function test_deploy_check_operator() public {
         address minimal_proxy = factory.deploy();
-        assertEq(SpherexProtetedMinimalProxy(payable(minimal_proxy)).sphereXOperator(), address(this));
+        assertEq(ProtetedMinimalProxy(payable(minimal_proxy)).sphereXOperator(), address(this));
     }
 
     // this test also check that the minimal proxy is an allowed sender because
@@ -52,7 +52,7 @@ contract SphereXProtectedTest is Test {
 
     function test_accept_proxy_admin() public {
         address minimal_proxy = factory.deploy();
-        SpherexProtetedMinimalProxy(payable(minimal_proxy)).acceptSphereXAdminRole();
-        SpherexProtetedMinimalProxy(payable(minimal_proxy)).changeSphereXOperator(random_address);
+        ProtetedMinimalProxy(payable(minimal_proxy)).acceptSphereXAdminRole();
+        ProtetedMinimalProxy(payable(minimal_proxy)).changeSphereXOperator(random_address);
     }
 }

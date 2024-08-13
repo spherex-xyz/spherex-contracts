@@ -4,7 +4,7 @@
 pragma solidity ^0.8.0;
 
 import {SphereXConfiguration} from "../SphereXConfiguration.sol";
-import {SpherexProtetedMinimalProxy} from "./ProtectedMinimalProxy.sol";
+import {ProtetedMinimalProxy} from "./ProtectedMinimalProxy.sol";
 
 /**
  * @title A factory contract that deploys the SpherexProtetedMinimalProxy contracts.
@@ -43,7 +43,7 @@ contract MinimalProtectedProxyFactory is SphereXConfiguration {
      * @dev notice the deploy function itself is NOT PROTECTED
      */
     function deploy() public virtual onlyAllowedDeployer returns (address proxyAddress) {
-        SpherexProtetedMinimalProxy minimalProxy = new SpherexProtetedMinimalProxy(
+        ProtetedMinimalProxy minimalProxy = new ProtetedMinimalProxy(
             address(this),
             address(this), // for configuring the allowed sigs
             sphereXEngine(),

@@ -8,7 +8,7 @@ import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 /**
  * @title SphereX minimal proxy contract (cannot be upgraded) which implements OZ's Proxy intereface.
  */
-contract SpherexProtetedMinimalProxy is SphereXProtectedProxy {
+contract ProtetedMinimalProxy is SphereXProtectedProxy {
     address immutable _imp;
 
     constructor(address admin, address operator, address engine, address implementation)
