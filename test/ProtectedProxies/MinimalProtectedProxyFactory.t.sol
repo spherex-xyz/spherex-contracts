@@ -33,7 +33,7 @@ contract SphereXProtectedTest is Test {
         assertEq(SpherexProtetedMinimalProxy(payable(minimal_proxy)).sphereXOperator(),address(this));
     }
 
-    // this test also check that the minimal proxy is allowed sender because
+    // this test also check that the minimal proxy is an allowed sender because
     // if it wasnt we would get disallowed sender revert
     function test_deploy_check_protected_sigs() public {
         address minimal_proxy = factory.deploy();
