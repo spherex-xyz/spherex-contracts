@@ -7,7 +7,7 @@ import {SphereXConfiguration} from "../SphereXConfiguration.sol";
 import {ProtetedMinimalProxy} from "./ProtectedMinimalProxy.sol";
 
 /**
- * @title A factory contract that deploys the SpherexProtetedMinimalProxy contracts.
+ * @title A factory contract that deploys the ProtetedMinimalProxy contracts.
  */
 contract MinimalProtectedProxyFactory is SphereXConfiguration {
     address private immutable IMPLEMENTATION;
