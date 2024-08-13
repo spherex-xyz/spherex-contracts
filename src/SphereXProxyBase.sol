@@ -34,7 +34,7 @@ contract SphereXProxyBase is SphereXProtectedBase {
      * Adds several functions' signature to the protected functions map stored in an arbitrary slot
      * @param keys of the functions added to the protected map
      */
-    function addProtectedFuncSigs(bytes4[] memory keys) public spherexOnlyOperator {
+    function addProtectedFuncSigs(bytes4[] memory keys) public onlySpherexOperator {
         for (uint256 i = 0; i < keys.length; ++i) {
             _setProtectedFuncSig(keys[i], true);
         }
@@ -45,7 +45,7 @@ contract SphereXProxyBase is SphereXProtectedBase {
      * Removes given functions' signature from the protected functions map
      * @param keys of the functions removed from the protected map
      */
-    function removeProtectedFuncSigs(bytes4[] memory keys) public spherexOnlyOperator {
+    function removeProtectedFuncSigs(bytes4[] memory keys) public onlySpherexOperator {
         for (uint256 i = 0; i < keys.length; ++i) {
             _setProtectedFuncSig(keys[i], false);
         }
