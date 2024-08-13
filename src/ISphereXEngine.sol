@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
  * @notice This interface is imported by SphereXProtected, so that SphereXProtected can call functions from SphereXEngine
  * @dev Full docs of these functions can be found in SphereXEngine
  */
-
 interface ISphereXEngine {
     function sphereXValidatePre(int256 num, address sender, bytes calldata data) external returns (bytes32[] memory);
     function sphereXValidatePost(

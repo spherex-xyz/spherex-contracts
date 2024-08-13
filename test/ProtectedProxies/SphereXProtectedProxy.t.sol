@@ -182,8 +182,10 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
         allowed_cf_storage =
             [to_int256(costumer_contract.setEngine.selector), -to_int256(costumer_contract.setEngine.selector)];
         addAllowedPattern();
-        allowed_cf_storage =
-            [to_int256(costumer_contract.publicFunction.selector), -to_int256(costumer_contract.publicFunction.selector)];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicFunction.selector),
+            -to_int256(costumer_contract.publicFunction.selector)
+        ];
         addAllowedPattern();
         // call the publicFunction and see it doesnt revert
         costumer_contract.publicFunction();
@@ -195,7 +197,7 @@ abstract contract SphereXProtectedProxyTest is SphereXProtectedTest {
 
         costumer_contract.changeSphereXOperator(address(proxy_contract));
         costumer_contract.setEngine(address(spherex_engine_2));
-        
+
         // after successfully cahging the engine call the publicFunction function and expect revert
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.publicFunction();

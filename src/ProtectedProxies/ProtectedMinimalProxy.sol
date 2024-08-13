@@ -11,15 +11,16 @@ import {SphereXProtectedProxy} from "../SphereXProtectedProxy.sol";
 contract SpherexProtetedMinimalProxy is SphereXProtectedProxy {
     address immutable _imp;
 
-    constructor(address admin, address operator, address engine, address implementation) SphereXProtectedProxy(admin, operator, engine) {
+    constructor(address admin, address operator, address engine, address implementation)
+        SphereXProtectedProxy(admin, operator, engine)
+    {
         _imp = implementation;
     }
 
     /**
      * Overrider the _implementation method from proxy
      */
-    function _implementation() override internal view virtual returns (address) {
+    function _implementation() internal view virtual override returns (address) {
         return _imp;
     }
-
 }
