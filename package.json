@@ -1,6 +1,6 @@
 {
     "name": "@spherex-xyz/contracts",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "description": "Spherex protection contracts and engine.",
     "files": [
         "src/**/*.sol",
