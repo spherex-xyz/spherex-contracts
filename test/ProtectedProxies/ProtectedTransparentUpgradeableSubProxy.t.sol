@@ -181,7 +181,6 @@ contract ProtectedTransparentUpgradeableSubProxyTest is SphereXProtectedSubProxy
         vm.expectCall(address(new_costumer), new_func_data);
         ISphereXProtectedSubProxy(address(proxy_contract)).subUpgradeToAndCall(address(new_costumer), new_func_data);
     }
-    
-    function test_changeSphereXEngine_from_protected_function_engine_on() public override {}
 
+    function test_changeSphereXEngine_from_protected_function_engine_on() public override {}
 }

@@ -86,7 +86,7 @@ abstract contract SphereXConfiguration {
         _;
     }
 
-    modifier spherexOnlyOperator() {
+    modifier onlySpherexOperator() {
         require(msg.sender == _getAddress(SPHEREX_OPERATOR_STORAGE_SLOT), "SphereX error: operator required");
         _;
     }
@@ -180,7 +180,7 @@ abstract contract SphereXConfiguration {
      * @dev this is also used to actually enable the defense
      * (because as long is this address is 0, the protection is disabled).
      */
-    function changeSphereXEngine(address newSphereXEngine) external spherexOnlyOperator {
+    function changeSphereXEngine(address newSphereXEngine) external onlySpherexOperator {
         _checkSphereXEngine(newSphereXEngine);
         address oldEngine = _getAddress(SPHEREX_ENGINE_STORAGE_SLOT);
         _setAddress(SPHEREX_ENGINE_STORAGE_SLOT, newSphereXEngine);

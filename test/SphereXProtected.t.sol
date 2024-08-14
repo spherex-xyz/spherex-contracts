@@ -180,7 +180,6 @@ contract SphereXProtectedTest is Test, CFUtils {
      *      for now it checks that nothing is being sent
      *      to the engine at the post call except for the num parameter.
      */
-
     function testPublicFunction() external {
         allowed_cf_storage = [
             to_int256(costumer_contract.publicFunction.selector),
@@ -491,13 +490,15 @@ contract SphereXProtectedTest is Test, CFUtils {
         spherex_engine.grantSenderAdderRole(address(costumer_contract));
     }
 
-    function test_changeSphereXEngine_from_protected_function_engine_on() public virtual{
+    function test_changeSphereXEngine_from_protected_function_engine_on() public virtual {
         spherex_engine.configureRules(CF);
         allowed_cf_storage =
             [to_int256(costumer_contract.setEngine.selector), -to_int256(costumer_contract.setEngine.selector)];
         addAllowedPattern();
-        allowed_cf_storage =
-            [to_int256(costumer_contract.publicFunction.selector), -to_int256(costumer_contract.publicFunction.selector)];
+        allowed_cf_storage = [
+            to_int256(costumer_contract.publicFunction.selector),
+            -to_int256(costumer_contract.publicFunction.selector)
+        ];
         addAllowedPattern();
         // call the publicFunction and see it doesnt revert
         costumer_contract.publicFunction();
@@ -509,7 +510,7 @@ contract SphereXProtectedTest is Test, CFUtils {
 
         costumer_contract.changeSphereXOperator(address(costumer_contract));
         costumer_contract.setEngine(address(spherex_engine_2));
-        
+
         // after successfully cahging the engine call the publicFunction function and expect revert
         vm.expectRevert("SphereX error: disallowed tx pattern");
         costumer_contract.publicFunction();
