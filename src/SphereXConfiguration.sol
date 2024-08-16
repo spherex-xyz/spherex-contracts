@@ -8,6 +8,7 @@ import {ISphereXEngine, ModifierLocals} from "./ISphereXEngine.sol";
 /**
  * @title SphereX base Customer contract template
  */
+/// @custom:oz-upgrades-unsafe-allow constructor
 abstract contract SphereXConfiguration {
     /**
      * @dev we would like to avoid occupying storage slots
