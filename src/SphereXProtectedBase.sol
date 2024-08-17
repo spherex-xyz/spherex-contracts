@@ -9,6 +9,7 @@ import {SphereXConfiguration} from "./SphereXConfiguration.sol";
 /**
  * @title SphereX base Customer contract template
  */
+/// @custom:oz-upgrades-unsafe-allow constructor 
 abstract contract SphereXProtectedBase is SphereXConfiguration {
     constructor(address admin, address operator, address engine) SphereXConfiguration(admin, operator, engine) {}
 
