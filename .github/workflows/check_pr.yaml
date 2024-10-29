@@ -1,0 +1,42 @@
+name: Check PR for Associated Issues
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, edited, synchronize]
+
+jobs:
+  check-PR:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check for associated issues
+        run: |
+          if ! grep -q -E "(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved) #[0-9]+" <<< "${{ github.event.pull_request.body }}"; then
+            echo "PR must reference at least one issue."
+            exit 1
+          fi
+
+      - name: "Check PR Title"
+        run: |          
+          regex="^(.+)\((.+)\): (.+)$"
+          allowed_types=("feat" "fix" "docs" "style" "refactor" "test" "chore")
+          pr_title="${{ github.event.pull_request.title }}"
+
+          if [[ "$pr_title" =~ $regex ]]; then
+              type=${BASH_REMATCH[1]}
+
+              if [[ ! " ${allowed_types[@]} " =~ " ${type} " ]]; then
+                  echo "Invalid PR type - the type mst be one of the following: ${allowed_types[@]}"
+                  exit 1
+              fi
+
+          else
+              echo "Invalid PR title - check it requirments at https://www.notion.so/spherex/Workflow-methodology-5dc8af6bc4a7457e8a70c79c689cc667?pvs=4#e420eefb0755459a8ceb9f5925faf4e3"
+              exit 1
+          fi
+      
+      - name: Success
+        run: echo "PR Issues and title is good to go."
+
