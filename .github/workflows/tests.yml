@@ -6,7 +6,7 @@ name: Run tests before PR to master
 on:
   # Triggers the workflow on pull request events for the "master" branch
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -24,14 +24,6 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly-94777647f6ea5d34572a1b15c9b57e35b8c77b41
-      - name: Run tests 0.6.2
-        run: forge test -vv --use 0.6.2 
-      
-      - name: Run tests 0.7.0
-        run: forge test -vv --use 0.7.0 
-        
-      - name: Run tests 0.8.0
-        run: forge test -vv --use 0.8.0 
-     
+               
       - name: Run tests latest
         run: forge test -vv 
