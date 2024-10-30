@@ -6,7 +6,7 @@ name: Run tests before PR to master
 on:
   # Triggers the workflow on pull request events for the "master" branch
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
