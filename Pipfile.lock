@@ -856,11 +856,12 @@
         },
         "eth-abi": {
             "hashes": [
-                "sha256:60d88788d53725794cdb07c0f0bb0df2a31a6e1ad19644313fe6117ac24eeeb0",
-                "sha256:abd83410a5326145bf178675c276de0ed154f6dc695dcad1beafaa44d97f44ae"
+                "sha256:521960d8b4beee514958e1774951dc6b48176aa274e3bd8b166f6921453047ef",
+                "sha256:e9425110c6120c585c9f0db2e8a33d76c4b886b148a65e68fc0035d3917a3b9c"
             ],
-            "markers": "python_version < '4' and python_full_version >= '3.7.2'",
-            "version": "==4.2.1"
+            "index": "pypi",
+            "markers": "python_version >= '3.8' and python_version < '4'",
+            "version": "==5.0.1"
         },
         "eth-account": {
             "hashes": [
@@ -879,7 +880,9 @@
             "version": "==1.0.4"
         },
         "eth-hash": {
-            "extras": [],
+            "extras": [
+                "pycryptodome"
+            ],
             "hashes": [
                 "sha256:3c884e4f788b38cc92cff05c4e43bc6b82686066f04ecfae0e11cdcbe5a283bd",
                 "sha256:8cde211519ff1a98b46e9057cb909f12ab62e263eb30a0a94e2f7e1f46ac67a0"
